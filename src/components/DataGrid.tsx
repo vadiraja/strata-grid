@@ -48,6 +48,8 @@ export function DataGrid<TRow>({
     data: tree ? tree.rootRows : rows,
     columns,
     getSubRows: tree?.getSubRows,
+    // Adapt TreeDataConfig's single-arg getRowId to TanStack's
+    // (row, index, parent) signature; the extra arguments are unused.
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
     defaultExpanded,
   });

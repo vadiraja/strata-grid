@@ -14,6 +14,9 @@ export function resolveTreeColumnId<TRow>(columns: ColumnDef<TRow>[]): string {
     return designated.id;
   }
   if (columns.length === 0) {
+    // Degenerate case — tree mode with no columns. The empty id never matches
+    // a column id, so no cell becomes a TreeCell; the grid renders nothing
+    // either way. The development warning is the actionable signal.
     devWarn('Tree mode is on but the grid has no columns.');
     return '';
   }
