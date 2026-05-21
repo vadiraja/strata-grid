@@ -13,11 +13,28 @@ export interface CellContext<TRow> {
   rowIndex: number;
 }
 
+/** Sort direction for a column. */
+export type SortDirection = 'asc' | 'desc';
+
+/** A single column's sort specification. */
+export interface ColumnSort {
+  /** The column id to sort by. */
+  columnId: string;
+  /** The sort direction. */
+  direction: SortDirection;
+}
+
+/** The complete sorting state — an ordered list of column sorts. */
+export type SortingState = ColumnSort[];
+
+/** Built-in filter types. */
+export type FilterType = 'text' | 'number';
+
 /**
  * Definition of a single grid column.
  *
- * Later milestones extend this interface with pinning, sorting, and
- * filtering options.
+ * Later milestones extend this interface with pinning and
+ * column group options.
  */
 export interface ColumnDef<TRow> {
   /** Unique, stable column id. */
@@ -42,6 +59,17 @@ export interface ColumnDef<TRow> {
    * and a development warning is emitted.
    */
   isTreeColumn?: boolean;
+  /**
+   * Whether this column is sortable. Defaults to `true`.
+   * Set to `false` to disable sorting for this column.
+   */
+  sortable?: boolean;
+  /**
+   * The filter type for this column. Set to `'text'` for case-insensitive
+   * substring matching, `'number'` for numeric comparison, or `false` to
+   * disable filtering. Defaults to `false` (no filter).
+   */
+  filter?: FilterType | false;
 }
 
 /**
