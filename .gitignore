@@ -10,6 +10,7 @@ build/
 coverage/
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # Visual-companion brainstorming workspace (local only)
 .superpowers/

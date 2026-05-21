@@ -17,6 +17,7 @@
   },
   "files": ["dist"],
   "scripts": {
+    "dev": "vite",
     "build": "tsup && cp src/strata.css dist/strata.css",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -34,11 +35,13 @@
     "@testing-library/react": "^16.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^26.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
+    "vite": "^6.0.7",
     "vitest": "^3.0.5"
   }
 }
