@@ -8,10 +8,16 @@ export interface BodyViewportProps<TRow> {
   table: Table<TRow>;
   /** Height of the scrollable body area in pixels. */
   height: number;
+  /** Id of the tree column. Set only in tree mode. */
+  treeColumnId?: string;
 }
 
 /** Renders the grid body as a vertically virtualized scroll area. */
-export function BodyViewport<TRow>({ table, height }: BodyViewportProps<TRow>) {
+export function BodyViewport<TRow>({
+  table,
+  height,
+  treeColumnId,
+}: BodyViewportProps<TRow>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
   const virtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -39,6 +45,7 @@ export function BodyViewport<TRow>({ table, height }: BodyViewportProps<TRow>) {
           <GridRow
             key={virtualRow.key}
             row={rows[virtualRow.index]}
+            treeColumnId={treeColumnId}
             style={{
               position: 'absolute',
               top: 0,

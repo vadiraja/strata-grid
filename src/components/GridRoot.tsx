@@ -8,14 +8,26 @@ export interface GridRootProps<TRow> {
   table: Table<TRow>;
   /** Height of the scrollable body area in pixels. */
   height: number;
+  /**
+   * Id of the tree column. Set only in tree mode; switches the grid to the
+   * `treegrid` ARIA role and tells rows which cell renders the hierarchy.
+   */
+  treeColumnId?: string;
 }
 
 /** The grid layout shell. */
-export function GridRoot<TRow>({ table, height }: GridRootProps<TRow>) {
+export function GridRoot<TRow>({
+  table,
+  height,
+  treeColumnId,
+}: GridRootProps<TRow>) {
   return (
-    <div className="strata-grid" role="grid">
+    <div
+      className="strata-grid"
+      role={treeColumnId === undefined ? 'grid' : 'treegrid'}
+    >
       <HeaderArea table={table} />
-      <BodyViewport table={table} height={height} />
+      <BodyViewport table={table} height={height} treeColumnId={treeColumnId} />
       <GridFooter rowCount={table.getRowModel().rows.length} />
     </div>
   );
