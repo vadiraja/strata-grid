@@ -88,6 +88,7 @@ and being headless, it leaves us full control of the DOM.
 | Later | Tier 3 plugin system | Formal `registerModules([...])` registry for optional feature modules. |
 
 Each milestone is its own spec → implementation plan → build cycle.
+Roadmap-level scope for M2–M4 is recorded in [`docs/roadmap.md`](../../roadmap.md).
 
 ---
 
