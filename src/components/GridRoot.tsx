@@ -1,4 +1,5 @@
 import type { Table } from '@tanstack/react-table';
+import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 
 export interface GridRootProps<TRow> {
@@ -10,6 +11,7 @@ export interface GridRootProps<TRow> {
 export function GridRoot<TRow>({ table }: GridRootProps<TRow>) {
   return (
     <div className="strata-grid" role="grid">
+      <HeaderArea table={table} />
       <BodyViewport table={table} />
     </div>
   );
