@@ -2,14 +2,18 @@ import { useMemo } from 'react';
 import {
   getCoreRowModel,
   getExpandedRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
   useReactTable,
   type ColumnDef as TanstackColumnDef,
   type Row,
   type Table,
+  type SortingState as TanstackSortingState,
 } from '@tanstack/react-table';
-import type { ColumnDef } from './types';
+import type { ColumnDef, ColumnSort, FilterType } from './types';
 import { readValue } from './read-value';
 import { DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './constants';
+import { textFilterFn, numberFilterFn } from './tree-filter-fn';
 
 export interface UseGridTableOptions<TRow> {
   /** The rows to display. In tree mode, the root rows. */
@@ -25,21 +29,55 @@ export interface UseGridTableOptions<TRow> {
   getRowId?: (row: TRow, index: number, parent?: Row<TRow>) => string;
   /** Tree mode: when true, every row starts expanded. Defaults to false. */
   defaultExpanded?: boolean;
+  /** Initial sorting state. */
+  defaultSort?: ColumnSort[];
+  /** Whether the grid is in tree mode (enables filterFromLeafRows). */
+  isTreeMode?: boolean;
+}
+
+/**
+ * Resolves the TanStack filter function for a given filter type.
+ */
+function resolveFilterFn(filterType: FilterType | false | undefined) {
+  if (filterType === 'text') {
+    return (row: any, columnId: string, filterValue: string) =>
+      textFilterFn(row.getValue(columnId), filterValue);
+  }
+  if (filterType === 'number') {
+    return (row: any, columnId: string, filterValue: string) =>
+      numberFilterFn(row.getValue(columnId), filterValue);
+  }
+  return undefined;
+}
+
+/**
+ * Converts Strata's ColumnSort[] to TanStack's SortingState.
+ */
+function toTanstackSorting(sorts?: ColumnSort[]): TanstackSortingState {
+  if (!sorts || sorts.length === 0) return [];
+  return sorts.map((s) => ({ id: s.columnId, desc: s.direction === 'desc' }));
 }
 
 /**
  * Builds a TanStack Table instance from Strata column definitions.
  *
- * Each Strata column is carried on its TanStack column via `meta.strataColumn`.
- * The expanded row model is always installed: with no `getSubRows` it is
- * identical to the core model (flat grids are unaffected); with `getSubRows`
- * it flattens only the currently-expanded rows. Expansion state is managed
- * internally by TanStack Table and seeded by `defaultExpanded`.
+ * Installs the sorted, filtered, and expanded row models. Sorting is
+ * multi-column and tree-aware (siblings sort within their parent).
+ * Filtering in tree mode uses `filterFromLeafRows` so ancestor rows
+ * remain visible when a descendant matches.
  */
 export function useGridTable<TRow>(
   options: UseGridTableOptions<TRow>,
 ): Table<TRow> {
-  const { data, columns, getSubRows, getRowId, defaultExpanded } = options;
+  const {
+    data,
+    columns,
+    getSubRows,
+    getRowId,
+    defaultExpanded,
+    defaultSort,
+    isTreeMode,
+  } = options;
 
   const tanstackColumns = useMemo<TanstackColumnDef<TRow>[]>(
     () =>
@@ -49,6 +87,9 @@ export function useGridTable<TRow>(
         size: column.width ?? DEFAULT_COLUMN_WIDTH,
         minSize: column.minWidth ?? MIN_COLUMN_WIDTH,
         meta: { strataColumn: column },
+        enableSorting: column.sortable !== false,
+        enableColumnFilter: column.filter !== false && column.filter !== undefined,
+        filterFn: resolveFilterFn(column.filter),
       })),
     [columns],
   );
@@ -59,7 +100,13 @@ export function useGridTable<TRow>(
     getRowId,
     getSubRows,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-    initialState: { expanded: defaultExpanded ? true : {} },
+    filterFromLeafRows: isTreeMode ?? false,
+    initialState: {
+      expanded: defaultExpanded ? true : {},
+      sorting: toTanstackSorting(defaultSort),
+    },
   });
 }

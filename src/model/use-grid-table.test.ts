@@ -108,3 +108,49 @@ describe('useGridTable — tree mode', () => {
     expect(result.current.getRowModel().rows).toHaveLength(3);
   });
 });
+
+describe('useGridTable — sorting', () => {
+  it('sorts rows ascending by a column when defaultSort is provided', () => {
+    const unsorted: Material[] = [
+      { id: 'M-2', name: 'Nut', qty: 8 },
+      { id: 'M-1', name: 'Bolt', qty: 12 },
+    ];
+    const { result } = renderHook(() =>
+      useGridTable({
+        data: unsorted,
+        columns,
+        defaultSort: [{ columnId: 'name', direction: 'asc' }],
+      }),
+    );
+    const names = result.current
+      .getRowModel()
+      .rows.map((r) => r.getValue('name'));
+    expect(names).toEqual(['Bolt', 'Nut']);
+  });
+
+  it('sorts rows descending when direction is desc', () => {
+    const { result } = renderHook(() =>
+      useGridTable({
+        data,
+        columns,
+        defaultSort: [{ columnId: 'name', direction: 'desc' }],
+      }),
+    );
+    const names = result.current
+      .getRowModel()
+      .rows.map((r) => r.getValue('name'));
+    expect(names).toEqual(['Nut', 'Bolt']);
+  });
+
+  it('disables sorting on a column with sortable: false', () => {
+    const cols: ColumnDef<Material>[] = [
+      { id: 'name', header: 'Name', accessor: 'name', sortable: false },
+      { id: 'qty', header: 'Qty', accessor: 'qty' },
+    ];
+    const { result } = renderHook(() =>
+      useGridTable({ data, columns: cols }),
+    );
+    const nameCol = result.current.getColumn('name');
+    expect(nameCol?.getCanSort()).toBe(false);
+  });
+});
