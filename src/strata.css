@@ -1,0 +1,62 @@
+.strata-grid {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d1d1d6;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.strata-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.strata-header-row {
+  display: flex;
+}
+
+.strata-header-cell {
+  box-sizing: border-box;
+  padding: 6px 10px;
+  font-weight: 600;
+  background: #f5f5f7;
+  border-bottom: 1px solid #d1d1d6;
+  border-right: 1px solid #e5e5e7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strata-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.strata-row {
+  display: flex;
+}
+
+.strata-cell {
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border-bottom: 1px solid #e5e5e7;
+  border-right: 1px solid #e5e5e7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strata-empty {
+  padding: 24px;
+  text-align: center;
+  color: #86868b;
+}
+
+.strata-footer {
+  padding: 6px 10px;
+  background: #f5f5f7;
+  border-top: 1px solid #d1d1d6;
+  color: #86868b;
+  font-size: 12px;
+}
