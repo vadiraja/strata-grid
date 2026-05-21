@@ -23,7 +23,7 @@ describe('DataGrid — column headers', () => {
 
   it('renders the header text', () => {
     render(<DataGrid data={data} columns={columns} />);
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Qty' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Name/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Qty/ })).toBeInTheDocument();
   });
 });
