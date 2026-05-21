@@ -22,9 +22,11 @@ describe('DataGrid — column pinning', () => {
       { id: 'c', header: 'Col C', accessor: 'c' },
     ];
     const { container } = render(<DataGrid data={data} columns={columns} />);
-    const leftPane = container.querySelector('.strata-pane-left');
-    expect(leftPane).not.toBeNull();
-    expect(leftPane?.textContent).toContain('A1');
+    // Panes appear in both header and body — combine all text to assert data presence
+    const leftPanes = container.querySelectorAll('.strata-pane-left');
+    expect(leftPanes.length).toBeGreaterThan(0);
+    const combined = Array.from(leftPanes).map((el) => el.textContent).join('');
+    expect(combined).toContain('A1');
   });
 
   it('renders pinned-right columns in a separate pane', () => {
@@ -34,9 +36,10 @@ describe('DataGrid — column pinning', () => {
       { id: 'c', header: 'Col C', accessor: 'c', pin: 'right' },
     ];
     const { container } = render(<DataGrid data={data} columns={columns} />);
-    const rightPane = container.querySelector('.strata-pane-right');
-    expect(rightPane).not.toBeNull();
-    expect(rightPane?.textContent).toContain('C1');
+    const rightPanes = container.querySelectorAll('.strata-pane-right');
+    expect(rightPanes.length).toBeGreaterThan(0);
+    const combined = Array.from(rightPanes).map((el) => el.textContent).join('');
+    expect(combined).toContain('C1');
   });
 
   it('does not render pinned panes when no columns are pinned', () => {
