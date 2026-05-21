@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { Header } from '@tanstack/react-table';
 import { SortIndicator } from './SortIndicator';
 import { FilterPopover } from './FilterPopover';
@@ -23,18 +23,42 @@ export function ColumnHeaderCell<TRow>({
   const sortDirection = header.column.getIsSorted();
   const filterType = strataColumn.filter as FilterType | false | undefined;
 
+  // Track whether the current interaction is a drag/resize so we can suppress sort on click
+  const didDragRef = useRef(false);
+
   const handleClick = (e: React.MouseEvent) => {
+    // Suppress sort if the click came from a resize handle or after a drag operation
     if (!canSort) return;
+    if (header.column.getIsResizing()) return;
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
+    // Don't sort if the click target is the resize handle
+    if ((e.target as HTMLElement).closest('.strata-resize-handle')) return;
     header.column.getToggleSortingHandler()?.(e);
   };
 
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
+      // If the drag started from the resize handle, cancel it
+      if ((e.target as HTMLElement).closest('.strata-resize-handle')) {
+        e.preventDefault();
+        return;
+      }
+      didDragRef.current = true;
       e.dataTransfer.setData('text/plain', header.column.id);
       e.dataTransfer.effectAllowed = 'move';
     },
     [header.column.id],
   );
+
+  const handleDragEnd = useCallback(() => {
+    // Reset after a short delay so the click event that fires after dragend is suppressed
+    setTimeout(() => {
+      didDragRef.current = false;
+    }, 0);
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -60,6 +84,7 @@ export function ColumnHeaderCell<TRow>({
       onClick={handleClick}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       aria-sort={

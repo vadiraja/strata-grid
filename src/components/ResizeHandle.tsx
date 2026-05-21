@@ -6,13 +6,28 @@ export interface ResizeHandleProps<TRow> {
 }
 
 export function ResizeHandle<TRow>({ header }: ResizeHandleProps<TRow>) {
+  const resizeHandler = header.getResizeHandler();
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent the parent's HTML5 drag from activating
+    e.preventDefault();
+    e.stopPropagation();
+    resizeHandler(e);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    resizeHandler(e);
+  };
+
   return (
     <div
       className={`strata-resize-handle${
         header.column.getIsResizing() ? ' strata-resize-handle-active' : ''
       }`}
-      onMouseDown={header.getResizeHandler()}
-      onTouchStart={header.getResizeHandler()}
+      draggable={false}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       role="separator"
       aria-orientation="vertical"
       aria-label={`Resize column ${header.column.id}`}

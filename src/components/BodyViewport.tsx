@@ -84,13 +84,11 @@ export function BodyViewport<TRow>({
                 </div>
               )}
               <div className="strata-pane-center" style={{ flex: '1 1 auto', overflow: 'hidden' }}>
-                <div style={{ width: colVirtualizer.getTotalSize(), position: 'relative' }}>
-                  <GridRow
-                    row={row}
-                    treeColumnId={treeColumnId}
-                    cells={getVirtualizedCenterCells(row, centerColumns, colVirtualizer)}
-                  />
-                </div>
+                <GridRow
+                  row={row}
+                  treeColumnId={treeColumnId}
+                  cells={getVirtualizedCenterCells(row, centerColumns, colVirtualizer)}
+                />
               </div>
               {rightColumns.length > 0 && (
                 <div className="strata-pane-right" style={{ width: rightWidth, flexShrink: 0 }}>
