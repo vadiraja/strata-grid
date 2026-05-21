@@ -2,7 +2,7 @@ import { DataGrid, type ColumnDef } from '../src/index';
 import '../src/strata.css';
 
 /**
- * Throwaway dev playground for Strata Plan 1 (flat grid).
+ * Throwaway dev playground for Strata.
  * The full examples app is Plan 7 in docs/roadmap.md.
  */
 
@@ -15,18 +15,21 @@ interface BomRow {
   type: 'FERT' | 'HALB' | 'ROH';
 }
 
-const data: BomRow[] = [
-  { id: '1', material: 'BIKE-MTB-26', description: 'Mountain Bike, 26"', qty: 1, uom: 'EA', type: 'FERT' },
-  { id: '2', material: 'ASSY-FRAME', description: 'Frame Assembly, Welded', qty: 1, uom: 'EA', type: 'HALB' },
-  { id: '3', material: 'ASSY-WHEEL', description: 'Wheel Assembly, Disc', qty: 2, uom: 'EA', type: 'HALB' },
-  { id: '4', material: 'ASSY-DRIVE', description: 'Drivetrain Assembly', qty: 1, uom: 'EA', type: 'HALB' },
-  { id: '5', material: 'BRAKE-DISC', description: 'Disc Brake Set', qty: 1, uom: 'SET', type: 'HALB' },
-  { id: '6', material: 'TUBE-AL6061', description: 'Aluminum Tube 6061-T6', qty: 1.2, uom: 'M', type: 'ROH' },
-  { id: '7', material: 'RIM-26', description: 'Rim, 26" Double-Wall', qty: 2, uom: 'EA', type: 'HALB' },
-  { id: '8', material: 'SPOKE-SS', description: 'Spoke, Stainless 290mm', qty: 64, uom: 'EA', type: 'ROH' },
-  { id: '9', material: 'ROTOR-160', description: 'Rotor, 160mm 6-Bolt', qty: 2, uom: 'EA', type: 'ROH' },
-  { id: '10', material: 'KIT-WELD', description: 'Weld Consumables Kit', qty: 1, uom: 'KIT', type: 'ROH' },
-];
+const TYPES: BomRow['type'][] = ['FERT', 'HALB', 'ROH'];
+const UOMS = ['EA', 'M', 'KG', 'SET', 'KIT'];
+
+function makeRows(count: number): BomRow[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: String(i + 1),
+    material: `MAT-${String(i + 1).padStart(5, '0')}`,
+    description: `Component ${i + 1}`,
+    qty: (i % 9) + 1,
+    uom: UOMS[i % UOMS.length],
+    type: TYPES[i % TYPES.length],
+  }));
+}
+
+const data = makeRows(2000);
 
 const typeColor: Record<BomRow['type'], string> = {
   FERT: '#0a84ff',
@@ -64,11 +67,11 @@ const columns: ColumnDef<BomRow>[] = [
 export function App() {
   return (
     <div style={{ padding: 32, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Strata — Plan 1 Playground</h1>
+      <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Strata — Plan 2 Playground</h1>
       <p style={{ color: '#86868b', fontSize: 14, margin: '0 0 20px' }}>
-        Flat data grid · column headers · custom cell renderer on Type · footer row count
+        Row virtualization · 2,000 rows · only the visible window is in the DOM
       </p>
-      <DataGrid data={data} columns={columns} />
+      <DataGrid data={data} columns={columns} height={520} />
     </div>
   );
 }
