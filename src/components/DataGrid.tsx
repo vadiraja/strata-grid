@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { ColumnDef, TreeDataConfig } from '../model/types';
+import type { ColumnDef, TreeDataConfig, ColumnSort } from '../model/types';
 import { DEFAULT_GRID_HEIGHT } from '../model/constants';
 import { useGridTable } from '../model/use-grid-table';
 import { normalizeTreeData } from '../model/normalize-tree-data';
@@ -21,6 +21,8 @@ export interface DataGridProps<TRow> {
   treeData?: TreeDataConfig<TRow>;
   /** Tree mode: when true, every row starts expanded. Defaults to false. */
   defaultExpanded?: boolean;
+  /** Initial sorting state — an ordered list of column sorts. */
+  defaultSort?: ColumnSort[];
 }
 
 /** The public Strata grid component. */
@@ -30,6 +32,7 @@ export function DataGrid<TRow>({
   height = DEFAULT_GRID_HEIGHT,
   treeData,
   defaultExpanded,
+  defaultSort,
 }: DataGridProps<TRow>) {
   const dataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const rows = dataSource.load();
@@ -48,10 +51,10 @@ export function DataGrid<TRow>({
     data: tree ? tree.rootRows : rows,
     columns,
     getSubRows: tree?.getSubRows,
-    // Adapt TreeDataConfig's single-arg getRowId to TanStack's
-    // (row, index, parent) signature; the extra arguments are unused.
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
     defaultExpanded,
+    defaultSort,
+    isTreeMode: treeData !== undefined,
   });
 
   return <GridRoot table={table} height={height} treeColumnId={treeColumnId} />;
