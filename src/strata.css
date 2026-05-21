@@ -29,8 +29,12 @@
 }
 
 .strata-body {
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+}
+
+.strata-body-sizer {
+  position: relative;
+  width: 100%;
 }
 
 .strata-row {
