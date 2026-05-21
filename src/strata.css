@@ -105,6 +105,57 @@
   box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
 }
 
+.strata-row-container {
+  display: flex;
+}
+
+.strata-pane-left {
+  flex: none;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  border-right: 2px solid #d1d1d6;
+}
+
+.strata-pane-center {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.strata-pane-right {
+  flex: none;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  border-left: 2px solid #d1d1d6;
+}
+
+.strata-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.strata-resize-handle:hover,
+.strata-resize-handle-active {
+  background: #0071e3;
+}
+
+.strata-header-cell {
+  position: relative;
+}
+
+.strata-header-cell[draggable='true']:active {
+  opacity: 0.6;
+}
+
 .strata-body {
   overflow-x: hidden;
   overflow-y: auto;
