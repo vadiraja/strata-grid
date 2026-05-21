@@ -68,7 +68,7 @@ const bom: BomNode[] = [
 ];
 
 const columns: ColumnDef<BomNode>[] = [
-  { id: 'material', header: 'Material', accessor: 'material', width: 150, isTreeColumn: true, filter: 'text' },
+  { id: 'material', header: 'Material', accessor: 'material', width: 150, isTreeColumn: true, pin: 'left', filter: 'text' },
   { id: 'description', header: 'Description', accessor: 'description', width: 260, filter: 'text' },
   { id: 'qty', header: 'Qty', accessor: 'qty', width: 80, filter: 'number' },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80 },
@@ -82,9 +82,9 @@ const treeData: TreeDataConfig<BomNode> = {
 export function App() {
   return (
     <div style={{ padding: 32, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Strata — Plan 4 Playground</h1>
+      <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Strata — Plan 5 Playground</h1>
       <p style={{ color: '#86868b', fontSize: 14, margin: '0 0 20px' }}>
-        Sorting (click headers) · filtering (▽ icon) · tree-aware
+        Column pinning (Material pinned left) · resize (drag header edges) · reorder (drag headers) · sorting · filtering
       </p>
       <DataGrid
         data={bom}
