@@ -16,8 +16,8 @@ export interface CellContext<TRow> {
 /**
  * Definition of a single grid column.
  *
- * Later milestones extend this interface with pinning, sorting, filtering,
- * and tree-column options.
+ * Later milestones extend this interface with pinning, sorting, and
+ * filtering options.
  */
 export interface ColumnDef<TRow> {
   /** Unique, stable column id. */
@@ -35,6 +35,32 @@ export interface ColumnDef<TRow> {
   width?: number;
   /** Minimum column width in pixels. Defaults to `MIN_COLUMN_WIDTH`. */
   minWidth?: number;
+  /**
+   * Marks this column as the tree column — the one that shows the hierarchy
+   * (depth indentation and the expand/collapse control). Tree mode only;
+   * exactly one column should set it. If none does, the first column is used
+   * and a development warning is emitted.
+   */
+  isTreeColumn?: boolean;
+}
+
+/**
+ * Configures tree (hierarchical / BOM) mode. Passing `treeData` to
+ * `<DataGrid>` turns it into a tree grid.
+ *
+ * Provide **either** `getChildren` (nested data) **or** `getParentId` (flat,
+ * parent-pointer data). If both are given, `getChildren` wins and a
+ * development warning is emitted.
+ */
+export interface TreeDataConfig<TRow> {
+  /** Returns a stable, unique id for a row. */
+  getRowId: (row: TRow) => string;
+  /** Nested data: returns a row's children, or `undefined` for a leaf. */
+  getChildren?: (row: TRow) => TRow[] | undefined;
+  /**
+   * Flat data: returns a row's parent id, or `null`/`undefined` for a root.
+   */
+  getParentId?: (row: TRow) => string | null | undefined;
 }
 
 /**

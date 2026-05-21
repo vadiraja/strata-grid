@@ -12,3 +12,6 @@ export const ROW_OVERSCAN = 8;
 
 /** Default height of the scrollable grid body in pixels. */
 export const DEFAULT_GRID_HEIGHT = 400;
+
+/** Horizontal indentation applied per tree depth level, in pixels. */
+export const TREE_INDENT_WIDTH = 20;
