@@ -47,3 +47,64 @@ describe('useGridTable', () => {
     expect(result.current.getAllColumns()[0].getSize()).toBe(160);
   });
 });
+
+interface TreeNode {
+  id: string;
+  name: string;
+  children?: TreeNode[];
+}
+
+const treeRows: TreeNode[] = [
+  {
+    id: 'a',
+    name: 'A',
+    children: [
+      { id: 'a1', name: 'A1' },
+      { id: 'a2', name: 'A2' },
+    ],
+  },
+];
+
+const treeColumns: ColumnDef<TreeNode>[] = [
+  { id: 'name', header: 'Name', accessor: 'name' },
+];
+
+describe('useGridTable — tree mode', () => {
+  it('shows only root rows when collapsed', () => {
+    const { result } = renderHook(() =>
+      useGridTable({
+        data: treeRows,
+        columns: treeColumns,
+        getSubRows: (row) => row.children,
+        getRowId: (row) => row.id,
+      }),
+    );
+    expect(result.current.getRowModel().rows).toHaveLength(1);
+  });
+
+  it('marks a row with children as expandable', () => {
+    const { result } = renderHook(() =>
+      useGridTable({
+        data: treeRows,
+        columns: treeColumns,
+        getSubRows: (row) => row.children,
+        getRowId: (row) => row.id,
+      }),
+    );
+    expect(result.current.getRowModel().rows[0].getCanExpand()).toBe(true);
+  });
+
+  it('includes descendant rows when defaultExpanded is set', () => {
+    const { result } = renderHook(() =>
+      useGridTable({
+        data: treeRows,
+        columns: treeColumns,
+        getSubRows: (row) => row.children,
+        getRowId: (row) => row.id,
+        defaultExpanded: true,
+      }),
+    );
+    // 1 root + 2 children
+    expect(result.current.getRowModel().rows).toHaveLength(3);
+  });
+});
