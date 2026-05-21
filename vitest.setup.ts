@@ -8,7 +8,7 @@ afterEach(() => {
 
 // --- Virtualization test environment ---------------------------------------
 // jsdom has no layout engine and no ResizeObserver. TanStack Virtual measures
-// its scroll element with getBoundingClientRect and observes it with a
+// its scroll element with offsetHeight/offsetWidth and observes it with a
 // ResizeObserver. Provide both so the row virtualizer renders rows in tests.
 
 class ResizeObserverStub {
@@ -21,6 +21,19 @@ globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserv
 
 const TEST_VIEWPORT_WIDTH = 800;
 const TEST_VIEWPORT_HEIGHT = 600;
+
+// TanStack Virtual reads offsetHeight / offsetWidth (not getBoundingClientRect)
+// to determine how many rows fit in the visible area. jsdom always returns 0
+// for these, so we stub them to a realistic viewport size.
+Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+  configurable: true,
+  get() { return TEST_VIEWPORT_HEIGHT; },
+});
+
+Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+  configurable: true,
+  get() { return TEST_VIEWPORT_WIDTH; },
+});
 
 Element.prototype.getBoundingClientRect = function getBoundingClientRect(): DOMRect {
   return {
