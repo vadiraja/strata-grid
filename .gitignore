@@ -14,6 +14,9 @@ test-results/
 # Visual-companion brainstorming workspace (local only)
 .superpowers/
 
+# Claude Code worktrees (local only)
+.claude/worktrees/
+
 # Editor / OS
 .DS_Store
 .idea/
