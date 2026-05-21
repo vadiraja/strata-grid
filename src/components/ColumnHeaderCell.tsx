@@ -1,15 +1,22 @@
+import { useCallback } from 'react';
 import type { Header } from '@tanstack/react-table';
 import { SortIndicator } from './SortIndicator';
 import { FilterPopover } from './FilterPopover';
+import { ResizeHandle } from './ResizeHandle';
 import type { FilterType } from '../model/types';
 
 export interface ColumnHeaderCellProps<TRow> {
   /** The TanStack header to render. */
   header: Header<TRow, unknown>;
+  /** Callback when a column is dragged and dropped onto another. */
+  onColumnReorder?: (draggedId: string, targetId: string) => void;
 }
 
-/** Renders a single column header cell with sort and filter controls. */
-export function ColumnHeaderCell<TRow>({ header }: ColumnHeaderCellProps<TRow>) {
+/** Renders a column header cell with sort, filter, resize, and reorder. */
+export function ColumnHeaderCell<TRow>({
+  header,
+  onColumnReorder,
+}: ColumnHeaderCellProps<TRow>) {
   const strataColumn = header.column.columnDef.meta!.strataColumn;
   const width = header.getSize();
   const canSort = header.column.getCanSort();
@@ -21,12 +28,40 @@ export function ColumnHeaderCell<TRow>({ header }: ColumnHeaderCellProps<TRow>) 
     header.column.getToggleSortingHandler()?.(e);
   };
 
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      e.dataTransfer.setData('text/plain', header.column.id);
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    [header.column.id],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId && draggedId !== header.column.id && onColumnReorder) {
+        onColumnReorder(draggedId, header.column.id);
+      }
+    },
+    [header.column.id, onColumnReorder],
+  );
+
   return (
     <div
       className={`strata-header-cell${canSort ? ' strata-header-cell-sortable' : ''}`}
       role="columnheader"
       style={{ width }}
       onClick={handleClick}
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       aria-sort={
         sortDirection === 'asc'
           ? 'ascending'
@@ -35,13 +70,12 @@ export function ColumnHeaderCell<TRow>({ header }: ColumnHeaderCellProps<TRow>) 
             : undefined
       }
     >
-      <span className="strata-header-label">
-        {strataColumn.header}
-      </span>
+      <span className="strata-header-label">{strataColumn.header}</span>
       {canSort && <SortIndicator direction={sortDirection} />}
       {!!filterType && (
         <FilterPopover column={header.column} filterType={filterType} />
       )}
+      <ResizeHandle header={header} />
     </div>
   );
 }
