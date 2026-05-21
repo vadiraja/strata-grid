@@ -90,6 +90,7 @@ export function useGridTable<TRow>(
         enableSorting: column.sortable !== false,
         enableColumnFilter: column.filter !== false && column.filter !== undefined,
         filterFn: resolveFilterFn(column.filter),
+        enablePinning: true,
       })),
     [columns],
   );
@@ -104,9 +105,15 @@ export function useGridTable<TRow>(
     getFilteredRowModel: getFilteredRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     filterFromLeafRows: isTreeMode ?? false,
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
     initialState: {
       expanded: defaultExpanded ? true : {},
       sorting: toTanstackSorting(defaultSort),
+      columnPinning: {
+        left: columns.filter((c) => c.pin === 'left').map((c) => c.id),
+        right: columns.filter((c) => c.pin === 'right').map((c) => c.id),
+      },
     },
   });
 }

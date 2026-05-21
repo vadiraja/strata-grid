@@ -70,6 +70,12 @@ export interface ColumnDef<TRow> {
    * disable filtering. Defaults to `false` (no filter).
    */
   filter?: FilterType | false;
+  /**
+   * Pins (freezes) this column to the left or right edge of the grid.
+   * Pinned columns are always visible and never column-virtualized.
+   * Defaults to unpinned (center).
+   */
+  pin?: 'left' | 'right';
 }
 
 /**

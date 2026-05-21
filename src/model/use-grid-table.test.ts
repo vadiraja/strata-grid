@@ -154,3 +154,32 @@ describe('useGridTable — sorting', () => {
     expect(nameCol?.getCanSort()).toBe(false);
   });
 });
+
+describe('useGridTable — column pinning', () => {
+  it('pins columns to the left when pin is set', () => {
+    const cols: ColumnDef<Material>[] = [
+      { id: 'name', header: 'Name', accessor: 'name', pin: 'left' },
+      { id: 'qty', header: 'Qty', accessor: 'qty' },
+    ];
+    const { result } = renderHook(() => useGridTable({ data, columns: cols }));
+    const pinState = result.current.getState().columnPinning;
+    expect(pinState.left).toContain('name');
+  });
+
+  it('pins columns to the right when pin is set', () => {
+    const cols: ColumnDef<Material>[] = [
+      { id: 'name', header: 'Name', accessor: 'name' },
+      { id: 'qty', header: 'Qty', accessor: 'qty', pin: 'right' },
+    ];
+    const { result } = renderHook(() => useGridTable({ data, columns: cols }));
+    const pinState = result.current.getState().columnPinning;
+    expect(pinState.right).toContain('qty');
+  });
+
+  it('leaves unpinned columns in the center', () => {
+    const { result } = renderHook(() => useGridTable({ data, columns }));
+    const pinState = result.current.getState().columnPinning;
+    expect(pinState.left).toEqual([]);
+    expect(pinState.right).toEqual([]);
+  });
+});
