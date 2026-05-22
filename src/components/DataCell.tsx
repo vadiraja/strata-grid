@@ -1,6 +1,7 @@
 import type { Cell } from '@tanstack/react-table';
 import { renderCellContent } from './render-cell-content';
 import { useEditContext } from '../model/edit-context';
+import { CellEditor } from './editors';
 
 export interface DataCellProps<TRow> {
   /** The TanStack cell to render. */
@@ -45,6 +46,12 @@ export function DataCell<TRow>({
     if (!isEditable) return;
     editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
   };
+  const handleClick = () => {
+    if (!editCtx) return;
+    if (editCtx.config.activateOn !== 'singleClick') return;
+    if (!isEditable) return;
+    editCtx.editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
+  };
 
   const className = [
     'strata-cell',
@@ -61,9 +68,10 @@ export function DataCell<TRow>({
       role="gridcell"
       id={isFocused ? focusId : undefined}
       style={{ width, flex: `0 0 ${width}px` }}
+      onClick={editCtx ? handleClick : undefined}
       onDoubleClick={editCtx ? handleDoubleClick : undefined}
     >
-      {renderCellContent(cell)}
+      {isEditing ? <CellEditor cell={cell} /> : renderCellContent(cell)}
     </div>
   );
 }

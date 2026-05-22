@@ -381,6 +381,7 @@
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  position: relative;
   padding: var(--strata-cell-padding-y) var(--strata-cell-padding-x);
   background: var(--strata-bg);
   border-bottom: var(--strata-border-width) solid var(--strata-border-cell);
@@ -490,4 +491,42 @@
   outline-offset: -2px;
   z-index: 1;
   position: relative;
+}
+
+.strata-cell-editor-container {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+  background: var(--strata-bg);
+}
+
+.strata-editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: var(--strata-cell-padding-y) var(--strata-cell-padding-x);
+  font-family: var(--strata-font-family);
+  font-size: var(--strata-font-size);
+  color: var(--strata-text);
+  background: var(--strata-bg);
+  border: none;
+  outline: 2px solid var(--strata-accent);
+  outline-offset: -2px;
+}
+
+.strata-editor-select {
+  appearance: auto;
+}
+
+.strata-editor-checkbox {
+  width: var(--strata-checkbox-size);
+  height: var(--strata-checkbox-size);
+  align-self: center;
+  margin: 0 auto;
+  padding: 0;
+  accent-color: var(--strata-accent);
 }

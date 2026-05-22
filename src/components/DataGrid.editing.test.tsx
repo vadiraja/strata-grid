@@ -8,18 +8,32 @@ interface Person {
   name: string;
   age: number;
   role: string;
+  startDate: string;
+  active: boolean;
 }
 
 const people: Person[] = [
-  { id: '1', name: 'Alice', age: 30, role: 'Engineer' },
-  { id: '2', name: 'Bob', age: 25, role: 'Designer' },
-  { id: '3', name: 'Charlie', age: 35, role: 'Manager' },
+  { id: '1', name: 'Alice', age: 30, role: 'Engineer', startDate: '2026-01-15', active: true },
+  { id: '2', name: 'Bob', age: 25, role: 'Designer', startDate: '2026-02-20', active: false },
+  { id: '3', name: 'Charlie', age: 35, role: 'Manager', startDate: '2026-03-10', active: true },
 ];
 
 const columns: ColumnDef<Person>[] = [
   { id: 'name', header: 'Name', accessor: 'name', editable: true },
   { id: 'age', header: 'Age', accessor: 'age', editable: true, editorType: 'number' },
-  { id: 'role', header: 'Role', accessor: 'role', editable: false },
+  {
+    id: 'role',
+    header: 'Role',
+    accessor: 'role',
+    editable: true,
+    editorType: 'select',
+    editorOptions: {
+      choices: ['Engineer', 'Designer', 'Manager'],
+    },
+  },
+  { id: 'startDate', header: 'Start Date', accessor: 'startDate', editable: true, editorType: 'date' },
+  { id: 'active', header: 'Active', accessor: 'active', editable: true, editorType: 'checkbox' },
+  { id: 'readonly', header: 'Readonly', accessor: 'role', editable: false },
 ];
 
 describe('DataGrid — cell activation', () => {
@@ -55,8 +69,8 @@ describe('DataGrid — cell activation', () => {
       />,
     );
     const cells = container.querySelectorAll('.strata-cell');
-    // Third cell in first row is "role" (not editable)
-    fireEvent.doubleClick(cells[2]);
+    // Sixth cell in first row is explicitly read-only.
+    fireEvent.doubleClick(cells[5]);
     expect(onCellEditStart).not.toHaveBeenCalled();
   });
 
@@ -128,6 +142,152 @@ describe('DataGrid — edit commit/discard', () => {
         columnId: 'name',
         committed: true,
       }),
+    );
+  });
+});
+
+describe('DataGrid — built-in editors', () => {
+  it('renders a text editor and commits changed text', () => {
+    const onCellEditEnd = vi.fn();
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+
+    fireEvent.doubleClick(container.querySelectorAll('.strata-cell')[0]);
+    const input = document.activeElement as HTMLInputElement;
+    expect(input).toHaveValue('Alice');
+
+    fireEvent.change(input, { target: { value: 'Alicia' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onCellEditEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        columnId: 'name',
+        newValue: 'Alicia',
+        committed: true,
+      }),
+    );
+  });
+
+  it('renders a number editor and preserves numeric values', () => {
+    const onCellEditEnd = vi.fn();
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+
+    fireEvent.doubleClick(container.querySelectorAll('.strata-cell')[1]);
+    const input = document.activeElement as HTMLInputElement;
+    expect(input).toHaveAttribute('type', 'number');
+    fireEvent.change(input, { target: { value: '31' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onCellEditEnd).toHaveBeenCalledWith(
+      expect.objectContaining({ columnId: 'age', newValue: 31 }),
+    );
+  });
+
+  it('renders select, date, and checkbox editors', () => {
+    const onCellEditEnd = vi.fn();
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+    const cells = container.querySelectorAll('.strata-cell');
+
+    fireEvent.doubleClick(cells[2]);
+    const select = document.activeElement as HTMLSelectElement;
+    expect(select.tagName).toBe('SELECT');
+    fireEvent.change(select, { target: { value: '2' } });
+    fireEvent.keyDown(select, { key: 'Enter' });
+    expect(onCellEditEnd).toHaveBeenLastCalledWith(
+      expect.objectContaining({ columnId: 'role', newValue: 'Manager' }),
+    );
+
+    fireEvent.doubleClick(cells[3]);
+    const dateInput = document.activeElement as HTMLInputElement;
+    expect(dateInput).toHaveAttribute('type', 'date');
+    fireEvent.change(dateInput, { target: { value: '2026-04-01' } });
+    fireEvent.keyDown(dateInput, { key: 'Enter' });
+    expect(onCellEditEnd).toHaveBeenLastCalledWith(
+      expect.objectContaining({ columnId: 'startDate', newValue: '2026-04-01' }),
+    );
+
+    fireEvent.doubleClick(cells[4]);
+    const checkbox = document.activeElement as HTMLInputElement;
+    expect(checkbox).toHaveAttribute('type', 'checkbox');
+    fireEvent.click(checkbox);
+    expect(onCellEditEnd).toHaveBeenLastCalledWith(
+      expect.objectContaining({ columnId: 'active', newValue: false }),
+    );
+  });
+
+  it('discards edits on Escape', () => {
+    const onCellEditEnd = vi.fn();
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+
+    fireEvent.doubleClick(container.querySelectorAll('.strata-cell')[0]);
+    const input = document.activeElement as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Discard me' } });
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(onCellEditEnd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        columnId: 'name',
+        newValue: 'Discard me',
+        committed: false,
+      }),
+    );
+  });
+
+  it('supports single-click and Enter activation modes', () => {
+    const onSingleClickStart = vi.fn();
+    const { container, rerender } = render(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell', activateOn: 'singleClick' }}
+        onCellEditStart={onSingleClickStart}
+      />,
+    );
+
+    fireEvent.click(container.querySelectorAll('.strata-cell')[0]);
+    expect(onSingleClickStart).toHaveBeenCalledWith(
+      expect.objectContaining({ columnId: 'name' }),
+    );
+
+    const onEnterStart = vi.fn();
+    rerender(
+      <DataGrid
+        data={people}
+        columns={columns}
+        editable={{ mode: 'cell', activateOn: 'enter' }}
+        onCellEditStart={onEnterStart}
+      />,
+    );
+    fireEvent.keyDown(container.querySelector('.strata-grid')!, { key: 'Enter' });
+    expect(onEnterStart).toHaveBeenCalledWith(
+      expect.objectContaining({ columnId: 'name' }),
     );
   });
 });

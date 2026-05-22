@@ -9,7 +9,14 @@ import {
 } from '../src/index';
 import '../src/strata.css';
 
-type ExampleKey = 'tree' | 'wide' | 'selection' | 'columnGroups' | 'rowGrouping';
+type ExampleKey =
+  | 'flat'
+  | 'tree'
+  | 'wide'
+  | 'selection'
+  | 'columnGroups'
+  | 'rowGrouping'
+  | 'editing';
 
 interface ExampleConfig {
   key: ExampleKey;
@@ -18,6 +25,11 @@ interface ExampleConfig {
 }
 
 const examples: ExampleConfig[] = [
+  {
+    key: 'flat',
+    label: 'Data Grid',
+    summary: 'A regular flat data grid with sorting, filtering, column resize, and reorder.',
+  },
   {
     key: 'tree',
     label: 'Tree BOM',
@@ -42,6 +54,11 @@ const examples: ExampleConfig[] = [
     key: 'rowGrouping',
     label: 'Row Grouping',
     summary: 'Flat product rows grouped by category and subcategory with collapsible group headers.',
+  },
+  {
+    key: 'editing',
+    label: 'Editing',
+    summary: 'Inline text, number, select, date, and checkbox editors with Enter, blur, and Escape handling.',
   },
 ];
 
@@ -235,12 +252,112 @@ const selectionConfig: SelectionConfig = {
   cascade: true,
 };
 
+// --- Flat grid example data ---
+
+interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  title: string;
+  location: string;
+  salary: number;
+  startDate: string;
+  email: string;
+}
+
+const employees: Employee[] = [
+  { id: '1', name: 'Alice Chen', department: 'Engineering', title: 'Staff Engineer', location: 'San Francisco', salary: 185000, startDate: '2019-03-15', email: 'alice.chen@acme.io' },
+  { id: '2', name: 'Bob Martinez', department: 'Engineering', title: 'Senior Engineer', location: 'Austin', salary: 155000, startDate: '2020-07-01', email: 'bob.martinez@acme.io' },
+  { id: '3', name: 'Carol Johnson', department: 'Design', title: 'Design Lead', location: 'New York', salary: 145000, startDate: '2018-11-20', email: 'carol.j@acme.io' },
+  { id: '4', name: 'David Kim', department: 'Engineering', title: 'Engineer', location: 'San Francisco', salary: 130000, startDate: '2022-01-10', email: 'david.kim@acme.io' },
+  { id: '5', name: 'Eva Müller', department: 'Product', title: 'Product Manager', location: 'Berlin', salary: 140000, startDate: '2021-04-05', email: 'eva.muller@acme.io' },
+  { id: '6', name: 'Frank Okafor', department: 'Engineering', title: 'Senior Engineer', location: 'London', salary: 150000, startDate: '2020-09-14', email: 'frank.o@acme.io' },
+  { id: '7', name: 'Grace Liu', department: 'Design', title: 'UX Designer', location: 'San Francisco', salary: 125000, startDate: '2022-06-01', email: 'grace.liu@acme.io' },
+  { id: '8', name: 'Henry Patel', department: 'Product', title: 'Senior PM', location: 'Austin', salary: 160000, startDate: '2019-08-22', email: 'henry.p@acme.io' },
+  { id: '9', name: 'Iris Tanaka', department: 'Engineering', title: 'Engineer', location: 'Tokyo', salary: 120000, startDate: '2023-02-13', email: 'iris.t@acme.io' },
+  { id: '10', name: 'James Wilson', department: 'Sales', title: 'Account Executive', location: 'New York', salary: 110000, startDate: '2021-10-01', email: 'james.w@acme.io' },
+  { id: '11', name: 'Karen Singh', department: 'Engineering', title: 'Tech Lead', location: 'Austin', salary: 170000, startDate: '2018-05-07', email: 'karen.s@acme.io' },
+  { id: '12', name: 'Leo Rossi', department: 'Sales', title: 'Sales Manager', location: 'London', salary: 135000, startDate: '2020-01-20', email: 'leo.r@acme.io' },
+  { id: '13', name: 'Mia Thompson', department: 'Design', title: 'Senior Designer', location: 'Berlin', salary: 138000, startDate: '2019-12-03', email: 'mia.t@acme.io' },
+  { id: '14', name: 'Noah Garcia', department: 'Engineering', title: 'Principal Engineer', location: 'San Francisco', salary: 210000, startDate: '2017-06-15', email: 'noah.g@acme.io' },
+  { id: '15', name: 'Olivia Brown', department: 'Product', title: 'Director of Product', location: 'New York', salary: 195000, startDate: '2018-02-28', email: 'olivia.b@acme.io' },
+];
+
+const employeeColumns: ColumnDef<Employee>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', width: 180, filter: 'text' },
+  { id: 'department', header: 'Department', accessor: 'department', width: 140, filter: 'text' },
+  { id: 'title', header: 'Title', accessor: 'title', width: 180, filter: 'text' },
+  { id: 'location', header: 'Location', accessor: 'location', width: 140, filter: 'text' },
+  { id: 'salary', header: 'Salary', accessor: (row) => `$${row.salary.toLocaleString()}`, width: 120, sortable: true, filter: 'number' },
+  { id: 'startDate', header: 'Start Date', accessor: 'startDate', width: 120, sortable: true },
+  { id: 'email', header: 'Email', accessor: 'email', width: 200 },
+];
+
+interface EditableTask {
+  id: string;
+  item: string;
+  owner: string;
+  status: 'Draft' | 'In Review' | 'Released' | 'Blocked';
+  dueDate: string;
+  qty: number;
+  approved: boolean;
+}
+
+const initialEditableTasks: EditableTask[] = [
+  { id: 'task-1', item: 'Frame tolerance review', owner: 'Maya', status: 'In Review', dueDate: '2026-06-03', qty: 12, approved: false },
+  { id: 'task-2', item: 'Supplier sample order', owner: 'Noah', status: 'Draft', dueDate: '2026-06-07', qty: 6, approved: false },
+  { id: 'task-3', item: 'Release wheel spec', owner: 'Ava', status: 'Released', dueDate: '2026-06-12', qty: 24, approved: true },
+  { id: 'task-4', item: 'Blocked bearing change', owner: 'Lena', status: 'Blocked', dueDate: '2026-06-18', qty: 4, approved: false },
+  { id: 'task-5', item: 'Packaging signoff', owner: 'Iris', status: 'In Review', dueDate: '2026-06-21', qty: 18, approved: true },
+];
+
+const editableTaskColumns: ColumnDef<EditableTask>[] = [
+  { id: 'item', header: 'Item', accessor: 'item', width: 220, filter: 'text', editable: true, editorType: 'text' },
+  { id: 'owner', header: 'Owner', accessor: 'owner', width: 120, filter: 'text', editable: true, editorType: 'text' },
+  {
+    id: 'status',
+    header: 'Status',
+    accessor: 'status',
+    width: 130,
+    filter: 'text',
+    editable: true,
+    editorType: 'select',
+    editorOptions: {
+      choices: ['Draft', 'In Review', 'Released', 'Blocked'],
+    },
+  },
+  { id: 'dueDate', header: 'Due Date', accessor: 'dueDate', width: 130, editable: true, editorType: 'date' },
+  { id: 'qty', header: 'Qty', accessor: 'qty', width: 90, filter: 'number', editable: true, editorType: 'number' },
+  { id: 'approved', header: 'Approved', accessor: 'approved', width: 110, editable: true, editorType: 'checkbox' },
+];
+
+interface PlaygroundCellEditEndEvent {
+  rowId: string;
+  columnId: string;
+  value: unknown;
+  newValue: unknown;
+  committed: boolean;
+}
+
 function exampleGrid(
   activeExample: ExampleKey,
   theme: GridTheme,
   onSelectionChange: (selectedIds: string[]) => void,
+  editableTasks: EditableTask[],
+  onTaskEditEnd: (event: PlaygroundCellEditEndEvent) => void,
 ) {
   switch (activeExample) {
+    case 'flat':
+      return (
+        <DataGrid
+          key="flat"
+          data={employees}
+          columns={employeeColumns}
+          defaultSort={[{ columnId: 'name', direction: 'asc' }]}
+          height={500}
+          theme={theme}
+        />
+      );
     case 'tree':
       return (
         <DataGrid
@@ -303,18 +420,50 @@ function exampleGrid(
           theme={theme}
         />
       );
+    case 'editing':
+      return (
+        <DataGrid
+          key="editing"
+          data={editableTasks}
+          columns={editableTaskColumns}
+          height={500}
+          theme={theme}
+          editable={{ mode: 'cell' }}
+          onCellEditEnd={onTaskEditEnd}
+        />
+      );
   }
 }
 
 export function App() {
-  const [activeExample, setActiveExample] = useState<ExampleKey>('tree');
+  const [activeExample, setActiveExample] = useState<ExampleKey>('flat');
   const [theme, setTheme] = useState<GridTheme>('light');
   const [selectionInfo, setSelectionInfo] = useState('None');
+  const [editableTasks, setEditableTasks] = useState(initialEditableTasks);
+  const [editInfo, setEditInfo] = useState('None');
   const isDark = theme === 'dark';
   const active = useMemo(
     () => examples.find((example) => example.key === activeExample) ?? examples[0],
     [activeExample],
   );
+
+  function handleTaskEditEnd(event: PlaygroundCellEditEndEvent) {
+    const task = editableTasks[Number(event.rowId)];
+
+    if (!event.committed) {
+      setEditInfo(`Discarded ${event.columnId} on ${task?.item ?? event.rowId}`);
+      return;
+    }
+
+    setEditableTasks((current) =>
+      current.map((currentTask, index) =>
+        String(index) === event.rowId
+          ? { ...currentTask, [event.columnId]: event.newValue }
+          : currentTask,
+      ),
+    );
+    setEditInfo(`${task?.item ?? event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
+  }
 
   return (
     <div
@@ -387,13 +536,20 @@ export function App() {
           Selection: {selectionInfo}
         </p>
       )}
+      {activeExample === 'editing' && (
+        <p style={{ color: isDark ? '#98989d' : '#515154', fontSize: 13, margin: '0 0 8px' }}>
+          Last edit: {editInfo}
+        </p>
+      )}
       <p style={{ color: isDark ? '#98989d' : '#86868b', fontSize: 12, margin: '0 0 20px' }}>
-        Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.
+        {activeExample === 'editing'
+          ? 'Double-click editable cells to edit. Enter or blur commits; Escape discards.'
+          : 'Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.'}
       </p>
 
       {exampleGrid(activeExample, theme, (selectedIds) => {
         setSelectionInfo(selectedIds.length > 0 ? selectedIds.join(', ') : 'None');
-      })}
+      }, editableTasks, handleTaskEditEnd)}
     </div>
   );
 }

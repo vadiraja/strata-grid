@@ -9,6 +9,7 @@ import type { Table } from '@tanstack/react-table';
 import type { GridTheme } from '../model/types';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
+import { useEditContext } from '../model/edit-context';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -52,6 +53,7 @@ export function GridRoot<TRow>({
     clientWidth: 0,
     scrollWidth: 0,
   });
+  const editCtx = useEditContext();
 
   const leftColumns = table.getLeftVisibleLeafColumns();
   const centerColumns = table.getCenterVisibleLeafColumns();
@@ -68,6 +70,33 @@ export function GridRoot<TRow>({
   const treeColumnIndex =
     treeColumnId === undefined ? -1 : keyboardColumnIds.indexOf(treeColumnId);
   const selectionColumnIndex = selection ? 0 : -1;
+
+  const startEditAt = useCallback(
+    (rowIndex: number, colIndex: number) => {
+      if (!editCtx || editCtx.config.activateOn !== 'enter') return;
+
+      const row = rows[rowIndex];
+      const columnId = keyboardColumnIds[colIndex];
+      if (!row || !columnId || columnId === '__selection__' || row.getIsGrouped()) {
+        return;
+      }
+
+      const cell = row
+        .getVisibleCells()
+        .find((visibleCell) => visibleCell.column.id === columnId);
+      const columnDef = cell?.column.columnDef.meta?.strataColumn;
+      if (!cell || !columnDef?.editable) return;
+
+      const editable =
+        typeof columnDef.editable === 'function'
+          ? columnDef.editable(row.original)
+          : columnDef.editable;
+      if (!editable) return;
+
+      editCtx.editState.startEdit(row.id, columnId, cell.getValue());
+    },
+    [editCtx, keyboardColumnIds, rows],
+  );
 
   const keyboard = useGridKeyboard({
     rowCount: rows.length,
@@ -86,6 +115,7 @@ export function GridRoot<TRow>({
         selection.toggleRow(row.id);
       }
     },
+    onCellActivate: startEditAt,
   });
 
   const columnVirtualizer = useColumnVirtualizer({
@@ -129,11 +159,21 @@ export function GridRoot<TRow>({
     const scroller = horizontalScrollRef.current;
     if (!scroller) return;
 
+    const max = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const clampedScrollLeft =
+      scroller.clientWidth > 0
+        ? Math.min(Math.max(scroller.scrollLeft, 0), max)
+        : scroller.scrollLeft;
+
+    if (scroller.scrollLeft !== clampedScrollLeft) {
+      scroller.scrollLeft = clampedScrollLeft;
+    }
+
     setScrollbarMetrics({
       clientWidth: scroller.clientWidth,
       scrollWidth: scroller.scrollWidth,
     });
-    setScrollLeft(scroller.scrollLeft);
+    setScrollLeft(clampedScrollLeft);
   }, []);
 
   useLayoutEffect(() => {
@@ -154,6 +194,10 @@ export function GridRoot<TRow>({
     0,
     scrollbarMetrics.scrollWidth - scrollbarMetrics.clientWidth,
   );
+  const effectiveScrollLeft =
+    scrollbarMetrics.clientWidth > 0
+      ? Math.min(Math.max(scrollLeft, 0), maxScrollLeft)
+      : scrollLeft;
   const thumbWidth =
     scrollbarMetrics.clientWidth > 0 && scrollbarMetrics.scrollWidth > 0
       ? Math.max(
@@ -164,9 +208,21 @@ export function GridRoot<TRow>({
       : 0;
   const thumbLeft =
     maxScrollLeft > 0
-      ? (scrollLeft / maxScrollLeft) *
+      ? (effectiveScrollLeft / maxScrollLeft) *
         Math.max(0, scrollbarMetrics.clientWidth - thumbWidth)
       : 0;
+
+  useLayoutEffect(() => {
+    if (scrollbarMetrics.clientWidth === 0 || scrollLeft === effectiveScrollLeft) {
+      return;
+    }
+
+    const scroller = horizontalScrollRef.current;
+    if (scroller) {
+      scroller.scrollLeft = effectiveScrollLeft;
+    }
+    setScrollLeft(effectiveScrollLeft);
+  }, [effectiveScrollLeft, scrollLeft, scrollbarMetrics.clientWidth]);
 
   const scrollCenterTo = useCallback((nextScrollLeft: number) => {
     const scroller = horizontalScrollRef.current;
@@ -236,7 +292,7 @@ export function GridRoot<TRow>({
       <HeaderArea
         table={table}
         columnLayout={columnLayout}
-        scrollLeft={scrollLeft}
+        scrollLeft={effectiveScrollLeft}
         selection={selection}
       />
       <BodyViewport
@@ -245,7 +301,7 @@ export function GridRoot<TRow>({
         treeColumnId={treeColumnId}
         scrollRef={bodyScrollRef}
         columnLayout={columnLayout}
-        scrollLeft={scrollLeft}
+        scrollLeft={effectiveScrollLeft}
         selection={selection}
         activeCell={keyboard.activeCell}
         keyboardColumnIds={keyboardColumnIds}
