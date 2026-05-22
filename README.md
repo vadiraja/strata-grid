@@ -1,15 +1,30 @@
 # Strata
 
-**An open-source React tree data grid for PLM bills of materials and enterprise data.**
+**An open-source React tree data grid for hierarchical and nested data.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-pre--release-orange.svg)](#status)
 
-Strata is a fast, accessible, themable **tree/BOM data grid** delivered as a
-single `<DataGrid>` React component. Its defining capability is the **indented
-multi-level tree grid** — the canonical view for Product Lifecycle Management
-(PLM) bills of materials and other hierarchical enterprise data — delivered
-free, where every comparable library either paywalls it or omits it.
+Strata is a fast, accessible, themable **tree data grid** delivered as a single
+`<DataGrid>` React component. Its defining capability is the **indented,
+multi-level tree grid** — delivered free, where comparable libraries either
+paywall it or omit it.
+
+It renders any parent/child hierarchy, and works equally with **nested data**
+(objects that hold a `children` array) and **flat, parent-pointer data** (rows
+that reference a `parentId`).
+
+### Use it for
+
+- File and folder explorers
+- Org charts and reporting lines
+- Category, taxonomy, and navigation trees
+- Threaded or nested comments
+- Chart-of-accounts and ledger hierarchies
+- Bills of materials and product structures
+- JSON and nested-data inspectors
+
+…or as a plain flat grid — the same component renders both.
 
 ---
 
@@ -32,16 +47,14 @@ filtering compose correctly with the hierarchy.
 
 ## Status
 
-Strata is in **active early development** (Milestone 1: the read-only BOM /
-tree data grid). The API is settling and may change before a `1.0` release.
-It is **not yet published to npm**. See the [roadmap](./docs/roadmap.md) for
-what is planned.
+Strata is in **active early development** (Milestone 1: the read-only tree data
+grid). The API is settling and may change before a `1.0` release. It is **not
+yet published to npm**. See the [roadmap](./docs/roadmap.md) for what is planned.
 
 ## Features
 
-- **Tree / BOM mode** — indented, multi-level hierarchy with expand/collapse,
-  from either nested data (`getChildren`) or flat parent-pointer data
-  (`getParentId`).
+- **Tree mode** — indented, multi-level hierarchy with expand/collapse, from
+  either nested data (`getChildren`) or flat parent-pointer data (`getParentId`).
 - **Flat data grid** — the same component renders a plain grid with no
   hierarchy config.
 - **Virtualized** — both row *and* column virtualization for large datasets.
@@ -71,56 +84,64 @@ npm install strata-grid
 
 ## Quick start
 
+A plain flat grid — no hierarchy config required:
+
 ```tsx
 import { DataGrid, type ColumnDef } from 'strata-grid';
 import 'strata-grid/styles.css';
 
-interface Material {
+interface Person {
   id: string;
-  material: string;
-  description: string;
-  qty: number;
+  name: string;
+  role: string;
+  level: number;
 }
 
-const columns: ColumnDef<Material>[] = [
-  { id: 'material', header: 'Material', accessor: 'material', filter: 'text' },
-  { id: 'description', header: 'Description', accessor: 'description' },
-  { id: 'qty', header: 'Qty', accessor: 'qty', filter: 'number' },
+const columns: ColumnDef<Person>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', filter: 'text' },
+  { id: 'role', header: 'Role', accessor: 'role', filter: 'text' },
+  { id: 'level', header: 'Level', accessor: 'level', filter: 'number' },
 ];
 
-const data: Material[] = [
-  { id: 'PT-3000', material: 'PT-3000', description: 'Front Triangle', qty: 1 },
-  { id: 'PT-3001', material: 'PT-3001', description: 'Rear Triangle', qty: 1 },
+const data: Person[] = [
+  { id: '1', name: 'Ada Lovelace', role: 'Engineer', level: 5 },
+  { id: '2', name: 'Alan Turing', role: 'Architect', level: 6 },
 ];
 
 export function Example() {
-  return <DataGrid data={data} columns={columns} defaultSort={[{ columnId: 'material', direction: 'asc' }]} />;
+  return (
+    <DataGrid
+      data={data}
+      columns={columns}
+      defaultSort={[{ columnId: 'name', direction: 'asc' }]}
+    />
+  );
 }
 ```
 
-## Tree / BOM mode
+## Tree mode
 
 Pass a `treeData` config to turn the grid into a tree. Mark one column as the
 tree column with `isTreeColumn` — it renders the indentation and the
-expand/collapse control.
+expand/collapse control. This example models a file explorer:
 
 ```tsx
-interface BomNode {
+interface FileNode {
   id: string;
-  material: string;
-  description: string;
-  qty: number;
-  children?: BomNode[];
+  name: string;
+  kind: 'folder' | 'file';
+  size: number;
+  children?: FileNode[];
 }
 
-const columns: ColumnDef<BomNode>[] = [
-  { id: 'material', header: 'Material', accessor: 'material', isTreeColumn: true },
-  { id: 'description', header: 'Description', accessor: 'description' },
-  { id: 'qty', header: 'Qty', accessor: 'qty' },
+const columns: ColumnDef<FileNode>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', isTreeColumn: true },
+  { id: 'kind', header: 'Kind', accessor: 'kind' },
+  { id: 'size', header: 'Size', accessor: 'size' },
 ];
 
 <DataGrid
-  data={bom}
+  data={files}
   columns={columns}
   treeData={{
     getRowId: (row) => row.id,
@@ -141,7 +162,7 @@ For flat, parent-pointer data, supply `getParentId` instead of `getChildren`.
 | `data` | `TRow[]` | The rows to display. |
 | `columns` | `ColumnDef<TRow>[]` | Column definitions. |
 | `height` | `number` | Scrollable body height in px. Defaults to `400`. |
-| `treeData` | `TreeDataConfig<TRow>` | Enables tree/BOM mode. |
+| `treeData` | `TreeDataConfig<TRow>` | Enables tree mode. |
 | `defaultExpanded` | `boolean` | Tree mode: start every row expanded. |
 | `defaultSort` | `ColumnSort[]` | Initial multi-column sort. |
 
@@ -176,7 +197,7 @@ npm install
 ## Roadmap
 
 Strata is built milestone by milestone. See [`docs/roadmap.md`](./docs/roadmap.md)
-for the full plan — editing & aggregation (M2), the hierarchy/BOM editor (M3),
+for the full plan — editing & aggregation (M2), the hierarchy editor (M3),
 server-side data sources & export (M4), and more.
 
 ## Contributing
