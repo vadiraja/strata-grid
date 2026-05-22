@@ -11,7 +11,7 @@ gets its own design spec → implementation plan → build cycle.
 | Milestone | Title | Status |
 |---|---|---|
 | **M1** | BOM / Tree Data Grid (read-only core) | Specced — see [`docs/superpowers/specs/2026-05-21-strata-tree-data-grid-design.md`](superpowers/specs/2026-05-21-strata-tree-data-grid-design.md) |
-| M2 | Editing & aggregation | Planned |
+| M2 | Editing & aggregation | Specced — see [`docs/superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md`](superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md) |
 | M3 | Hierarchy / BOM editor | Planned |
 | M4 | Scale & enterprise extras | Planned |
 | Later | Plugin system & cross-cutting | Backlog |
