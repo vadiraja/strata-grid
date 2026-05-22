@@ -244,6 +244,7 @@ function exampleGrid(
     case 'tree':
       return (
         <DataGrid
+          key="tree"
           data={bom}
           columns={bomColumns}
           treeData={treeData}
@@ -255,6 +256,7 @@ function exampleGrid(
     case 'wide':
       return (
         <DataGrid
+          key="wide"
           data={virtualProducts}
           columns={wideColumns}
           defaultSort={[{ columnId: 'sku', direction: 'asc' }]}
@@ -265,6 +267,7 @@ function exampleGrid(
     case 'selection':
       return (
         <DataGrid
+          key="selection"
           data={bom}
           columns={bomColumns}
           treeData={treeData}
@@ -278,6 +281,7 @@ function exampleGrid(
     case 'columnGroups':
       return (
         <DataGrid
+          key="column-groups"
           data={bom}
           columns={groupedBomColumns}
           treeData={treeData}
@@ -289,6 +293,7 @@ function exampleGrid(
     case 'rowGrouping':
       return (
         <DataGrid
+          key="row-grouping"
           data={products}
           columns={groupedProductColumns}
           groupBy={['category', 'subcategory']}
