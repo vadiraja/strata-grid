@@ -2,7 +2,7 @@
 
 **An open-source React tree data grid for PLM bills of materials and enterprise data.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-pre--release-orange.svg)](#status)
 
 Strata is a fast, accessible, themable **tree/BOM data grid** delivered as a
@@ -188,4 +188,4 @@ changes before submitting a pull request.
 
 ## License
 
-[MIT](./LICENSE)
+[Apache License 2.0](./LICENSE) — see the [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE) files.
