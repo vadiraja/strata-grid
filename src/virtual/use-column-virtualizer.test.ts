@@ -2,19 +2,22 @@ import { renderHook } from '@testing-library/react';
 import { useColumnVirtualizer } from './use-column-virtualizer';
 
 describe('useColumnVirtualizer', () => {
-  it('returns virtual items for visible columns', () => {
+  it('windows columns — renders a partial set for a small viewport', () => {
     const scrollRef = { current: document.createElement('div') };
     Object.defineProperty(scrollRef.current, 'clientWidth', { value: 400 });
 
+    // 20 columns × 160px = 3200px, far wider than the 400px viewport.
+    const columnWidths = Array.from({ length: 20 }, () => 160);
     const { result } = renderHook(() =>
-      useColumnVirtualizer({
-        scrollRef,
-        columnWidths: [160, 160, 160, 160, 160], // 5 columns × 160px = 800px total
-      }),
+      useColumnVirtualizer({ scrollRef, columnWidths }),
     );
-    // With 400px viewport, not all 5 columns should be in the initial window
-    expect(result.current.getVirtualItems().length).toBeLessThanOrEqual(5);
-    expect(result.current.getTotalSize()).toBe(800);
+
+    const items = result.current.getVirtualItems();
+    // A 400px viewport over 3200px of columns must render a windowed
+    // subset, not all 20 — this assertion fails if windowing is disabled.
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.length).toBeLessThan(20);
+    expect(result.current.getTotalSize()).toBe(3200);
   });
 
   it('returns total size equal to sum of all column widths', () => {
