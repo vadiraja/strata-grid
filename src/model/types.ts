@@ -88,6 +88,18 @@ export interface ColumnDef<TRow> {
    * Defaults to unpinned (center).
    */
   pin?: 'left' | 'right';
+  /** Whether this column is editable. Default: false. */
+  editable?: boolean | ((row: TRow) => boolean);
+  /** Built-in editor type. */
+  editorType?: EditorType;
+  /** Custom editor component. Takes precedence over editorType. */
+  editor?: (ctx: EditorContext<TRow>) => ReactNode;
+  /** Editor options (e.g., choices for select editor). */
+  editorOptions?: Record<string, unknown>;
+  /** Validation rules for this column. */
+  validate?: Validator<TRow> | Validator<TRow>[];
+  /** Aggregation function for group/parent rows. */
+  aggregate?: AggregateType | ((values: unknown[]) => unknown);
 }
 
 /**
@@ -154,6 +166,87 @@ export interface SelectionState {
 
 /** Built-in grid themes. */
 export type GridTheme = 'light' | 'dark';
+
+/**
+ * Configures grid-level editing behavior.
+ */
+export interface EditableConfig {
+  /** Edit mode: 'cell' (default) or 'row'. */
+  mode?: 'cell' | 'row';
+  /** How to activate cell editing. Default: 'doubleClick'. */
+  activateOn?: 'doubleClick' | 'singleClick' | 'enter';
+  /** Whether to show a visual indicator on editable cells. Default: true. */
+  showEditableIndicator?: boolean;
+}
+
+/**
+ * Context passed to a custom editor component.
+ */
+export interface EditorContext<TRow> {
+  /** The current cell value. */
+  value: unknown;
+  /** The row data. */
+  row: TRow;
+  /** The column definition. */
+  column: ColumnDef<TRow>;
+  /** The row's unique id. */
+  rowId: string;
+  /** Call to update the pending value. */
+  onChange: (newValue: unknown) => void;
+  /** Call to commit the edit. */
+  onCommit: () => void;
+  /** Call to discard the edit. */
+  onDiscard: () => void;
+  /** Current validation state. */
+  validation: ValidationState;
+}
+
+/** Validation state for a cell. */
+export interface ValidationState {
+  status: 'valid' | 'invalid' | 'validating';
+  message?: string;
+}
+
+/** A validator function for a column. */
+export type Validator<TRow> = (
+  value: unknown,
+  row: TRow,
+) => ValidationResult | Promise<ValidationResult>;
+
+/** Validation result: true = valid, string = error message. */
+export type ValidationResult = true | string;
+
+/** Event fired when a cell edit starts. */
+export interface CellEditEvent<TRow> {
+  rowId: string;
+  columnId: string;
+  row: TRow;
+  value: unknown;
+}
+
+/** Event fired when a cell edit ends. */
+export interface CellEditEndEvent<TRow> extends CellEditEvent<TRow> {
+  newValue: unknown;
+  committed: boolean;
+}
+
+/** Event fired when a row enters edit mode. */
+export interface RowEditEvent<TRow> {
+  rowId: string;
+  row: TRow;
+}
+
+/** Event fired when a row exits edit mode. */
+export interface RowEditEndEvent<TRow> extends RowEditEvent<TRow> {
+  changes: Record<string, { oldValue: unknown; newValue: unknown }>;
+  committed: boolean;
+}
+
+/** Built-in aggregation types. */
+export type AggregateType = 'sum' | 'avg' | 'min' | 'max' | 'count';
+
+/** Built-in editor types. */
+export type EditorType = 'text' | 'number' | 'select' | 'date' | 'checkbox';
 
 /**
  * Augments TanStack's `ColumnMeta` so every TanStack column carries the
