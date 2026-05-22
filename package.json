@@ -28,7 +28,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsup && cp src/strata.css dist/strata.css",
+    "build": "tsup && cp src/strata.css dist/strata.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

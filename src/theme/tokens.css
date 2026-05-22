@@ -1,0 +1,63 @@
+.strata-grid {
+  --strata-bg: #ffffff;
+  --strata-bg-header: #f5f5f7;
+  --strata-bg-header-hover: #ededf0;
+  --strata-bg-footer: #f5f5f7;
+  --strata-bg-row-selected: #eef6ff;
+  --strata-bg-group-row: #f0f6ff;
+  --strata-bg-group-row-hover: #e4efff;
+  --strata-bg-popover: #ffffff;
+  --strata-bg-filter-button-hover: #e0e0e3;
+  --strata-bg-scrollbar-track: #e0e0e3;
+  --strata-bg-scrollbar-thumb: #8e8e93;
+  --strata-bg-scrollbar-thumb-hover: #6e6e73;
+
+  --strata-text: #1d1d1f;
+  --strata-text-secondary: #86868b;
+  --strata-text-muted: #6e6e73;
+
+  --strata-border: #d1d1d6;
+  --strata-border-cell: #e5e5e7;
+  --strata-accent: #0071e3;
+  --strata-accent-shadow: rgba(0, 113, 227, 0.2);
+  --strata-focus-ring: rgba(0, 113, 227, 0.45);
+  --strata-shadow-popover: rgba(0, 0, 0, 0.12);
+
+  --strata-font-family: system-ui, -apple-system, sans-serif;
+  --strata-font-size: 13px;
+  --strata-font-size-small: 12px;
+  --strata-font-size-filter: 10px;
+  --strata-font-size-sort: 9px;
+  --strata-font-size-toggle: 9px;
+  --strata-font-size-group-count: 12px;
+  --strata-font-weight-header: 600;
+
+  --strata-cell-padding-x: 10px;
+  --strata-cell-padding-y: 6px;
+  --strata-header-padding-x: 10px;
+  --strata-header-padding-y: 6px;
+  --strata-footer-padding-x: 10px;
+  --strata-footer-padding-y: 6px;
+  --strata-popover-padding: 6px;
+  --strata-filter-input-padding-x: 8px;
+  --strata-filter-input-padding-y: 4px;
+
+  --strata-border-width: 1px;
+  --strata-border-pinned-width: 2px;
+  --strata-radius-popover: 6px;
+  --strata-radius-input: 4px;
+  --strata-radius-button: 3px;
+  --strata-radius-scrollbar: 999px;
+
+  --strata-header-height: 40px;
+  --strata-row-height: 32px;
+  --strata-selection-cell-width: 40px;
+  --strata-checkbox-size: 14px;
+  --strata-toggle-size: 18px;
+  --strata-filter-button-size: 18px;
+  --strata-filter-clear-button-size: 22px;
+  --strata-resize-handle-width: 4px;
+  --strata-filter-input-width: 140px;
+  --strata-horizontal-scrollbar-height: 12px;
+  --strata-horizontal-scrollbar-track-height: 6px;
+}

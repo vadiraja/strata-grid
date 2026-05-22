@@ -30,6 +30,18 @@ export type SortingState = ColumnSort[];
 /** Built-in filter types. */
 export type FilterType = 'text' | 'number';
 
+/** Ordered list of column ids. */
+export type ColumnOrderState = string[];
+
+/** Left/right pinned column ids. Empty arrays mean no pinned columns. */
+export interface ColumnPinningState {
+  left?: string[];
+  right?: string[];
+}
+
+/** Per-column widths, keyed by column id. */
+export type ColumnSizingState = Record<string, number>;
+
 /**
  * Definition of a single grid column.
  *
@@ -79,6 +91,29 @@ export interface ColumnDef<TRow> {
 }
 
 /**
+ * A column group renders a stacked header that spans child columns.
+ * Groups may contain leaf columns or nested groups.
+ */
+export interface ColumnGroup<TRow> {
+  /** Unique, stable group id. */
+  groupId: string;
+  /** Group header content. */
+  header: string | ReactNode;
+  /** Child columns or nested column groups. */
+  columns: AnyColumn<TRow>[];
+}
+
+/** A leaf column definition or a grouped column definition. */
+export type AnyColumn<TRow> = ColumnDef<TRow> | ColumnGroup<TRow>;
+
+/** Returns true when a public column entry is a column group. */
+export function isColumnGroup<TRow>(
+  column: AnyColumn<TRow>,
+): column is ColumnGroup<TRow> {
+  return 'groupId' in column && 'columns' in column;
+}
+
+/**
  * Configures tree (hierarchical / BOM) mode. Passing `treeData` to
  * `<DataGrid>` turns it into a tree grid.
  *
@@ -96,6 +131,29 @@ export interface TreeDataConfig<TRow> {
    */
   getParentId?: (row: TRow) => string | null | undefined;
 }
+
+/**
+ * Configures row selection behavior on the grid.
+ *
+ * In tree mode with `cascade: true`, selecting a parent selects all
+ * descendants and deselecting a parent deselects all descendants. Parents with
+ * partially-selected children show an indeterminate checkbox.
+ */
+export interface SelectionConfig {
+  /** Selection mode: single-select or multi-select. */
+  mode: 'single' | 'multi';
+  /** Tree mode only: cascade selection between parents and descendants. */
+  cascade?: boolean;
+}
+
+/** The selection state passed to `onSelectionChange`. */
+export interface SelectionState {
+  /** Set of currently selected row ids. */
+  selectedIds: Set<string>;
+}
+
+/** Built-in grid themes. */
+export type GridTheme = 'light' | 'dark';
 
 /**
  * Augments TanStack's `ColumnMeta` so every TanStack column carries the

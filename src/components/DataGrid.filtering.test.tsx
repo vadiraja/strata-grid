@@ -56,6 +56,50 @@ describe('DataGrid — filtering', () => {
     expect(screen.getByText('Washer')).toBeInTheDocument();
   });
 
+  it('closes the filter popover when Escape is pressed', () => {
+    render(<DataGrid data={items} columns={columns} />);
+    fireEvent.click(screen.getByLabelText('Filter name'));
+    expect(screen.getByLabelText('Filter value for name')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByLabelText('Filter value for name')).not.toBeInTheDocument();
+  });
+
+  it('closes the filter popover when clicking outside it', () => {
+    render(<DataGrid data={items} columns={columns} />);
+    fireEvent.click(screen.getByLabelText('Filter name'));
+    expect(screen.getByLabelText('Filter value for name')).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByLabelText('Filter value for name')).not.toBeInTheDocument();
+  });
+
+  it('closes the filter popover when focus leaves it', () => {
+    render(<DataGrid data={items} columns={columns} />);
+    fireEvent.click(screen.getByLabelText('Filter name'));
+    const input = screen.getByLabelText('Filter value for name');
+
+    fireEvent.blur(input, { relatedTarget: document.body });
+
+    expect(screen.queryByLabelText('Filter value for name')).not.toBeInTheDocument();
+  });
+
+  it('clears the active filter from the popover clear button', () => {
+    render(<DataGrid data={items} columns={columns} />);
+    fireEvent.click(screen.getByLabelText('Filter name'));
+    const input = screen.getByLabelText('Filter value for name');
+    fireEvent.change(input, { target: { value: 'bol' } });
+
+    fireEvent.click(screen.getByLabelText('Clear filter name'));
+
+    expect(screen.queryByLabelText('Filter value for name')).not.toBeInTheDocument();
+    expect(screen.getByText('Bolt')).toBeInTheDocument();
+    expect(screen.getByText('Nut')).toBeInTheDocument();
+    expect(screen.getByText('Washer')).toBeInTheDocument();
+  });
+
   it('does not render a filter button for columns without filter', () => {
     const cols: ColumnDef<Item>[] = [
       { id: 'name', header: 'Name', accessor: 'name' },

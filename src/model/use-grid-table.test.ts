@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useGridTable } from './use-grid-table';
 import type { ColumnDef } from './types';
 
@@ -181,5 +181,84 @@ describe('useGridTable — column pinning', () => {
     const pinState = result.current.getState().columnPinning;
     expect(pinState.left).toEqual([]);
     expect(pinState.right).toEqual([]);
+  });
+});
+
+describe('useGridTable — column management state', () => {
+  it('uses a controlled column order', () => {
+    const { result } = renderHook(() =>
+      useGridTable({ data, columns, columnOrder: ['qty', 'name'] }),
+    );
+    expect(result.current.getVisibleLeafColumns().map((c) => c.id)).toEqual([
+      'qty',
+      'name',
+    ]);
+  });
+
+  it('fires onColumnOrderChange when column order changes', () => {
+    const changes: string[][] = [];
+    const { result } = renderHook(() =>
+      useGridTable({
+        data,
+        columns,
+        onColumnOrderChange: (state) => changes.push(state),
+      }),
+    );
+
+    act(() => {
+      result.current.setColumnOrder(['qty', 'name']);
+    });
+
+    expect(changes).toEqual([['qty', 'name']]);
+    expect(result.current.getState().columnOrder).toEqual(['qty', 'name']);
+  });
+
+  it('lets controlled pinning override column pin fields', () => {
+    const cols: ColumnDef<Material>[] = [
+      { id: 'name', header: 'Name', accessor: 'name', pin: 'left' },
+      { id: 'qty', header: 'Qty', accessor: 'qty' },
+    ];
+    const { result } = renderHook(() =>
+      useGridTable({
+        data,
+        columns: cols,
+        columnPinning: { left: [], right: ['qty'] },
+      }),
+    );
+
+    expect(result.current.getState().columnPinning).toEqual({
+      left: [],
+      right: ['qty'],
+    });
+  });
+
+  it('uses controlled column sizing', () => {
+    const { result } = renderHook(() =>
+      useGridTable({
+        data,
+        columns,
+        columnSizing: { name: 240 },
+      }),
+    );
+
+    expect(result.current.getColumn('name')?.getSize()).toBe(240);
+  });
+
+  it('fires onColumnSizingChange when column sizing changes', () => {
+    const changes: Record<string, number>[] = [];
+    const { result } = renderHook(() =>
+      useGridTable({
+        data,
+        columns,
+        onColumnSizingChange: (state) => changes.push(state),
+      }),
+    );
+
+    act(() => {
+      result.current.setColumnSizing({ name: 220 });
+    });
+
+    expect(changes).toEqual([{ name: 220 }]);
+    expect(result.current.getState().columnSizing).toEqual({ name: 220 });
   });
 });

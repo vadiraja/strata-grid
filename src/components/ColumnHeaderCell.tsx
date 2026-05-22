@@ -80,7 +80,7 @@ export function ColumnHeaderCell<TRow>({
     <div
       className={`strata-header-cell${canSort ? ' strata-header-cell-sortable' : ''}`}
       role="columnheader"
-      style={{ width }}
+      style={{ width, flex: `0 0 ${width}px` }}
       onClick={handleClick}
       draggable
       onDragStart={handleDragStart}
