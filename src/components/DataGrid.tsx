@@ -5,6 +5,7 @@ import type {
   ColumnPinningState,
   ColumnSizingState,
   ColumnSort,
+  EditableConfig,
   GridTheme,
   SelectionConfig,
   SelectionState,
@@ -17,6 +18,8 @@ import { resolveTreeColumnId } from '../model/resolve-tree-column-id';
 import { useSelection } from '../model/use-selection';
 import { getLeafColumns, normalizeColumns } from '../model/normalize-columns';
 import { InMemoryDataSource } from '../data/in-memory-data-source';
+import { useEditState } from '../model/use-edit-state';
+import { EditContext } from '../model/edit-context';
 import { GridRoot } from './GridRoot';
 
 export interface DataGridProps<TRow> {
@@ -64,6 +67,18 @@ export interface DataGridProps<TRow> {
   onSelectionChange?: (state: SelectionState) => void;
   /** Visual theme. Defaults to light. */
   theme?: GridTheme;
+  /** Enables cell editing. Omit to keep the grid read-only. */
+  editable?: EditableConfig;
+  /** Called when a cell edit starts. */
+  onCellEditStart?: (event: { rowId: string; columnId: string; value: unknown }) => void;
+  /** Called when a cell edit ends. */
+  onCellEditEnd?: (event: {
+    rowId: string;
+    columnId: string;
+    value: unknown;
+    newValue: unknown;
+    committed: boolean;
+  }) => void;
 }
 
 function collectAllRowIds<TRow>(
@@ -132,6 +147,9 @@ export function DataGrid<TRow>({
   selection,
   onSelectionChange,
   theme,
+  editable,
+  onCellEditStart,
+  onCellEditEnd,
 }: DataGridProps<TRow>) {
   const dataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const rows = dataSource.load();
@@ -202,7 +220,13 @@ export function DataGrid<TRow>({
     onSelectionChange,
   });
 
-  return (
+  const editState = useEditState({
+    mode: editable?.mode ?? 'cell',
+    onCellEditStart,
+    onCellEditEnd,
+  });
+
+  const gridContent = (
     <GridRoot
       table={table}
       height={height}
@@ -210,5 +234,13 @@ export function DataGrid<TRow>({
       selection={selection ? selectionState : undefined}
       theme={theme}
     />
+  );
+
+  return editable ? (
+    <EditContext.Provider value={{ editState, config: editable }}>
+      {gridContent}
+    </EditContext.Provider>
+  ) : (
+    gridContent
   );
 }
