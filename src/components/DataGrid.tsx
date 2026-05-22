@@ -79,6 +79,14 @@ export interface DataGridProps<TRow> {
     newValue: unknown;
     committed: boolean;
   }) => void;
+  /** Called when a row edit starts. */
+  onRowEditStart?: (event: { rowId: string }) => void;
+  /** Called when a row edit ends. */
+  onRowEditEnd?: (event: {
+    rowId: string;
+    changes: Record<string, { oldValue: unknown; newValue: unknown }>;
+    committed: boolean;
+  }) => void;
 }
 
 function collectAllRowIds<TRow>(
@@ -150,6 +158,8 @@ export function DataGrid<TRow>({
   editable,
   onCellEditStart,
   onCellEditEnd,
+  onRowEditStart,
+  onRowEditEnd,
 }: DataGridProps<TRow>) {
   const dataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const rows = dataSource.load();
@@ -224,6 +234,8 @@ export function DataGrid<TRow>({
     mode: editable?.mode ?? 'cell',
     onCellEditStart,
     onCellEditEnd,
+    onRowEditStart,
+    onRowEditEnd,
   });
 
   const gridContent = (

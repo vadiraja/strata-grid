@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Cell } from '@tanstack/react-table';
 import type { EditorType } from '../../model/types';
 import { useEditContext } from '../../model/edit-context';
@@ -60,35 +61,52 @@ function inferEditorType(value: unknown): EditorType {
 
 export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
   const editCtx = useEditContext();
-  if (!editCtx?.editState.activeCell) return null;
+  if (!editCtx) return null;
 
-  const { activeCell } = editCtx.editState;
-  if (
-    activeCell.rowId !== cell.row.id ||
-    activeCell.columnId !== cell.column.id
-  ) {
-    return null;
-  }
+  const { activeCell, activeRow } = editCtx.editState;
+  const isActiveCell =
+    activeCell?.rowId === cell.row.id && activeCell.columnId === cell.column.id;
+  const isActiveRow = activeRow?.rowId === cell.row.id;
+  if (!isActiveCell && !isActiveRow) return null;
 
   const column = cell.column.columnDef.meta?.strataColumn;
   if (!column) return null;
 
-  const value = activeCell.pendingValue;
-  const onChange = editCtx.editState.setPendingValue;
-  const onDiscard = editCtx.editState.discardEdit;
+  const value = isActiveRow
+    ? activeRow.pendingValues.get(cell.column.id)
+    : activeCell?.pendingValue;
+  const onChange = (nextValue: unknown) => {
+    if (isActiveRow) {
+      editCtx.editState.setRowPendingValue(cell.column.id, nextValue);
+      return;
+    }
+
+    editCtx.editState.setPendingValue(nextValue);
+  };
+  const onDiscard = isActiveRow
+    ? editCtx.editState.discardRowEdit
+    : editCtx.editState.discardEdit;
   const { validation, validateNow } = useValidation({
     validate: column.validate,
     value,
     row: cell.row.original,
   });
+  useEffect(() => {
+    if (isActiveRow) {
+      editCtx.editState.setRowValidationState(cell.column.id, validation.status);
+    }
+  }, [cell.column.id, editCtx.editState, isActiveRow, validation.status]);
+
   const onCommit = async () => {
     if (!column.validate) {
+      if (isActiveRow) return;
       editCtx.editState.commitEdit();
       return;
     }
 
     const nextValidation = await validateNow();
     if (nextValidation.status !== 'valid') return;
+    if (isActiveRow) return;
     editCtx.editState.commitEdit();
   };
 

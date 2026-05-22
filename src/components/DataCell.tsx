@@ -31,10 +31,12 @@ export function DataCell<TRow>({
   );
 
   const activeCell = editCtx?.editState.activeCell;
+  const activeRow = editCtx?.editState.activeRow;
   const isEditing =
-    activeCell != null &&
-    activeCell.rowId === cell.row.id &&
-    activeCell.columnId === cell.column.id;
+    (activeCell != null &&
+      activeCell.rowId === cell.row.id &&
+      activeCell.columnId === cell.column.id) ||
+    (activeRow != null && activeRow.rowId === cell.row.id && isEditable);
 
   const handleDoubleClick = () => {
     if (!editCtx) return;
@@ -44,12 +46,31 @@ export function DataCell<TRow>({
       return;
     }
     if (!isEditable) return;
+    if (config.mode === 'row') {
+      const values = new Map(
+        cell.row
+          .getVisibleCells()
+          .filter((visibleCell) => {
+            const column = visibleCell.column.columnDef.meta?.strataColumn;
+            if (!column?.editable) return false;
+            return typeof column.editable === 'function'
+              ? column.editable(cell.row.original)
+              : column.editable;
+          })
+          .map((visibleCell) => [visibleCell.column.id, visibleCell.getValue()]),
+      );
+      editState.startRowEdit(cell.row.id, values);
+      return;
+    }
     editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
   };
   const handleClick = () => {
     if (!editCtx) return;
     if (editCtx.config.activateOn !== 'singleClick') return;
     if (!isEditable) return;
+    if (editCtx.config.mode === 'row') {
+      return;
+    }
     editCtx.editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
   };
 

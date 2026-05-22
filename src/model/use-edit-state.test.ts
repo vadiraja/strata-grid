@@ -228,3 +228,101 @@ describe('useEditState — getDirtyState', () => {
     expect(result.current.isDirty()).toBe(false);
   });
 });
+
+describe('useEditState — row edit mode', () => {
+  it('starts a row edit with pending values', () => {
+    const onRowEditStart = vi.fn();
+    const { result } = renderHook(() =>
+      useEditState(createOptions({ mode: 'row', onRowEditStart })),
+    );
+
+    act(() => {
+      result.current.startRowEdit(
+        'row-1',
+        new Map<string, unknown>([
+          ['name', 'Alice'],
+          ['age', 30],
+        ]),
+      );
+    });
+
+    expect(onRowEditStart).toHaveBeenCalledWith({ rowId: 'row-1' });
+    expect(result.current.activeRow?.rowId).toBe('row-1');
+    expect(result.current.getRowPendingValue('name')).toBe('Alice');
+  });
+
+  it('commits row edit changes and adds them to dirty state', () => {
+    const onRowEditEnd = vi.fn();
+    const { result } = renderHook(() =>
+      useEditState(createOptions({ mode: 'row', onRowEditEnd })),
+    );
+
+    act(() => {
+      result.current.startRowEdit(
+        'row-1',
+        new Map<string, unknown>([
+          ['name', 'Alice'],
+          ['age', 30],
+        ]),
+      );
+      result.current.setRowPendingValue('name', 'Alicia');
+      result.current.commitRowEdit();
+    });
+
+    expect(onRowEditEnd).toHaveBeenCalledWith({
+      rowId: 'row-1',
+      changes: {
+        name: { oldValue: 'Alice', newValue: 'Alicia' },
+      },
+      committed: true,
+    });
+    expect(result.current.activeRow).toBeNull();
+    expect(result.current.getDirtyState().get('row-1')?.get('name')).toBe(
+      'Alicia',
+    );
+  });
+
+  it('discards row edit changes', () => {
+    const onRowEditEnd = vi.fn();
+    const { result } = renderHook(() =>
+      useEditState(createOptions({ mode: 'row', onRowEditEnd })),
+    );
+
+    act(() => {
+      result.current.startRowEdit('row-1', new Map([['name', 'Alice']]));
+      result.current.setRowPendingValue('name', 'Alicia');
+      result.current.discardRowEdit();
+    });
+
+    expect(onRowEditEnd).toHaveBeenCalledWith({
+      rowId: 'row-1',
+      changes: {},
+      committed: false,
+    });
+    expect(result.current.activeRow).toBeNull();
+    expect(result.current.isDirty()).toBe(false);
+  });
+
+  it('summarizes row validation state', () => {
+    const { result } = renderHook(() =>
+      useEditState(createOptions({ mode: 'row' })),
+    );
+
+    act(() => {
+      result.current.startRowEdit('row-1', new Map([['name', 'Alice']]));
+      result.current.setRowValidationState('name', 'validating');
+    });
+    expect(result.current.getRowValidationSummary()).toEqual({
+      hasInvalid: false,
+      hasValidating: true,
+    });
+
+    act(() => {
+      result.current.setRowValidationState('name', 'invalid');
+    });
+    expect(result.current.getRowValidationSummary()).toEqual({
+      hasInvalid: true,
+      hasValidating: false,
+    });
+  });
+});

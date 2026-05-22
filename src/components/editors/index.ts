@@ -5,4 +5,5 @@ export { SelectEditor } from './SelectEditor';
 export { DateEditor } from './DateEditor';
 export { CheckboxEditor } from './CheckboxEditor';
 export { ValidationMessage } from './ValidationMessage';
+export { RowEditControls } from './RowEditControls';
 export type { SelectChoice } from './SelectEditor';

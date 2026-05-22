@@ -3,8 +3,10 @@ import type { Table, Row, Cell } from '@tanstack/react-table';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { GridRow } from './GridRow';
 import { GroupRow } from './GroupRow';
+import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import type { ColumnLayout } from './column-layout';
+import { useEditContext } from '../model/edit-context';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -41,6 +43,8 @@ export function BodyViewport<TRow>({
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
+  const editCtx = useEditContext();
+  const showRowEditControls = editCtx?.config.mode === 'row';
 
   if (rows.length === 0) {
     return (
@@ -188,6 +192,11 @@ export function BodyViewport<TRow>({
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
                   />
+                </div>
+              )}
+              {showRowEditControls && (
+                <div className="strata-row-edit-pane">
+                  <RowEditControls row={row} />
                 </div>
               )}
             </div>

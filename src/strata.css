@@ -214,6 +214,14 @@
   box-shadow: -2px 0 0 var(--strata-border);
 }
 
+.strata-row-edit-pane {
+  flex: 0 0 124px;
+  width: 124px;
+  z-index: 4;
+  background: var(--strata-bg);
+  border-left: var(--strata-border-width) solid var(--strata-border);
+}
+
 .strata-resize-handle {
   position: absolute;
   top: 0;
@@ -552,4 +560,48 @@
   border-color: var(--strata-accent);
   color: var(--strata-accent);
   background: var(--strata-bg);
+}
+
+.strata-row-edit-controls {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--strata-row-height);
+  padding: 0 6px;
+  border-bottom: var(--strata-border-width) solid var(--strata-border-cell);
+}
+
+.strata-row-edit-controls:empty {
+  display: none;
+}
+
+.strata-row-edit-button {
+  box-sizing: border-box;
+  height: 24px;
+  min-width: 44px;
+  padding: 0 8px;
+  border: var(--strata-border-width) solid var(--strata-border);
+  border-radius: var(--strata-radius-button);
+  color: var(--strata-text);
+  background: var(--strata-bg);
+  font-family: var(--strata-font-family);
+  font-size: var(--strata-font-size-small);
+  cursor: pointer;
+}
+
+.strata-row-edit-button:hover:not(:disabled) {
+  background: var(--strata-bg-header-hover);
+}
+
+.strata-row-edit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.strata-row-edit-save {
+  border-color: var(--strata-accent);
+  color: #fff;
+  background: var(--strata-accent);
 }
