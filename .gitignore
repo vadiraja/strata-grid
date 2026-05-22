@@ -15,8 +15,10 @@ test-results/
 # Visual-companion brainstorming workspace (local only)
 .superpowers/
 
-# Claude Code worktrees (local only)
-.claude/worktrees/
+# Agent / tool workspaces (local only)
+.claude/
+.claire/
+.kiro/
 
 # Editor / OS
 .DS_Store
@@ -28,3 +30,6 @@ test-results/
 .env
 .env.local
 .env.*.local
+
+# Local scratch screenshots
+/*.png
