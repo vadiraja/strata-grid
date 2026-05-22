@@ -489,7 +489,8 @@
 .strata-cell-editing {
   outline: 2px solid var(--strata-accent);
   outline-offset: -2px;
-  z-index: 1;
+  overflow: visible;
+  z-index: 7;
   position: relative;
 }
 
@@ -529,4 +530,26 @@
   margin: 0 auto;
   padding: 0;
   accent-color: var(--strata-accent);
+}
+
+.strata-validation-message {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  max-width: max(180px, 100%);
+  padding: 4px 8px;
+  border: var(--strata-border-width) solid #d92d20;
+  border-radius: 4px;
+  color: #b42318;
+  background: #fff4f2;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  font-size: var(--strata-font-size-small);
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.strata-validation-message-validating {
+  border-color: var(--strata-accent);
+  color: var(--strata-accent);
+  background: var(--strata-bg);
 }

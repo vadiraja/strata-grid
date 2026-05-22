@@ -1,11 +1,13 @@
 import type { Cell } from '@tanstack/react-table';
-import type { EditorType, ValidationState } from '../../model/types';
+import type { EditorType } from '../../model/types';
 import { useEditContext } from '../../model/edit-context';
+import { useValidation } from '../../model/use-validation';
 import { TextEditor } from './TextEditor';
 import { NumberEditor } from './NumberEditor';
 import { SelectEditor, type SelectChoice } from './SelectEditor';
 import { DateEditor } from './DateEditor';
 import { CheckboxEditor } from './CheckboxEditor';
+import { ValidationMessage } from './ValidationMessage';
 
 export interface CellEditorProps<TRow> {
   cell: Cell<TRow, unknown>;
@@ -56,8 +58,6 @@ function inferEditorType(value: unknown): EditorType {
   return 'text';
 }
 
-const validValidationState: ValidationState = { status: 'valid' };
-
 export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
   const editCtx = useEditContext();
   if (!editCtx?.editState.activeCell) return null;
@@ -75,8 +75,22 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
 
   const value = activeCell.pendingValue;
   const onChange = editCtx.editState.setPendingValue;
-  const onCommit = editCtx.editState.commitEdit;
   const onDiscard = editCtx.editState.discardEdit;
+  const { validation, validateNow } = useValidation({
+    validate: column.validate,
+    value,
+    row: cell.row.original,
+  });
+  const onCommit = async () => {
+    if (!column.validate) {
+      editCtx.editState.commitEdit();
+      return;
+    }
+
+    const nextValidation = await validateNow();
+    if (nextValidation.status !== 'valid') return;
+    editCtx.editState.commitEdit();
+  };
 
   const editorContext = {
     value,
@@ -86,7 +100,7 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
     onChange,
     onCommit,
     onDiscard,
-    validation: validValidationState,
+    validation,
   };
 
   return (
@@ -108,6 +122,7 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
           column.editorOptions,
         )
       )}
+      <ValidationMessage validation={validation} />
     </div>
   );
 }

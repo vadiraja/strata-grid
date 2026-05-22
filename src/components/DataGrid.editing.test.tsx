@@ -1,5 +1,5 @@
-import { render, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { DataGrid } from './DataGrid';
 import type { ColumnDef } from '../model/types';
 
@@ -35,6 +35,10 @@ const columns: ColumnDef<Person>[] = [
   { id: 'active', header: 'Active', accessor: 'active', editable: true, editorType: 'checkbox' },
   { id: 'readonly', header: 'Readonly', accessor: 'role', editable: false },
 ];
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('DataGrid — cell activation', () => {
   it('fires onCellEditStart on double-click of editable cell', () => {
@@ -289,5 +293,76 @@ describe('DataGrid — built-in editors', () => {
     expect(onEnterStart).toHaveBeenCalledWith(
       expect.objectContaining({ columnId: 'name' }),
     );
+  });
+});
+
+describe('DataGrid — validation', () => {
+  it('blocks invalid commits and shows the validation message', async () => {
+    const onCellEditEnd = vi.fn();
+    const validatingColumns: ColumnDef<Person>[] = [
+      {
+        id: 'name',
+        header: 'Name',
+        accessor: 'name',
+        editable: true,
+        validate: (value) =>
+          String(value).length >= 3 ? true : 'Use at least 3 characters',
+      },
+    ];
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={validatingColumns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+
+    fireEvent.doubleClick(container.querySelectorAll('.strata-cell')[0]);
+    const input = document.activeElement as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Al' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Use at least 3 characters',
+    );
+    expect(document.activeElement).toBe(input);
+    expect(onCellEditEnd).not.toHaveBeenCalled();
+  });
+
+  it('shows validating state while async validation is pending', async () => {
+    const onCellEditEnd = vi.fn();
+    const validatingColumns: ColumnDef<Person>[] = [
+      {
+        id: 'name',
+        header: 'Name',
+        accessor: 'name',
+        editable: true,
+        validate: async (value) => {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return String(value).startsWith('A') ? true : 'Name must start with A';
+        },
+      },
+    ];
+    const { container } = render(
+      <DataGrid
+        data={people}
+        columns={validatingColumns}
+        editable={{ mode: 'cell' }}
+        onCellEditEnd={onCellEditEnd}
+      />,
+    );
+
+    fireEvent.doubleClick(container.querySelectorAll('.strata-cell')[0]);
+    const input = document.activeElement as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Beth' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Validating...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Name must start with A');
+    });
+    expect(onCellEditEnd).not.toHaveBeenCalled();
   });
 });
