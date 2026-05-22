@@ -19,6 +19,21 @@ export function DataCell<TRow>({
 }: DataCellProps<TRow>) {
   const width = cell.column.getSize();
   const editCtx = useEditContext();
+  const colDef = cell.column.columnDef.meta?.strataColumn;
+
+  const isEditable = Boolean(
+    editCtx &&
+      colDef?.editable &&
+      (typeof colDef.editable === 'function'
+        ? colDef.editable(cell.row.original)
+        : colDef.editable),
+  );
+
+  const activeCell = editCtx?.editState.activeCell;
+  const isEditing =
+    activeCell != null &&
+    activeCell.rowId === cell.row.id &&
+    activeCell.columnId === cell.column.id;
 
   const handleDoubleClick = () => {
     if (!editCtx) return;
@@ -27,20 +42,22 @@ export function DataCell<TRow>({
     if (config.activateOn !== 'doubleClick' && config.activateOn !== undefined) {
       return;
     }
-    const colDef = cell.column.columnDef.meta?.strataColumn;
-    if (!colDef?.editable) return;
-    if (
-      typeof colDef.editable === 'function' &&
-      !colDef.editable(cell.row.original)
-    ) {
-      return;
-    }
+    if (!isEditable) return;
     editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
   };
 
+  const className = [
+    'strata-cell',
+    isFocused && 'strata-cell-focused',
+    isEditable && 'strata-cell-editable',
+    isEditing && 'strata-cell-editing',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
-      className={`strata-cell${isFocused ? ' strata-cell-focused' : ''}`}
+      className={className}
       role="gridcell"
       id={isFocused ? focusId : undefined}
       style={{ width, flex: `0 0 ${width}px` }}

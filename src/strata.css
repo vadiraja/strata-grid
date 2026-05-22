@@ -474,3 +474,20 @@
   color: var(--strata-text-secondary);
   font-size: var(--strata-font-size-small);
 }
+
+/* --- Editing --- */
+
+.strata-cell-editable {
+  cursor: text;
+}
+
+.strata-cell-editable:hover {
+  background: var(--strata-bg-header-hover);
+}
+
+.strata-cell-editing {
+  outline: 2px solid var(--strata-accent);
+  outline-offset: -2px;
+  z-index: 1;
+  position: relative;
+}
