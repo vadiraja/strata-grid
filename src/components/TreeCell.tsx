@@ -13,6 +13,10 @@ export interface TreeCellProps<TRow> {
   rollupTargetColumnId?: string;
   /** Extended quantities keyed by row id. */
   extendedQuantities?: Map<string, number>;
+  /** Called when this cell is selected/focused by pointer. */
+  onFocusCell?: () => void;
+  /** Called before toggling row expansion. */
+  onToggleExpand?: () => void;
 }
 
 /**
@@ -26,6 +30,8 @@ export function TreeCell<TRow>({
   focusId,
   rollupTargetColumnId,
   extendedQuantities,
+  onFocusCell,
+  onToggleExpand,
 }: TreeCellProps<TRow>) {
   const { row } = cell;
   const width = cell.column.getSize();
@@ -38,6 +44,7 @@ export function TreeCell<TRow>({
       role="gridcell"
       id={isFocused ? focusId : undefined}
       style={{ width, flex: `0 0 ${width}px` }}
+      onClick={onFocusCell}
     >
       <span
         className="strata-tree-indent"
@@ -49,7 +56,11 @@ export function TreeCell<TRow>({
           type="button"
           className="strata-tree-toggle"
           aria-label={expanded ? 'Collapse row' : 'Expand row'}
-          onClick={row.getToggleExpandedHandler()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleExpand?.();
+            row.toggleExpanded();
+          }}
           tabIndex={-1}
         >
           {expanded ? '▾' : '▸'}

@@ -11,6 +11,7 @@ import {
   type Row,
   type Table,
   type SortingState as TanstackSortingState,
+  type ColumnFiltersState,
   type Updater,
 } from '@tanstack/react-table';
 import type {
@@ -20,6 +21,7 @@ import type {
   ColumnSizingState,
   ColumnSort,
 } from './types';
+import type { FilterExpression } from '../data/types';
 import { normalizeColumns } from './normalize-columns';
 
 export interface UseGridTableOptions<TRow> {
@@ -40,6 +42,14 @@ export interface UseGridTableOptions<TRow> {
   defaultExpanded?: boolean;
   /** Initial sorting state. */
   defaultSort?: ColumnSort[];
+  /** Called whenever sorting changes. */
+  onSortChange?: (state: ColumnSort[]) => void;
+  /** Called whenever column filters change. */
+  onFilterChange?: (filters: FilterExpression[]) => void;
+  /** Use server-provided sorted rows instead of client-side sorting. */
+  manualSorting?: boolean;
+  /** Use server-provided filtered rows instead of client-side filtering. */
+  manualFiltering?: boolean;
   /** Whether the grid is in tree mode (enables filterFromLeafRows). */
   isTreeMode?: boolean;
   /**
@@ -65,6 +75,8 @@ export interface UseGridTableOptions<TRow> {
   defaultColumnSizing?: ColumnSizingState;
   /** Called when column sizing changes. */
   onColumnSizingChange?: (state: ColumnSizingState) => void;
+  /** Override whether a row can expand, useful for lazy trees. */
+  getRowCanExpand?: (row: Row<TRow>) => boolean;
 }
 
 /**
@@ -73,6 +85,21 @@ export interface UseGridTableOptions<TRow> {
 function toTanstackSorting(sorts?: ColumnSort[]): TanstackSortingState {
   if (!sorts || sorts.length === 0) return [];
   return sorts.map((s) => ({ id: s.columnId, desc: s.direction === 'desc' }));
+}
+
+function fromTanstackSorting(sorts: TanstackSortingState): ColumnSort[] {
+  return sorts.map((sort) => ({
+    columnId: sort.id,
+    direction: sort.desc ? 'desc' : 'asc',
+  }));
+}
+
+function fromTanstackFilters(filters: ColumnFiltersState): FilterExpression[] {
+  return filters.map((filter) => ({
+    columnId: filter.id,
+    operator: 'contains',
+    value: filter.value,
+  }));
 }
 
 function getPinningFromColumns<TRow>(
@@ -116,6 +143,10 @@ export function useGridTable<TRow>(
     getRowId,
     defaultExpanded,
     defaultSort,
+    onSortChange,
+    onFilterChange,
+    manualSorting,
+    manualFiltering,
     isTreeMode,
     groupBy,
     columnOrder: controlledColumnOrder,
@@ -127,6 +158,7 @@ export function useGridTable<TRow>(
     columnSizing: controlledColumnSizing,
     defaultColumnSizing,
     onColumnSizingChange,
+    getRowCanExpand,
   } = options;
 
   const initialColumnOrder = useMemo(
@@ -145,6 +177,10 @@ export function useGridTable<TRow>(
     useState<Required<ColumnPinningState>>(initialColumnPinning);
   const [internalColumnSizing, setInternalColumnSizing] =
     useState<ColumnSizingState>(defaultColumnSizing ?? {});
+  const [sorting, setSorting] = useState<TanstackSortingState>(() =>
+    toTanstackSorting(defaultSort),
+  );
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const columnOrder = controlledColumnOrder ?? internalColumnOrder;
   const columnPinning = normalizePinning(
@@ -164,9 +200,10 @@ export function useGridTable<TRow>(
     columns: tanstackColumns,
     getRowId,
     getSubRows,
+    getRowCanExpand,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
+    getFilteredRowModel: manualFiltering ? undefined : getFilteredRowModel(),
     ...(hasGrouping ? { getGroupedRowModel: getGroupedRowModel() } : {}),
     getExpandedRowModel: getExpandedRowModel(),
     filterFromLeafRows: isTreeMode ?? false,
@@ -178,6 +215,20 @@ export function useGridTable<TRow>(
       columnPinning,
       columnSizing,
       grouping,
+      sorting,
+      columnFilters,
+    },
+    manualSorting,
+    manualFiltering,
+    onSortingChange: (updater) => {
+      const next = applyUpdater(updater, sorting);
+      setSorting(next);
+      onSortChange?.(fromTanstackSorting(next));
+    },
+    onColumnFiltersChange: (updater) => {
+      const next = applyUpdater(updater, columnFilters);
+      setColumnFilters(next);
+      onFilterChange?.(fromTanstackFilters(next));
     },
     onColumnOrderChange: (updater) => {
       const next = applyUpdater(updater, columnOrder);
@@ -202,7 +253,6 @@ export function useGridTable<TRow>(
     },
     initialState: {
       expanded: defaultExpanded ? true : {},
-      sorting: toTanstackSorting(defaultSort),
     },
   });
 }

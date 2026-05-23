@@ -11,6 +11,12 @@ interface Person {
   age: number;
 }
 
+interface BomNode {
+  id: string;
+  name: string;
+  children?: BomNode[];
+}
+
 const people: Person[] = [
   { id: '1', name: 'Alice', age: 30 },
   { id: '2', name: 'Bob', age: 25 },
@@ -19,6 +25,36 @@ const people: Person[] = [
 const columns: ColumnDef<Person>[] = [
   { id: 'name', header: 'Name', accessor: 'name', editable: true },
   { id: 'age', header: 'Age', accessor: 'age', editable: true, editorType: 'number' },
+];
+
+const bom: BomNode[] = [
+  {
+    id: 'A',
+    name: 'Assembly A',
+    children: [
+      { id: 'A1', name: 'Part A1' },
+      { id: 'A2', name: 'Part A2' },
+    ],
+  },
+  {
+    id: 'B',
+    name: 'Assembly B',
+    children: [{ id: 'B1', name: 'Part B1' }],
+  },
+];
+
+const bomColumns: ColumnDef<BomNode>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', isTreeColumn: true },
+];
+
+const flatBom = [
+  { id: 'A', name: 'Assembly A', parentId: null },
+  { id: 'A1', name: 'Part A1', parentId: 'A' },
+  { id: 'A2', name: 'Part A2', parentId: 'A' },
+];
+
+const flatBomColumns: ColumnDef<(typeof flatBom)[number]>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', isTreeColumn: true },
 ];
 
 describe('DataGrid — apiRef', () => {
@@ -82,5 +118,134 @@ describe('DataGrid — apiRef', () => {
     });
 
     expect(screen.queryByDisplayValue('Alice')).not.toBeInTheDocument();
+  });
+
+  it('exposes M3 tree editor methods', async () => {
+    const apiRef = createRef<GridApi<BomNode> | null>();
+    const onTreeChange = vi.fn();
+    const { container } = render(
+      <DataGrid
+        data={bom}
+        columns={bomColumns}
+        treeData={{
+          getRowId: (row) => row.id,
+          getChildren: (row) => row.children,
+        }}
+        treeEditor={{}}
+        defaultExpanded
+        apiRef={apiRef}
+        onTreeChange={onTreeChange}
+      />,
+    );
+
+    expect(screen.getByText('Part A2')).toBeInTheDocument();
+
+    act(() => {
+      apiRef.current!.moveNode('A2', 'B');
+    });
+
+    await waitFor(() => expect(apiRef.current!.canUndo()).toBe(true));
+    expect(apiRef.current!.isDirty()).toBe(true);
+    expect(apiRef.current!.getChangeSet().moved).toEqual([
+      { id: 'A2', oldParentId: 'A', newParentId: 'B' },
+    ]);
+    expect(onTreeChange).toHaveBeenCalled();
+
+    const text = container.textContent ?? '';
+    expect(text.indexOf('Part B1')).toBeLessThan(text.indexOf('Part A2'));
+
+    act(() => {
+      apiRef.current!.undo();
+    });
+
+    await waitFor(() => expect(apiRef.current!.canRedo()).toBe(true));
+    const restored = container.textContent ?? '';
+    expect(restored.indexOf('Part A1')).toBeLessThan(
+      restored.indexOf('Part A2'),
+    );
+    expect(restored.indexOf('Part A2')).toBeLessThan(
+      restored.indexOf('Assembly B'),
+    );
+  });
+
+  it('renders DataGrid from tree editor state after delete and add operations', async () => {
+    const apiRef = createRef<GridApi<BomNode> | null>();
+    render(
+      <DataGrid
+        data={bom}
+        columns={bomColumns}
+        treeData={{
+          getRowId: (row) => row.id,
+          getChildren: (row) => row.children,
+        }}
+        treeEditor={{ generateId: () => 'A3' }}
+        defaultExpanded
+        apiRef={apiRef}
+      />,
+    );
+
+    act(() => {
+      apiRef.current!.deleteNode('A1');
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByText('Part A1')).not.toBeInTheDocument(),
+    );
+
+    act(() => {
+      apiRef.current!.addNode('A', { id: 'A3', name: 'Part A3' });
+    });
+
+    expect(await screen.findByText('Part A3')).toBeInTheDocument();
+  });
+
+  it('exposes M4 view-state import/export methods', async () => {
+    const apiRef = createRef<GridApi<Person> | null>();
+    render(<DataGrid data={people} columns={columns} apiRef={apiRef} />);
+
+    act(() => {
+      apiRef.current!.importViewState({
+        columnOrder: ['age', 'name'],
+        columnSizing: { age: 180 },
+        columnPinning: { left: ['age'], right: [] },
+        sorting: [{ columnId: 'age', direction: 'desc' }],
+        filters: [],
+        expandedIds: [],
+        hiddenColumns: [],
+      });
+    });
+
+    await waitFor(() =>
+      expect(apiRef.current!.exportViewState()).toEqual(
+        expect.objectContaining({
+          columnOrder: ['age', 'name'],
+          columnSizing: { age: 180 },
+          columnPinning: { left: ['age'], right: [] },
+          sorting: [{ columnId: 'age', direction: 'desc' }],
+        }),
+      ),
+    );
+  });
+
+  it('exposes M4 where-used lookup from flat tree data', async () => {
+    const apiRef = createRef<GridApi<(typeof flatBom)[number]> | null>();
+    render(
+      <DataGrid
+        data={flatBom}
+        columns={flatBomColumns}
+        treeData={{
+          getRowId: (row) => row.id,
+          getParentId: (row) => row.parentId,
+        }}
+        apiRef={apiRef}
+      />,
+    );
+
+    await expect(apiRef.current!.whereUsed('A1')).resolves.toEqual([
+      {
+        parentNode: flatBom[0],
+        path: [flatBom[0]],
+      },
+    ]);
   });
 });

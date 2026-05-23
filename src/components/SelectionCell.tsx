@@ -13,6 +13,8 @@ export interface SelectionCellProps {
   isFocused?: boolean;
   /** Stable active-descendant id when focused. */
   focusId?: string;
+  /** Called when this selection cell is selected/focused by pointer. */
+  onFocusCell?: () => void;
 }
 
 export function SelectionCell({
@@ -22,6 +24,7 @@ export function SelectionCell({
   rowId,
   isFocused,
   focusId,
+  onFocusCell,
 }: SelectionCellProps) {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +39,7 @@ export function SelectionCell({
       className={`strata-cell strata-selection-cell${isFocused ? ' strata-cell-focused' : ''}`}
       role="gridcell"
       id={isFocused ? focusId : undefined}
+      onClick={onFocusCell}
     >
       <input
         ref={checkboxRef}

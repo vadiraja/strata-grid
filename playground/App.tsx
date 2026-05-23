@@ -1,12 +1,33 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ColumnManagementPanel,
   DataGrid,
+  ExportMenu,
+  FilterBuilderPanel,
+  InMemoryDataSource,
+  PaginationBar,
+  QuickSearchInput,
+  WhereUsedDialog,
+  evaluateFilter,
+  useColumnManagement,
+  useExport,
+  useFilterBuilder,
+  useLiveUpdates,
+  usePagination,
+  useQuickSearch,
+  useWhereUsed,
   type AnyColumn,
   type ColumnDef,
+  type DataChangeHandler,
+  type DataSource,
   type EditorContext,
+  type FilterExpression,
   type GridTheme,
+  type PageParams,
+  type PageResult,
   type SelectionConfig,
   type TreeDataConfig,
+  type WhereUsedResult,
 } from '../src/index';
 import '../src/strata.css';
 
@@ -19,7 +40,14 @@ type ExampleKey =
   | 'rowGrouping'
   | 'bomEditing'
   | 'editing'
-  | 'rowEditing';
+  | 'rowEditing'
+  | 'pagination'
+  | 'quickSearch'
+  | 'filterBuilder'
+  | 'export'
+  | 'whereUsed'
+  | 'columnMgmt'
+  | 'liveUpdates';
 
 interface ExampleConfig {
   key: ExampleKey;
@@ -36,7 +64,7 @@ const examples: ExampleConfig[] = [
   {
     key: 'tree',
     label: 'Tree BOM',
-    summary: 'Hierarchy, tree expand/collapse, sorting, filtering, and pinned identity columns.',
+    summary: 'Hierarchy, structure editing, tree expand/collapse, sorting, filtering, and pinned identity columns.',
   },
   {
     key: 'wide',
@@ -72,6 +100,41 @@ const examples: ExampleConfig[] = [
     key: 'rowEditing',
     label: 'Row Editing',
     summary: 'Row-level editing with Edit, Save, Cancel, and validation-gated commits.',
+  },
+  {
+    key: 'pagination',
+    label: 'Pagination',
+    summary: 'Server-style pagination via DataSource.loadPage, with a footer PaginationBar.',
+  },
+  {
+    key: 'quickSearch',
+    label: 'Quick Search',
+    summary: 'Debounced global search filtering rows across visible text columns.',
+  },
+  {
+    key: 'filterBuilder',
+    label: 'Filter Builder',
+    summary: 'Compose compound AND/OR filter expressions and evaluate them client-side.',
+  },
+  {
+    key: 'export',
+    label: 'Export',
+    summary: 'Export visible, all, or selected rows as CSV or XLSX.',
+  },
+  {
+    key: 'whereUsed',
+    label: 'Where Used',
+    summary: 'Click a BOM component to find every assembly that uses it.',
+  },
+  {
+    key: 'columnMgmt',
+    label: 'Column Management',
+    summary: 'Toggle visibility and reorder columns through the column manager panel.',
+  },
+  {
+    key: 'liveUpdates',
+    label: 'Live Updates',
+    summary: 'Subscribe to a streaming data source — pushed add/update/delete events reconcile into the grid.',
   },
 ];
 
@@ -244,7 +307,7 @@ const virtualProducts: Product[] = Array.from({ length: 500 }, (_, index) => {
 
 const wideColumns: ColumnDef<Product>[] = [
   { id: 'sku', header: 'SKU', accessor: 'sku', width: 140, pin: 'left', filter: 'text' },
-  { id: 'name', header: 'Product Name', accessor: 'name', width: 220, filter: 'text' },
+  { id: 'name', header: 'Product Name', accessor: 'name', width: 220, flex: 1, filter: 'text' },
   { id: 'category', header: 'Category', accessor: 'category', width: 140, filter: 'text' },
   { id: 'subcategory', header: 'Subcategory', accessor: 'subcategory', width: 150, filter: 'text' },
   { id: 'planner', header: 'Planner', accessor: 'planner', width: 120, filter: 'text' },
@@ -410,6 +473,463 @@ const editableTaskColumns: ColumnDef<EditableTask>[] = [
   { id: 'approved', header: 'Approved', accessor: 'approved', width: 110, editable: true, editorType: 'checkbox' },
 ];
 
+// --- M4: shared helpers and data ---
+
+function readProductValue(row: Product, columnId: string): unknown {
+  switch (columnId) {
+    case 'sku':
+      return row.sku;
+    case 'name':
+      return row.name;
+    case 'category':
+      return row.category;
+    case 'subcategory':
+      return row.subcategory;
+    case 'planner':
+      return row.planner;
+    case 'status':
+      return row.status;
+    case 'stock':
+      return row.stock;
+    case 'demand':
+      return row.demand;
+    case 'price':
+      return row.price;
+    case 'uom':
+      return row.uom;
+    default:
+      return undefined;
+  }
+}
+
+const productColumnInfo = wideColumns.map((c) => ({
+  id: c.id,
+  header: typeof c.header === 'string' ? c.header : c.id,
+}));
+
+// A simple paged in-memory data source backed by an array — implements loadPage.
+class PagedArrayDataSource<TRow> implements DataSource<TRow> {
+  constructor(private readonly rows: TRow[]) {}
+  load(): TRow[] {
+    return this.rows;
+  }
+  async loadPage(params: PageParams): Promise<PageResult<TRow>> {
+    // simulate network latency
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const offset = typeof params.offset === 'number' ? params.offset : 0;
+    const slice = this.rows.slice(offset, offset + params.limit);
+    return {
+      rows: slice,
+      totalCount: this.rows.length,
+      hasMore: offset + params.limit < this.rows.length,
+    };
+  }
+  capabilities() {
+    return { pagination: true } as const;
+  }
+}
+
+// --- M4 example: pagination ---
+
+function PaginationExample({ theme }: { theme: GridTheme }) {
+  const dataSource = useMemo(() => new PagedArrayDataSource(virtualProducts), []);
+  const pager = usePagination(dataSource, { pageSize: 25 });
+
+  return (
+    <div>
+      <DataGrid
+        key="pagination"
+        data={pager.data}
+        columns={wideColumns}
+        height={500}
+        theme={theme}
+      />
+      <PaginationBar
+        currentPage={pager.currentPage}
+        totalPages={pager.totalPages}
+        pageSize={pager.pageSize}
+        totalCount={pager.totalCount}
+        isLoading={pager.isLoading}
+        onPageChange={pager.goToPage}
+        onPageSizeChange={pager.setPageSize}
+      />
+    </div>
+  );
+}
+
+// --- M4 example: quick search ---
+
+function QuickSearchExample({ theme }: { theme: GridTheme }) {
+  const { term, debouncedTerm, setTerm, clear } = useQuickSearch({ debounceMs: 200 });
+  const filtered = useMemo(() => {
+    if (!debouncedTerm) return products;
+    const needle = debouncedTerm.toLowerCase();
+    return products.filter((row) =>
+      [row.sku, row.name, row.category, row.subcategory, row.planner, row.status]
+        .some((value) => value.toLowerCase().includes(needle)),
+    );
+  }, [debouncedTerm]);
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12, maxWidth: 320 }}>
+        <QuickSearchInput
+          value={term}
+          onChange={setTerm}
+          onClear={clear}
+          placeholder="Search products..."
+        />
+      </div>
+      <DataGrid
+        key="quick-search"
+        data={filtered}
+        columns={wideColumns}
+        height={500}
+        theme={theme}
+      />
+    </div>
+  );
+}
+
+// --- M4 example: filter builder ---
+
+function FilterBuilderExample({ theme }: { theme: GridTheme }) {
+  const builder = useFilterBuilder({
+    logic: 'and',
+    children: [{ columnId: 'category', operator: 'equals', value: 'Electronics' }],
+  });
+  const [applied, setApplied] = useState<FilterExpression>(builder.expression);
+
+  const filtered = useMemo(() => {
+    if (!applied.children || applied.children.length === 0) return products;
+    return products.filter((row) =>
+      evaluateFilter(row, applied, (r, columnId) => readProductValue(r, columnId)),
+    );
+  }, [applied]);
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12 }}>
+        <FilterBuilderPanel
+          expression={builder.expression}
+          columns={productColumnInfo}
+          onAddCondition={() => builder.addCondition({ operator: 'equals' })}
+          onRemoveCondition={builder.removeCondition}
+          onUpdateCondition={builder.updateCondition}
+          onToggleLogic={builder.toggleLogic}
+          onClear={() => {
+            builder.clear();
+            setApplied({ logic: 'and', children: [] });
+          }}
+          onApply={() => setApplied(builder.expression)}
+        />
+      </div>
+      <DataGrid
+        key="filter-builder"
+        data={filtered}
+        columns={wideColumns}
+        height={460}
+        theme={theme}
+      />
+    </div>
+  );
+}
+
+// --- M4 example: export ---
+
+function ExportExample({ theme }: { theme: GridTheme }) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const exporter = useExport({
+    getVisibleRows: () => products,
+    getAllRows: () => products,
+    getSelectedRows: () => products.filter((row) => selectedIds.includes(row.id)),
+    columns: productColumnInfo,
+    getRowValue: (row, columnId) => {
+      const value = readProductValue(row, columnId);
+      return value == null ? '' : String(value);
+    },
+  });
+
+  const [scope, setScope] = useState<'visible' | 'all' | 'selected'>('visible');
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <label style={{ fontSize: 13 }}>
+          Scope:&nbsp;
+          <select value={scope} onChange={(e) => setScope(e.target.value as typeof scope)}>
+            <option value="visible">Visible</option>
+            <option value="all">All</option>
+            <option value="selected">Selected ({selectedIds.length})</option>
+          </select>
+        </label>
+        <ExportMenu
+          formats={['csv', 'xlsx']}
+          onExport={(format) =>
+            void exporter.exportData({ format, scope, filename: 'strata-products' })
+          }
+        />
+      </div>
+      <DataGrid
+        key="export"
+        data={products}
+        columns={wideColumns}
+        height={460}
+        theme={theme}
+        selection={{ mode: 'multi' }}
+        onSelectionChange={(state) => setSelectedIds([...state.selectedIds])}
+      />
+    </div>
+  );
+}
+
+// --- M4 example: where used ---
+
+interface BomFlatRow {
+  id: string;
+  material: string;
+  description: string;
+  parentId: string | null;
+}
+
+function flattenBom(nodes: BomNode[], parentId: string | null = null): BomFlatRow[] {
+  const rows: BomFlatRow[] = [];
+  for (const node of nodes) {
+    rows.push({
+      id: node.id,
+      material: node.material,
+      description: node.description,
+      parentId,
+    });
+    if (node.children) {
+      rows.push(...flattenBom(node.children, node.id));
+    }
+  }
+  return rows;
+}
+
+function WhereUsedExample({ theme }: { theme: GridTheme }) {
+  const flatRows = useMemo(() => flattenBom(bom), []);
+  const dataSource = useMemo(() => new InMemoryDataSource(flatRows), [flatRows]);
+  const whereUsed = useWhereUsed<BomFlatRow>(
+    dataSource,
+    flatRows,
+    (row) => row.id,
+    (row) => row.parentId,
+  );
+  const [openFor, setOpenFor] = useState<BomFlatRow | null>(null);
+
+  const columns: ColumnDef<BomFlatRow>[] = useMemo(
+    () => [
+      { id: 'material', header: 'Material', accessor: 'material', width: 150, filter: 'text' },
+      { id: 'description', header: 'Description', accessor: 'description', width: 260, filter: 'text' },
+      {
+        id: 'whereUsed',
+        header: 'Where Used',
+        width: 140,
+        cell: (ctx) => (
+          <button
+            type="button"
+            onClick={() => {
+              setOpenFor(ctx.row);
+              whereUsed.query(ctx.row.id);
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#0071e3',
+              cursor: 'pointer',
+              padding: 0,
+              textDecoration: 'underline',
+            }}
+          >
+            Find usage
+          </button>
+        ),
+      },
+    ],
+    [whereUsed],
+  );
+
+  return (
+    <div>
+      <DataGrid
+        key="where-used"
+        data={flatRows}
+        columns={columns}
+        height={500}
+        theme={theme}
+      />
+      {openFor && (
+        <WhereUsedDialog<BomFlatRow>
+          nodeLabel={`${openFor.material} — ${openFor.description}`}
+          results={whereUsed.results}
+          isLoading={whereUsed.isLoading}
+          error={whereUsed.error?.message}
+          renderNodeLabel={(node) => node.material}
+          onClose={() => {
+            setOpenFor(null);
+            whereUsed.clear();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- M4 example: column management ---
+
+function ColumnMgmtExample({ theme }: { theme: GridTheme }) {
+  const mgmt = useColumnManagement({
+    columns: productColumnInfo,
+    alwaysVisible: ['sku'],
+  });
+  const [panelOpen, setPanelOpen] = useState(true);
+
+  const visibleColumns = useMemo(() => {
+    const order = mgmt.columnOrder;
+    const hidden = new Set(mgmt.hiddenColumns);
+    return order
+      .filter((id) => !hidden.has(id))
+      .map((id) => wideColumns.find((c) => c.id === id))
+      .filter((c): c is ColumnDef<Product> => Boolean(c));
+  }, [mgmt.columnOrder, mgmt.hiddenColumns]);
+
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={() => setPanelOpen((v) => !v)}
+            style={{ padding: '6px 12px' }}
+          >
+            {panelOpen ? 'Hide' : 'Show'} column manager
+          </button>
+        </div>
+        <DataGrid
+          key={`column-mgmt-${visibleColumns.map((c) => c.id).join('|')}`}
+          data={products}
+          columns={visibleColumns}
+          height={500}
+          theme={theme}
+        />
+      </div>
+      {panelOpen && (
+        <div style={{ width: 260, flexShrink: 0 }}>
+          <ColumnManagementPanel
+            columns={productColumnInfo}
+            hiddenColumns={mgmt.hiddenColumns}
+            alwaysVisible={['sku']}
+            onToggleColumn={mgmt.toggleColumn}
+            onMoveColumn={mgmt.moveColumn}
+            onReset={mgmt.reset}
+            onClose={() => setPanelOpen(false)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- M4 example: live updates ---
+
+class LiveProductsDataSource implements DataSource<Product> {
+  private readonly listeners = new Set<DataChangeHandler<Product>>();
+  constructor(private readonly initial: Product[]) {}
+  load(): Product[] {
+    return this.initial;
+  }
+  subscribe(handler: DataChangeHandler<Product>) {
+    this.listeners.add(handler);
+    return () => {
+      this.listeners.delete(handler);
+    };
+  }
+  emit(event: Parameters<DataChangeHandler<Product>>[0]) {
+    for (const listener of this.listeners) listener(event);
+  }
+  capabilities() {
+    return { liveUpdates: true } as const;
+  }
+}
+
+function LiveUpdatesExample({ theme }: { theme: GridTheme }) {
+  const dataSource = useMemo(() => new LiveProductsDataSource(products), []);
+  const initial = useMemo(() => products, []);
+  const live = useLiveUpdates(dataSource, initial, (row) => row.id);
+  const counterRef = useRef(0);
+
+  const handleSimulate = useCallback(() => {
+    const choice = counterRef.current % 3;
+    counterRef.current += 1;
+    if (choice === 0) {
+      const id = `LIVE-${Date.now()}`;
+      dataSource.emit({
+        type: 'add',
+        rows: [
+          {
+            id,
+            data: {
+              id,
+              sku: id,
+              name: 'Streamed Item',
+              category: 'Electronics',
+              subcategory: 'Streaming',
+              planner: 'System',
+              status: 'Released',
+              price: 100 + Math.round(Math.random() * 200),
+              stock: Math.round(Math.random() * 100),
+              demand: Math.round(Math.random() * 100),
+              uom: 'EA',
+            },
+          },
+        ],
+      });
+    } else if (choice === 1) {
+      const target = live.data[Math.floor(Math.random() * live.data.length)];
+      if (target) {
+        dataSource.emit({
+          type: 'update',
+          rows: [{ id: target.id, data: { ...target, stock: target.stock + 10 } }],
+        });
+      }
+    } else {
+      const target = live.data[live.data.length - 1];
+      if (target && target.id.startsWith('LIVE-')) {
+        dataSource.emit({ type: 'delete', rows: [{ id: target.id }] });
+      }
+    }
+  }, [dataSource, live.data]);
+
+  useEffect(() => {
+    const timer = setInterval(handleSimulate, 1800);
+    return () => clearInterval(timer);
+  }, [handleSimulate]);
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12, fontSize: 13 }}>
+        Auto-streaming events every 1.8s. Pending while editing: {live.pendingCount}
+        <button
+          type="button"
+          onClick={handleSimulate}
+          style={{ marginLeft: 12, padding: '4px 10px' }}
+        >
+          Fire one now
+        </button>
+      </div>
+      <DataGrid
+        key="live-updates"
+        data={live.data}
+        columns={wideColumns}
+        height={460}
+        theme={theme}
+      />
+    </div>
+  );
+}
+
 interface PlaygroundCellEditEndEvent {
   rowId: string;
   columnId: string;
@@ -454,6 +974,7 @@ function exampleGrid(
           columns={bomColumns}
           treeData={treeData}
           defaultExpanded
+          treeEditor={{}}
           aggregation={{
             extendedQuantity: {
               sourceColumn: 'qty',
@@ -561,6 +1082,20 @@ function exampleGrid(
           onRowEditEnd={onTaskRowEditEnd}
         />
       );
+    case 'pagination':
+      return <PaginationExample theme={theme} />;
+    case 'quickSearch':
+      return <QuickSearchExample theme={theme} />;
+    case 'filterBuilder':
+      return <FilterBuilderExample theme={theme} />;
+    case 'export':
+      return <ExportExample theme={theme} />;
+    case 'whereUsed':
+      return <WhereUsedExample theme={theme} />;
+    case 'columnMgmt':
+      return <ColumnMgmtExample theme={theme} />;
+    case 'liveUpdates':
+      return <LiveUpdatesExample theme={theme} />;
   }
 }
 

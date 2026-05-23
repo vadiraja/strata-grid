@@ -14,6 +14,8 @@ export interface DataCellProps<TRow> {
   rollupTargetColumnId?: string;
   /** Extended quantities keyed by row id. */
   extendedQuantities?: Map<string, number>;
+  /** Called when this cell is selected/focused by pointer. */
+  onFocusCell?: () => void;
 }
 
 /** Renders a single ordinary body cell, delegating content rendering. */
@@ -23,6 +25,7 @@ export function DataCell<TRow>({
   focusId,
   rollupTargetColumnId,
   extendedQuantities,
+  onFocusCell,
 }: DataCellProps<TRow>) {
   const width = cell.column.getSize();
   const editCtx = useEditContext();
@@ -72,6 +75,7 @@ export function DataCell<TRow>({
     editState.startEdit(cell.row.id, cell.column.id, cell.getValue());
   };
   const handleClick = () => {
+    onFocusCell?.();
     if (!editCtx) return;
     if (editCtx.config.activateOn !== 'singleClick') return;
     if (!isEditable) return;
@@ -97,7 +101,7 @@ export function DataCell<TRow>({
       role="gridcell"
       id={isFocused ? focusId : undefined}
       style={{ width, flex: `0 0 ${width}px` }}
-      onClick={editCtx ? handleClick : undefined}
+      onClick={handleClick}
       onDoubleClick={editCtx ? handleDoubleClick : undefined}
     >
       {isEditing ? (

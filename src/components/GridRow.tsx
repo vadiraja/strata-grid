@@ -38,6 +38,10 @@ export interface GridRowProps<TRow> {
    * when this row is the current target.
    */
   dragDrop?: UseDragDropReturn;
+  /** Called when a cell in this row is selected/focused by pointer. */
+  onCellFocus?: (columnId: string) => void;
+  /** Called before this row is expanded. */
+  onRowExpand?: () => void;
 }
 
 /** Renders one body row as a horizontal strip of cells. */
@@ -53,6 +57,8 @@ export function GridRow<TRow>({
   rollupTargetColumnId,
   extendedQuantities,
   dragDrop,
+  onCellFocus,
+  onRowExpand,
 }: GridRowProps<TRow>) {
   const isTree = treeColumnId !== undefined;
   const cellsToRender = cells ?? row.getVisibleCells();
@@ -138,6 +144,7 @@ export function GridRow<TRow>({
           rowId={row.id}
           isFocused={focusedColumnId === '__selection__'}
           focusId={focusId}
+          onFocusCell={() => onCellFocus?.('__selection__')}
         />
       )}
       {cellsToRender.map((cell) => {
@@ -150,6 +157,10 @@ export function GridRow<TRow>({
             focusId={focusId}
             rollupTargetColumnId={rollupTargetColumnId}
             extendedQuantities={extendedQuantities}
+            onFocusCell={() => onCellFocus?.(cell.column.id)}
+            onToggleExpand={() => {
+              if (!row.getIsExpanded()) onRowExpand?.();
+            }}
           />
         ) : (
           <DataCell
@@ -159,6 +170,7 @@ export function GridRow<TRow>({
             focusId={focusId}
             rollupTargetColumnId={rollupTargetColumnId}
             extendedQuantities={extendedQuantities}
+            onFocusCell={() => onCellFocus?.(cell.column.id)}
           />
         );
       })}

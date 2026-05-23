@@ -460,6 +460,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   height: var(--strata-row-height);
+  cursor: cell;
 }
 
 .strata-cell-focused {
@@ -727,3 +728,488 @@
   cursor: not-allowed;
 }
 
+
+
+/* --- Lazy loading --- */
+
+.strata-row-loading {
+  display: flex;
+  align-items: center;
+}
+
+.strata-loading-indent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.strata-loading-skeleton {
+  height: 12px;
+  width: 60%;
+  border-radius: 4px;
+  background: var(--strata-bg-row-hover, #e5e7eb);
+  animation: strata-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes strata-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.strata-row-error .strata-loading-error-message {
+  color: var(--strata-color-error, #dc2626);
+  font-size: 0.85em;
+}
+
+.strata-loading-retry-btn {
+  padding: 2px 8px;
+  font-size: 0.8em;
+  border: 1px solid var(--strata-border-color, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  cursor: pointer;
+}
+
+.strata-loading-retry-btn:hover {
+  background: var(--strata-bg-row-hover, #f3f4f6);
+}
+
+
+/* --- Loading overlay --- */
+
+.strata-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--strata-overlay-bg, rgba(255, 255, 255, 0.7));
+  z-index: 10;
+  pointer-events: all;
+}
+
+.strata-loading-spinner {
+  color: var(--strata-accent, #2563eb);
+}
+
+.strata-spinner-icon {
+  animation: strata-spin 1s linear infinite;
+}
+
+@keyframes strata-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+/* --- Pagination --- */
+
+.strata-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--strata-border, #e5e7eb);
+  font-size: 0.85em;
+}
+
+.strata-pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strata-pagination-label {
+  color: var(--strata-text-secondary, #6b7280);
+}
+
+.strata-pagination-select {
+  padding: 2px 6px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+}
+
+.strata-pagination-info {
+  color: var(--strata-text-secondary, #6b7280);
+}
+
+.strata-pagination-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.strata-pagination-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  cursor: pointer;
+  font-size: 1.1em;
+}
+
+.strata-pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.strata-pagination-btn:hover:not(:disabled) {
+  background: var(--strata-bg-row-hover, #f3f4f6);
+}
+
+.strata-pagination-load-more {
+  justify-content: center;
+}
+
+.strata-pagination-load-more-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  cursor: pointer;
+}
+
+.strata-pagination-load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* ===== M4 · Advanced Filtering ===== */
+
+/* --- Filter Builder Panel --- */
+
+.strata-filter-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--strata-bg, #fff);
+  border: 1px solid var(--strata-border, #e5e7eb);
+  border-radius: 6px;
+  font-family: var(--strata-font-family);
+  font-size: var(--strata-font-size, 0.875rem);
+}
+
+.strata-filter-builder-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strata-filter-logic-toggle {
+  padding: 2px 8px;
+  border: 1px solid var(--strata-accent, #2563eb);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-accent, #2563eb);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.strata-filter-logic-toggle:hover {
+  background: var(--strata-accent, #2563eb);
+  color: #fff;
+}
+
+.strata-filter-builder-title {
+  font-weight: 500;
+  color: var(--strata-text-secondary, #6b7280);
+}
+
+.strata-filter-conditions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.strata-filter-condition-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strata-filter-col-select,
+.strata-filter-op-select {
+  padding: 4px 8px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+}
+
+.strata-filter-value-input {
+  flex: 1 1 auto;
+  min-width: 80px;
+  padding: 4px 8px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+}
+
+.strata-filter-value-input:focus {
+  border-color: var(--strata-accent, #2563eb);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--strata-accent-shadow, rgba(37, 99, 235, 0.15));
+}
+
+.strata-filter-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--strata-text-muted, #9ca3af);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.strata-filter-remove-btn:hover {
+  background: var(--strata-bg-filter-button-hover, #f3f4f6);
+  color: var(--strata-text, #111827);
+}
+
+.strata-filter-builder-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.strata-filter-add-btn {
+  padding: 4px 10px;
+  border: 1px dashed var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--strata-text-secondary, #6b7280);
+  font-size: var(--strata-font-size-small, 0.8rem);
+  cursor: pointer;
+}
+
+.strata-filter-add-btn:hover {
+  border-color: var(--strata-accent, #2563eb);
+  color: var(--strata-accent, #2563eb);
+}
+
+.strata-filter-builder-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.strata-filter-clear-btn,
+.strata-filter-apply-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+  cursor: pointer;
+}
+
+.strata-filter-clear-btn:hover {
+  background: var(--strata-bg-row-hover, #f3f4f6);
+}
+
+.strata-filter-apply-btn {
+  border-color: var(--strata-accent, #2563eb);
+  background: var(--strata-accent, #2563eb);
+  color: #fff;
+}
+
+.strata-filter-apply-btn:hover {
+  opacity: 0.9;
+}
+
+/* --- Quick Search Input --- */
+
+.strata-quick-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.strata-quick-search-input {
+  width: 200px;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+  font-family: var(--strata-font-family);
+}
+
+.strata-quick-search-input:focus {
+  border-color: var(--strata-accent, #2563eb);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--strata-accent-shadow, rgba(37, 99, 235, 0.15));
+}
+
+.strata-quick-search-clear {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--strata-text-muted, #9ca3af);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.strata-quick-search-clear:hover {
+  background: var(--strata-bg-filter-button-hover, #f3f4f6);
+  color: var(--strata-text, #111827);
+}
+
+
+/* ===== M4 · Column Management Panel ===== */
+
+.strata-column-panel {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  max-height: 400px;
+  background: var(--strata-bg, #fff);
+  border: 1px solid var(--strata-border, #e5e7eb);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  font-family: var(--strata-font-family);
+  font-size: var(--strata-font-size, 0.875rem);
+}
+
+.strata-column-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--strata-border, #e5e7eb);
+}
+
+.strata-column-panel-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--strata-text, #111827);
+}
+
+.strata-column-panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--strata-text-muted, #9ca3af);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.strata-column-panel-close:hover {
+  background: var(--strata-bg-filter-button-hover, #f3f4f6);
+  color: var(--strata-text, #111827);
+}
+
+.strata-column-panel-search {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--strata-border, #e5e7eb);
+}
+
+.strata-column-panel-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+  font-family: var(--strata-font-family);
+}
+
+.strata-column-panel-search-input:focus {
+  border-color: var(--strata-accent, #2563eb);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--strata-accent-shadow, rgba(37, 99, 235, 0.15));
+}
+
+.strata-column-panel-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.strata-column-panel-item {
+  padding: 0 12px;
+}
+
+.strata-column-panel-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+  color: var(--strata-text, #111827);
+}
+
+.strata-column-panel-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--strata-accent, #2563eb);
+  cursor: pointer;
+}
+
+.strata-column-panel-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.strata-column-panel-locked {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--strata-text-muted, #9ca3af);
+}
+
+.strata-column-panel-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--strata-border, #e5e7eb);
+}
+
+.strata-column-panel-reset {
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--strata-border, #d1d5db);
+  border-radius: 4px;
+  background: var(--strata-bg, #fff);
+  color: var(--strata-text, #111827);
+  font-size: var(--strata-font-size-small, 0.8rem);
+  font-family: var(--strata-font-family);
+  cursor: pointer;
+}
+
+.strata-column-panel-reset:hover {
+  background: var(--strata-bg-row-hover, #f3f4f6);
+}

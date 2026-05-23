@@ -10,6 +10,8 @@ import { useEditContext } from '../model/edit-context';
 import type { ColumnDef } from '../model/types';
 import type { UseAggregationReturn } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
+import type { UseDragDropReturn } from '../tree-editor/use-drag-drop';
+import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -30,10 +32,16 @@ export interface BodyViewportProps<TRow> {
   activeCell?: [number, number];
   /** Visible column ids in keyboard order, including the synthetic selection column. */
   keyboardColumnIds?: string[];
+  /** Set the active body cell. */
+  onActiveCellChange?: (cell: [number, number]) => void;
   /** Aggregate state for grouped rows. */
   aggregation?: UseAggregationReturn<TRow>;
   /** Computed BOM extended quantities. */
   bomRollup?: UseBomRollupReturn;
+  /** Drag/drop controller for tree reparenting. */
+  dragDrop?: UseDragDropReturn;
+  /** Lazy tree loading state. */
+  lazyTree?: UseLazyTreeReturn<TRow>;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -47,8 +55,11 @@ export function BodyViewport<TRow>({
   selection,
   activeCell,
   keyboardColumnIds = [],
+  onActiveCellChange,
   aggregation,
   bomRollup,
+  dragDrop,
+  lazyTree,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -101,6 +112,12 @@ export function BodyViewport<TRow>({
             transform: `translateY(${virtualRow.start}px)`,
             display: 'flex',
           };
+          const focusColumn = (columnId: string) => {
+            const columnIndex = keyboardColumnIds.indexOf(columnId);
+            if (columnIndex >= 0) {
+              onActiveCellChange?.([virtualRow.index, columnIndex]);
+            }
+          };
 
           if (row.getIsGrouped()) {
             return (
@@ -147,6 +164,9 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
@@ -164,6 +184,9 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
@@ -193,6 +216,9 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -219,6 +245,9 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
