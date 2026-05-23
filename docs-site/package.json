@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm --prefix .. run docs:api",
     "dev": "astro dev",
+    "prebuild": "npm --prefix .. run docs:api",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

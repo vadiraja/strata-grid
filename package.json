@@ -37,7 +37,8 @@
     "build": "tsup && cp src/strata.css dist/strata.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",
