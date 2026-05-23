@@ -17,6 +17,11 @@ import { OutdentNodeCommand } from './commands/outdent-node';
 import { BatchCommand } from './commands/batch';
 import { filterToTopLevelNodes } from './ancestor-filter';
 
+/**
+ * Configuration for `useTreeEditor` — the hook that turns a tree grid into a
+ * fully-editable hierarchy with add/delete/move/reorder/indent/outdent,
+ * clipboard, drag-drop, and multi-level undo/redo.
+ */
 export interface UseTreeEditorOptions<TRow> {
   /** Initial tree state. */
   initialState: TreeState<TRow>;
@@ -35,6 +40,10 @@ export interface UseTreeEditorOptions<TRow> {
   onTreeChange?: (state: TreeState<TRow>, changeSet: ChangeSet<TRow>) => void;
 }
 
+/**
+ * Return value of `useTreeEditor` — current tree state, change tracking, undo
+ * stack, clipboard flag, and command dispatchers for every supported mutation.
+ */
 export interface UseTreeEditorReturn<TRow> {
   /** Current tree state. */
   state: TreeState<TRow>;

@@ -3,6 +3,10 @@ import { CsvWriter } from './csv-writer';
 import { XlsxWriter } from './xlsx-writer';
 import type { ExportOptions, ExportColumn, ExportRow } from './types';
 
+/**
+ * Configuration for the `useExport` hook — the rows, columns, and value
+ * accessors used by CSV/XLSX exports triggered through the returned API.
+ */
 export interface UseExportConfig<TRow> {
   /** Get currently visible (filtered/sorted) rows. */
   getVisibleRows: () => TRow[];
@@ -16,6 +20,10 @@ export interface UseExportConfig<TRow> {
   getRowValue: (row: TRow, columnId: string) => string;
 }
 
+/**
+ * Return value of `useExport` — bind `<ExportMenu>` to this object, or invoke
+ * `exportData` directly with format/scope options.
+ */
 export interface UseExportReturn<TRow = unknown> {
   /** Trigger a data export. */
   exportData: (options: ExportOptions<TRow>) => Promise<void>;

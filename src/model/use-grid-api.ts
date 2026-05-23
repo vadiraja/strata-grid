@@ -11,6 +11,11 @@ import type { ExportOptions } from '../export/types';
 import type { WhereUsedResult } from '../data/types';
 import type { ViewState } from './view-state-types';
 
+/**
+ * Imperative handle to a `<DataGrid>` instance. Obtain one by passing a ref
+ * (e.g. `ref={gridApiRef}`) and call methods on `.current` to drive the grid
+ * programmatically — expand/collapse, scroll, selection, export, etc.
+ */
 export interface GridApi<TRow> {
   expandAll(): void;
   collapseAll(): void;
