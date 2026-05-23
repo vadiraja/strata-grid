@@ -33,3 +33,4 @@ export type {
 export { isColumnGroup } from './model/types';
 export { InMemoryDataSource } from './data/in-memory-data-source';
 export type { DataSource } from './data/data-source';
+export type { GridApi } from './model/use-grid-api';

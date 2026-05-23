@@ -3,6 +3,7 @@ import {
   DataGrid,
   type AnyColumn,
   type ColumnDef,
+  type EditorContext,
   type GridTheme,
   type SelectionConfig,
   type TreeDataConfig,
@@ -16,6 +17,7 @@ type ExampleKey =
   | 'selection'
   | 'columnGroups'
   | 'rowGrouping'
+  | 'bomEditing'
   | 'editing'
   | 'rowEditing';
 
@@ -57,6 +59,11 @@ const examples: ExampleConfig[] = [
     summary: 'Flat product rows grouped by category and subcategory with collapsible group headers.',
   },
   {
+    key: 'bomEditing',
+    label: 'BOM Editing',
+    summary: 'Editable BOM quantities with extended quantity roll-up, validation, and a custom type editor.',
+  },
+  {
     key: 'editing',
     label: 'Editing',
     summary: 'Inline text, number, select, date, and checkbox editors with Enter, blur, and Escape handling.',
@@ -75,6 +82,7 @@ interface BomNode {
   qty: number;
   plant: string;
   status: string;
+  materialType?: 'Finished Good' | 'Subassembly' | 'Component';
   uom: string;
   children?: BomNode[];
 }
@@ -136,6 +144,60 @@ const bomColumns: ColumnDef<BomNode>[] = [
   { id: 'status', header: 'Status', accessor: 'status', width: 120, filter: 'text' },
   { id: 'qty', header: 'Qty', accessor: 'qty', width: 80, filter: 'number' },
   { id: 'extQty', header: 'Ext Qty', width: 90 },
+  { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
+];
+
+const materialTypeChoices = ['Finished Good', 'Subassembly', 'Component'] as const;
+
+function MaterialTypeEditor(ctx: EditorContext<BomNode>) {
+  return (
+    <select
+      className="strata-editor-input"
+      value={String(ctx.value ?? '')}
+      onChange={(event) => {
+        ctx.onChange(event.target.value);
+        void ctx.onCommit();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') ctx.onDiscard();
+      }}
+      autoFocus
+    >
+      {materialTypeChoices.map((choice) => (
+        <option key={choice} value={choice}>
+          {choice}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const editableBomColumns: ColumnDef<BomNode>[] = [
+  { id: 'material', header: 'Material', accessor: 'material', width: 150, isTreeColumn: true, pin: 'left', filter: 'text' },
+  { id: 'description', header: 'Description', accessor: 'description', width: 240, filter: 'text' },
+  {
+    id: 'materialType',
+    header: 'Type',
+    accessor: (row) =>
+      row.materialType ?? (row.id.startsWith('FG') ? 'Finished Good' : row.children ? 'Subassembly' : 'Component'),
+    width: 140,
+    editable: true,
+    editor: MaterialTypeEditor,
+  },
+  {
+    id: 'qty',
+    header: 'Qty',
+    accessor: 'qty',
+    width: 90,
+    filter: 'number',
+    editable: true,
+    editorType: 'number',
+    validate: (value) => {
+      const qty = Number(value);
+      return Number.isFinite(qty) && qty > 0 ? true : 'Qty must be greater than 0';
+    },
+  },
+  { id: 'extQty', header: 'Ext Qty', width: 100 },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
 ];
 
@@ -367,6 +429,8 @@ function exampleGrid(
   theme: GridTheme,
   onSelectionChange: (selectedIds: string[]) => void,
   editableTasks: EditableTask[],
+  editableBom: BomNode[],
+  onBomEditEnd: (event: PlaygroundCellEditEndEvent) => void,
   onTaskEditEnd: (event: PlaygroundCellEditEndEvent) => void,
   onTaskRowEditEnd: (event: PlaygroundRowEditEndEvent) => void,
 ) {
@@ -452,6 +516,27 @@ function exampleGrid(
           theme={theme}
         />
       );
+    case 'bomEditing':
+      return (
+        <DataGrid
+          key="bom-editing"
+          data={editableBom}
+          columns={editableBomColumns}
+          treeData={treeData}
+          defaultExpanded
+          height={500}
+          theme={theme}
+          editable={{ mode: 'cell', activateOn: 'singleClick' }}
+          onCellEditEnd={onBomEditEnd}
+          aggregation={{
+            extendedQuantity: {
+              sourceColumn: 'qty',
+              targetColumn: 'extQty',
+              compute: 'multiply-down',
+            },
+          }}
+        />
+      );
     case 'editing':
       return (
         <DataGrid
@@ -484,6 +569,7 @@ export function App() {
   const [theme, setTheme] = useState<GridTheme>('light');
   const [selectionInfo, setSelectionInfo] = useState('None');
   const [editableTasks, setEditableTasks] = useState(initialEditableTasks);
+  const [editableBom, setEditableBom] = useState(bom);
   const [editInfo, setEditInfo] = useState('None');
   const isDark = theme === 'dark';
   const active = useMemo(
@@ -507,6 +593,34 @@ export function App() {
       ),
     );
     setEditInfo(`${task?.item ?? event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
+  }
+
+  function updateBomRows(rows: BomNode[], event: PlaygroundCellEditEndEvent): BomNode[] {
+    return rows.map((row) => {
+      const nextChildren = row.children
+        ? updateBomRows(row.children, event)
+        : undefined;
+      if (row.id !== event.rowId) {
+        return nextChildren === row.children ? row : { ...row, children: nextChildren };
+      }
+
+      return {
+        ...row,
+        children: nextChildren,
+        [event.columnId]:
+          event.columnId === 'qty' ? Number(event.newValue) : event.newValue,
+      };
+    });
+  }
+
+  function handleBomEditEnd(event: PlaygroundCellEditEndEvent) {
+    if (!event.committed) {
+      setEditInfo(`Discarded ${event.columnId} on ${event.rowId}`);
+      return;
+    }
+
+    setEditableBom((current) => updateBomRows(current, event));
+    setEditInfo(`${event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
   }
 
   function handleTaskRowEditEnd(event: PlaygroundRowEditEndEvent) {
@@ -610,7 +724,9 @@ export function App() {
           Selection: {selectionInfo}
         </p>
       )}
-      {(activeExample === 'editing' || activeExample === 'rowEditing') && (
+      {(activeExample === 'editing' ||
+        activeExample === 'rowEditing' ||
+        activeExample === 'bomEditing') && (
         <p style={{ color: isDark ? '#98989d' : '#515154', fontSize: 13, margin: '0 0 8px' }}>
           Last edit: {editInfo}
         </p>
@@ -618,6 +734,8 @@ export function App() {
       <p style={{ color: isDark ? '#98989d' : '#86868b', fontSize: 12, margin: '0 0 20px' }}>
         {activeExample === 'editing'
           ? 'Double-click editable cells to edit. Enter or blur commits; Escape discards.'
+          : activeExample === 'bomEditing'
+            ? 'Single-click editable BOM cells to edit. Invalid quantities stay open until corrected.'
           : activeExample === 'rowEditing'
             ? 'Click Edit on a row, update multiple cells, then Save or Cancel.'
           : 'Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.'}
@@ -625,7 +743,7 @@ export function App() {
 
       {exampleGrid(activeExample, theme, (selectedIds) => {
         setSelectionInfo(selectedIds.length > 0 ? selectedIds.join(', ') : 'None');
-      }, editableTasks, handleTaskEditEnd, handleTaskRowEditEnd)}
+      }, editableTasks, editableBom, handleBomEditEnd, handleTaskEditEnd, handleTaskRowEditEnd)}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type {
   AnyColumn,
   AggregationConfig,
@@ -22,6 +22,7 @@ import { InMemoryDataSource } from '../data/in-memory-data-source';
 import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
 import { useBomRollup } from '../model/use-bom-rollup';
+import { useGridApi, type GridApi } from '../model/use-grid-api';
 import { GridRoot } from './GridRoot';
 
 export interface DataGridProps<TRow> {
@@ -71,6 +72,8 @@ export interface DataGridProps<TRow> {
   theme?: GridTheme;
   /** Enables cell editing. Omit to keep the grid read-only. */
   editable?: EditableConfig;
+  /** Imperative grid API ref. */
+  apiRef?: { current: GridApi<TRow> | null };
   /** Configures aggregate rendering for grouped rows and the footer. */
   aggregation?: AggregationConfig;
   /** Called when a cell edit starts. */
@@ -160,6 +163,7 @@ export function DataGrid<TRow>({
   onSelectionChange,
   theme,
   editable,
+  apiRef,
   aggregation,
   onCellEditStart,
   onCellEditEnd,
@@ -251,6 +255,21 @@ export function DataGrid<TRow>({
     onRowEditStart,
     onRowEditEnd,
   });
+  const gridApi = useGridApi({
+    table,
+    editState,
+    selection: selection ? selectionState : undefined,
+  });
+
+  useEffect(() => {
+    if (!apiRef) return undefined;
+    apiRef.current = gridApi;
+    return () => {
+      if (apiRef.current === gridApi) {
+        apiRef.current = null;
+      }
+    };
+  }, [apiRef, gridApi]);
 
   const gridContent = (
     <GridRoot
