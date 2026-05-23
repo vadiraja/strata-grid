@@ -1,0 +1,348 @@
+---
+title: Server-driven lists
+description: Use Strata as the data grid behind enterprise list pages with skip/take pagination, server-side sort/filter, URL state, and selection.
+sidebar:
+  order: 11
+---
+
+import MockListGrid from '../../../components/examples/server-driven-lists/MockListGrid.tsx';
+
+When a list page is backed by a server — millions of rows, real filters,
+real pagination — you want Strata to push sort, filter, and paging
+to the API instead of loading everything into the browser. That's what
+the `DataSource` interface is for.
+
+This guide walks through the end-to-end pattern for wiring Strata into a
+typical enterprise list endpoint: write a small adapter that translates
+your API contract, declare server capabilities, hand the adapter to
+`<DataGrid>`, and round-trip view state through the URL. The same pattern
+covers REST + skip/take, OData, GraphQL, or anything else.
+
+## The contract
+
+`DataSource<TRow>` has one method you must implement and a few optional ones:
+
+```ts
+interface DataSource<TRow> {
+  load(query?: DataQuery): TRow[] | Promise<TRow[]>;
+  loadPage?(params: PageParams): Promise<PageResult<TRow>>;
+  capabilities?(): DataSourceCapabilities;
+  // ...
+}
+```
+
+For a paginated list page, implement `loadPage` and `capabilities`. The grid
+calls `loadPage` whenever the user changes page, sort, filter, or search.
+
+```ts
+interface PageParams {
+  offset: number | string;   // your `skip`
+  limit: number;             // your `take`
+  query?: DataQuery;         // sort / filters / search
+}
+
+interface PageResult<TRow> {
+  rows: TRow[];              // your `result`
+  totalCount: number;        // your `count`
+  hasMore: boolean;
+}
+```
+
+`DataQuery` is the grid-side representation of sort and filter state. Your
+adapter's job is to translate it into whatever wire format your API accepts.
+
+## Step 1: write the adapter
+
+A REST endpoint that takes `skip`, `take`, `sort`, `q`, and `where[]` query
+params and returns `{ result, count }` translates like this:
+
+```ts
+import type {
+  DataSource,
+  DataSourceCapabilities,
+  PageParams,
+  PageResult,
+  FilterExpression,
+  ColumnSort,
+} from 'strata-grid';
+
+interface ListResponse<T> { result: T[]; count: number; }
+
+function encodeSort(sort: ColumnSort[] = []): string[] {
+  return sort.map((s) => `${s.columnId}:${s.direction}`);
+}
+
+function encodeWhere(filters: FilterExpression[] = []): string[] {
+  // Flatten the FilterExpression tree into "field:op:value" strings.
+  const out: string[] = [];
+  const walk = (e: FilterExpression) => {
+    if (e.columnId && e.operator) {
+      out.push(`${e.columnId}:${e.operator}:${e.value ?? ''}`);
+    }
+    e.children?.forEach(walk);
+  };
+  filters.forEach(walk);
+  return out;
+}
+
+export function createListSource<T>(opts: { endpoint: string }): DataSource<T> {
+  return {
+    async load() {
+      // Fallback for non-paginated callers — unused when loadPage exists.
+      const res = await fetch(opts.endpoint).then((r) => r.json());
+      return (res as ListResponse<T>).result;
+    },
+    async loadPage({ offset, limit, query }: PageParams): Promise<PageResult<T>> {
+      const params = new URLSearchParams();
+      params.set('skip', String(offset));
+      params.set('take', String(limit));
+      encodeSort(query?.sort).forEach((s) => params.append('sort', s));
+      encodeWhere(query?.filters).forEach((w) => params.append('where[]', w));
+      if (query?.search) params.set('q', query.search);
+
+      const resp = await fetch(`${opts.endpoint}?${params}`);
+      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      const json = (await resp.json()) as ListResponse<T>;
+      const nextOffset = (offset as number) + limit;
+      return {
+        rows: json.result,
+        totalCount: json.count,
+        hasMore: nextOffset < json.count,
+      };
+    },
+    capabilities(): DataSourceCapabilities {
+      return { pagination: true, serverSort: true, serverFilter: true };
+    },
+  };
+}
+```
+
+That's the whole adapter — typically 60-90 lines once you handle auth, error
+mapping, and aborts. It's reusable across every list page in your app.
+
+## Step 2: wire it into &lt;DataGrid&gt;
+
+```tsx
+import { DataGrid, type ColumnDef } from 'strata-grid';
+import 'strata-grid/styles.css';
+import { createListSource } from './list-source';
+
+const columns: ColumnDef<Supplier>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', filter: 'text', flex: 1 },
+  { id: 'country', header: 'Country', accessor: 'country', filter: 'text' },
+  { id: 'status', header: 'Status', accessor: 'status' },
+];
+
+export function SuppliersPage() {
+  const dataSource = useMemo(
+    () => createListSource<Supplier>({ endpoint: '/api/suppliers' }),
+    [],
+  );
+
+  return (
+    <DataGrid
+      data={[]}                           // ignored when dataSource is set
+      columns={columns}
+      dataSource={dataSource}
+      height={600}
+      pagination={{ pageSize: 50, mode: 'pages' }}
+      selection={{ mode: 'multi' }}
+    />
+  );
+}
+```
+
+That's it. The grid feature-detects `capabilities()`, sees server-side sort
+and filter, and stops doing them client-side. Header clicks, filter inputs,
+and page changes all route through `loadPage` with the right `DataQuery`.
+
+## Step 3: round-trip view state through the URL
+
+Sort, filters, search, column order, column sizes, and pinning all live in
+`ViewState`. Use `defaultViewState` to restore from URL on mount, and
+`onViewStateChange` to push changes back:
+
+```tsx
+import { useSearchParams } from 'react-router-dom';
+import type { ViewState } from 'strata-grid';
+
+function viewStateFromUrl(params: URLSearchParams): Partial<ViewState> {
+  return {
+    searchTerm: params.get('q') ?? undefined,
+    sorting: params.getAll('sort').map((s) => {
+      const [columnId, direction] = s.split(':');
+      return { columnId, direction: direction as 'asc' | 'desc' };
+    }),
+    // ...filters, hiddenColumns, etc.
+  };
+}
+
+function viewStateToUrl(state: ViewState): URLSearchParams {
+  const params = new URLSearchParams();
+  if (state.searchTerm) params.set('q', state.searchTerm);
+  state.sorting.forEach((s) =>
+    params.append('sort', `${s.columnId}:${s.direction}`),
+  );
+  return params;
+}
+
+export function SuppliersPage() {
+  const [params, setParams] = useSearchParams();
+  const initialView = useMemo(() => viewStateFromUrl(params), []);
+
+  return (
+    <DataGrid
+      // ...
+      defaultViewState={initialView as ViewState}
+      onViewStateChange={(s) => setParams(viewStateToUrl(s), { replace: true })}
+    />
+  );
+}
+```
+
+`ViewState` is intentionally serializable JSON, so you can also persist it
+to `localStorage` for "remember my last view" behavior.
+
+## Step 4: row actions
+
+Row-level actions (view, edit, delete, etc.) are a synthetic column at the
+right edge with a `cell` renderer:
+
+```tsx
+const columns: ColumnDef<Supplier>[] = [
+  // ...your data columns
+  {
+    id: '__actions__',
+    header: '',
+    width: 96,
+    pin: 'right',
+    cell: ({ row }) => (
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button onClick={() => navigate(`/suppliers/${row.id}`)}>View</button>
+        <button onClick={() => openEditDialog(row)}>Edit</button>
+      </div>
+    ),
+  },
+];
+```
+
+Pin it `right` so it stays visible during horizontal scroll. We're tracking
+a first-class `rowActions` prop as a follow-up; until then, this pattern is
+the supported approach.
+
+## Step 5: status bar (count, selection, active filters)
+
+Strata is intentionally headless about chrome above and below the grid —
+status bars, filter pills, bulk-action toolbars belong to your application
+shell, not the grid. The data you need is all reachable today.
+
+For `selectedIds`, listen to `onSelectionChange`:
+
+```tsx
+const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+<DataGrid
+  // ...
+  onSelectionChange={(s) => setSelectedIds(s.selectedIds)}
+/>;
+```
+
+For sort, filter, search, and column state, listen to `onViewStateChange`.
+
+For **total count and loading state**, the cleanest pattern today is to
+let your adapter expose them. The adapter is where `loadPage` runs — it
+already knows the count and the in-flight state. Expose a tiny subscribe
+seam from the adapter that your status bar reads:
+
+```ts
+export function createListSource<T>(opts: { endpoint: string }) {
+  let totalCount = 0;
+  let isLoading = false;
+  const listeners = new Set<(s: { totalCount: number; isLoading: boolean }) => void>();
+  const emit = () => listeners.forEach((fn) => fn({ totalCount, isLoading }));
+
+  const source: DataSource<T> = {
+    async loadPage(params) {
+      isLoading = true; emit();
+      try {
+        const result = await fetchPage<T>(opts.endpoint, params);
+        totalCount = result.totalCount;
+        return result;
+      } finally {
+        isLoading = false; emit();
+      }
+    },
+    // ...
+  };
+
+  return {
+    source,
+    subscribe: (fn) => { listeners.add(fn); fn({ totalCount, isLoading }); return () => listeners.delete(fn); },
+  };
+}
+```
+
+Your status bar reads from `subscribe()` and re-renders. This keeps the
+grid component pure and the data-source observable, which is the right
+separation. A built-in `onPaginationChange` callback on `<DataGrid>` is
+tracked as a future ergonomic addition.
+
+## Live example
+
+The example below uses a mock in-memory adapter that simulates 250ms of
+network latency, with real server-style sort + filter + pagination over
+137 synthetic supplier rows. Click headers to sort, change pages, select
+rows — every interaction round-trips through the mock `loadPage`.
+
+<MockListGrid client:load />
+
+## What you get for free
+
+Once the adapter is wired:
+
+- **Row + column virtualization** — visible only, regardless of result size.
+- **Selection** — single or multi, with `onSelectionChange` for bulk
+  actions.
+- **Column resize, reorder, pinning** — built-in, persisted via
+  `onViewStateChange`.
+- **Quick search** — set `advancedFilter: { quickSearch: true }` and the
+  debounced search term flows into `DataQuery.search`.
+- **Filter builder UI** — set `advancedFilter: { filterBuilder: true }` for
+  a builder surface that emits `FilterExpression` trees your adapter can
+  encode.
+- **Loading and empty states** — built-in shimmer rows during page loads.
+- **ARIA semantics** — `role="treegrid"` (or `grid`), proper keyboard
+  navigation, screen-reader friendly.
+
+## Common pitfalls
+
+- **Forgetting `capabilities()`** — without it, the grid assumes
+  client-side sort/filter and ignores your `DataQuery`. The header click
+  will sort the current page locally, not the whole dataset.
+- **Not memoizing the adapter** — `createListSource({ endpoint })` returns
+  a new object each render. Wrap it in `useMemo([endpoint])` or the grid
+  will reload on every render.
+- **Passing `data={someArray}` and `dataSource={adapter}`** — `data` is
+  ignored when `dataSource` has server capabilities, but type-checkers
+  complain. Pass `data={[]}`.
+- **Compound `and`/`or` filters in an API that's flat** — `FilterExpression`
+  supports compound trees, but if your API only accepts `field:op:value`
+  strings (like ADR-026), you'll need to either flatten lossily or extend
+  your API contract.
+
+## What's next
+
+The pattern above ships in `strata-grid` today and is suitable for real
+list-page migrations. We're collecting friction reports from teams running
+this in production — see the GitHub repo if you want to share what your
+adapter looked like or what you wished was first-class.
+
+Planned ergonomic additions (no breaking changes):
+
+- **`onPaginationChange`** — surface `{ currentPage, totalCount, isLoading }`
+  from the grid directly, removing the need for the adapter-subscribe
+  pattern in Step 5.
+- **`rowActions` prop** — first-class actions column with inline / kebab
+  display, conditional visibility, and built-in keyboard accessibility.
+- **Discrete `onSortChange` / `onFilterChange` / `onSearchChange`** —
+  surgical callbacks for finer URL serialization than `onViewStateChange`.
