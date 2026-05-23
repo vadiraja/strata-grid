@@ -31,6 +31,8 @@ export interface BodyViewportProps<TRow> {
   activeCell?: [number, number];
   /** Visible column ids in keyboard order, including the synthetic selection column. */
   keyboardColumnIds?: string[];
+  /** Set the active body cell. */
+  onActiveCellChange?: (cell: [number, number]) => void;
   /** Aggregate state for grouped rows. */
   aggregation?: UseAggregationReturn<TRow>;
   /** Computed BOM extended quantities. */
@@ -50,6 +52,7 @@ export function BodyViewport<TRow>({
   selection,
   activeCell,
   keyboardColumnIds = [],
+  onActiveCellChange,
   aggregation,
   bomRollup,
   dragDrop,
@@ -105,6 +108,12 @@ export function BodyViewport<TRow>({
             transform: `translateY(${virtualRow.start}px)`,
             display: 'flex',
           };
+          const focusColumn = (columnId: string) => {
+            const columnIndex = keyboardColumnIds.indexOf(columnId);
+            if (columnIndex >= 0) {
+              onActiveCellChange?.([virtualRow.index, columnIndex]);
+            }
+          };
 
           if (row.getIsGrouped()) {
             return (
@@ -152,6 +161,7 @@ export function BodyViewport<TRow>({
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
                   />
                 </div>
               )}
@@ -170,6 +180,7 @@ export function BodyViewport<TRow>({
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
                   />
                 </div>
               )}
@@ -200,6 +211,7 @@ export function BodyViewport<TRow>({
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -227,6 +239,7 @@ export function BodyViewport<TRow>({
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
                     dragDrop={dragDrop}
+                    onCellFocus={focusColumn}
                   />
                 </div>
               )}

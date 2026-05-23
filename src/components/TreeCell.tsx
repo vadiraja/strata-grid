@@ -13,6 +13,8 @@ export interface TreeCellProps<TRow> {
   rollupTargetColumnId?: string;
   /** Extended quantities keyed by row id. */
   extendedQuantities?: Map<string, number>;
+  /** Called when this cell is selected/focused by pointer. */
+  onFocusCell?: () => void;
 }
 
 /**
@@ -26,6 +28,7 @@ export function TreeCell<TRow>({
   focusId,
   rollupTargetColumnId,
   extendedQuantities,
+  onFocusCell,
 }: TreeCellProps<TRow>) {
   const { row } = cell;
   const width = cell.column.getSize();
@@ -38,6 +41,7 @@ export function TreeCell<TRow>({
       role="gridcell"
       id={isFocused ? focusId : undefined}
       style={{ width, flex: `0 0 ${width}px` }}
+      onClick={onFocusCell}
     >
       <span
         className="strata-tree-indent"

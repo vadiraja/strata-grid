@@ -13,6 +13,7 @@ import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import type { UseDragDropReturn, UseTreeEditorReturn } from '../tree-editor';
+import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -50,6 +51,8 @@ export interface GridRootProps<TRow> {
   dragDrop?: UseDragDropReturn;
   /** Whether keyboard indent/outdent/reorder/delete shortcuts are enabled. */
   enableTreeKeyboard?: boolean;
+  /** Lazy tree loading state. Present when the data source supports lazy children. */
+  lazyTree?: UseLazyTreeReturn<TRow>;
 }
 
 /** The grid layout shell. */
@@ -65,6 +68,7 @@ export function GridRoot<TRow>({
   treeEditor,
   dragDrop,
   enableTreeKeyboard,
+  lazyTree,
 }: GridRootProps<TRow>) {
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
@@ -128,6 +132,10 @@ export function GridRoot<TRow>({
       const row = rows[rowIndex];
       if (row?.getCanExpand()) {
         row.toggleExpanded();
+        // Trigger lazy loading if the node is being expanded and not yet loaded
+        if (!row.getIsExpanded() && lazyTree) {
+          lazyTree.loadNodeChildren(row.id);
+        }
       }
     },
     onSelectionToggle: (rowIndex) => {
@@ -373,6 +381,7 @@ export function GridRoot<TRow>({
         selection={selection}
         activeCell={keyboard.activeCell}
         keyboardColumnIds={keyboardColumnIds}
+        onActiveCellChange={keyboard.setActiveCell}
         aggregation={aggregation}
         bomRollup={bomRollup}
         dragDrop={dragDrop}

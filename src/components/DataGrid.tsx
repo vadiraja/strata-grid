@@ -8,6 +8,7 @@ import type {
   ColumnSort,
   EditableConfig,
   GridTheme,
+  PaginationConfig,
   SelectionConfig,
   SelectionState,
   TreeDataConfig,
@@ -19,6 +20,11 @@ import { resolveTreeColumnId } from '../model/resolve-tree-column-id';
 import { useSelection } from '../model/use-selection';
 import { getLeafColumns, normalizeColumns } from '../model/normalize-columns';
 import { InMemoryDataSource } from '../data/in-memory-data-source';
+import type { DataSource } from '../data/data-source';
+import { useLazyTree } from '../data/use-lazy-tree';
+import { useServerDataSource } from '../data/use-server-data-source';
+import { usePagination } from '../data/use-pagination';
+import { useLiveUpdates } from '../data/use-live-updates';
 import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
 import { useBomRollup } from '../model/use-bom-rollup';
@@ -32,12 +38,20 @@ import {
   type TreeState,
 } from '../tree-editor';
 import { GridRoot } from './GridRoot';
+import { LoadingOverlay } from './LoadingOverlay';
+import { PaginationBar } from './PaginationBar';
 
 export interface DataGridProps<TRow> {
   /** The rows to display. */
   data: TRow[];
   /** The column definitions. */
   columns: AnyColumn<TRow>[];
+  /**
+   * Optional external data source with server-side capabilities (lazy loading,
+   * pagination, etc.). When provided, the grid uses this instead of creating
+   * an InMemoryDataSource from `data`.
+   */
+  dataSource?: DataSource<TRow>;
   /** Height of the scrollable body area in pixels. Defaults to 400. */
   height?: number;
   /**
@@ -88,6 +102,8 @@ export interface DataGridProps<TRow> {
   onTreeChange?: (state: TreeState<TRow>, changeSet: ChangeSet<TRow>) => void;
   /** Configures aggregate rendering for grouped rows and the footer. */
   aggregation?: AggregationConfig;
+  /** Configures pagination behavior. */
+  pagination?: PaginationConfig;
   /** Called when a cell edit starts. */
   onCellEditStart?: (event: { rowId: string; columnId: string; value: unknown }) => void;
   /** Called when a cell edit ends. */
@@ -203,31 +219,75 @@ export function DataGrid<TRow>({
   treeEditor,
   onTreeChange,
   aggregation,
+  pagination,
   onCellEditStart,
   onCellEditEnd,
   onRowEditStart,
   onRowEditEnd,
+  dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
-  const dataSource = useMemo(() => new InMemoryDataSource(data), [data]);
-  const rows = dataSource.load();
+  const internalDataSource = useMemo(() => new InMemoryDataSource(data), [data]);
+  const dataSource = externalDataSource ?? internalDataSource;
+
+  // Detect server-side capabilities
+  const capabilities = useMemo(
+    () => dataSource.capabilities?.() ?? {},
+    [dataSource],
+  );
+  const hasServerCapabilities =
+    capabilities.serverSort || capabilities.serverFilter;
+
+  // Server data source hook — always called (hooks can't be conditional)
+  const serverDS = useServerDataSource(dataSource);
+
+  // Pagination hook — always called (hooks can't be conditional)
+  const paginationState = usePagination(dataSource, {
+    pageSize: pagination?.pageSize,
+    mode: pagination?.mode,
+  });
+
+  // Use server-loaded data when server capabilities exist, otherwise load synchronously
+  const rows = useMemo(() => {
+    if (pagination && 'loadPage' in dataSource && dataSource.loadPage) {
+      return paginationState.data;
+    }
+    if (hasServerCapabilities) {
+      return serverDS.data;
+    }
+    const result = dataSource.load();
+    return Array.isArray(result) ? result : [];
+  }, [dataSource, hasServerCapabilities, serverDS.data, pagination, paginationState.data]);
+
+  // Live updates — subscribes to data source changes and reconciles them
+  const getRowIdForLive = useMemo(
+    () => (treeData ? (row: TRow) => treeData.getRowId(row) : (row: TRow) => String((row as Record<string, unknown>).id ?? '')),
+    [treeData],
+  );
+  const liveUpdates = useLiveUpdates(dataSource, rows, getRowIdForLive, {
+    onRefreshNeeded: () => serverDS.refresh(),
+    getParentId: treeData?.getParentId,
+  });
+  const effectiveRows = capabilities.liveUpdates ? liveUpdates.data : rows;
+
+  const lazyTree = useLazyTree(dataSource);
   const leafColumns = useMemo(() => getLeafColumns(columns), [columns]);
   const tanstackColumns = useMemo(() => normalizeColumns(columns), [columns]);
 
   const tree = useMemo(
-    () => (treeData ? normalizeTreeData(rows, treeData) : null),
-    [rows, treeData],
+    () => (treeData ? normalizeTreeData(effectiveRows, treeData) : null),
+    [effectiveRows, treeData],
   );
   const treeEditingEnabled = treeData !== undefined && treeEditor !== undefined;
   const initialTreeState = useMemo(
     () =>
       treeData
-        ? buildTreeState(rows, {
+        ? buildTreeState(effectiveRows, {
             getRowId: treeData.getRowId,
             getChildren: treeData.getChildren,
             getParentId: treeData.getParentId,
           })
         : buildTreeState<TRow>([], { getRowId: (_row) => '' }),
-    [rows, treeData],
+    [effectiveRows, treeData],
   );
   const treeEditorApi = useTreeEditor({
     initialState: initialTreeState,
@@ -266,7 +326,7 @@ export function DataGrid<TRow>({
   });
 
   const table = useGridTable({
-    data: editedTree?.rootRows ?? (tree ? tree.rootRows : rows),
+    data: editedTree?.rootRows ?? (tree ? tree.rootRows : effectiveRows),
     columns: leafColumns,
     tanstackColumns,
     getSubRows: editedTree?.getSubRows ?? tree?.getSubRows,
@@ -286,7 +346,7 @@ export function DataGrid<TRow>({
     onColumnSizingChange,
   });
 
-  const selectableRows = editedTree?.rootRows ?? (tree ? tree.rootRows : rows);
+  const selectableRows = editedTree?.rootRows ?? (tree ? tree.rootRows : effectiveRows);
   const getSelectionRowId = useMemo(
     () =>
       treeData
@@ -365,14 +425,49 @@ export function DataGrid<TRow>({
       enableTreeKeyboard={
         treeEditingEnabled && treeEditor?.enableIndent !== false
       }
+      lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
     />
+  );
+
+  // Show loading overlay only for server-side reloads (not initial load)
+  const showOverlay = !!(hasServerCapabilities && serverDS.isLoading);
+
+  const paginationBar = pagination && 'loadPage' in dataSource && dataSource.loadPage ? (
+    <PaginationBar
+      currentPage={paginationState.currentPage}
+      totalPages={paginationState.totalPages}
+      pageSize={paginationState.pageSize}
+      totalCount={paginationState.totalCount}
+      pageSizeOptions={pagination.pageSizeOptions}
+      mode={pagination.mode}
+      hasMore={paginationState.hasMore}
+      isLoading={paginationState.isLoading}
+      onPageChange={paginationState.goToPage}
+      onPageSizeChange={paginationState.setPageSize}
+      onLoadMore={paginationState.loadMore}
+    />
+  ) : null;
+
+  const wrappedContent = hasServerCapabilities ? (
+    <div style={{ position: 'relative' }}>
+      {gridContent}
+      {paginationBar}
+      <LoadingOverlay visible={showOverlay} />
+    </div>
+  ) : paginationBar ? (
+    <div>
+      {gridContent}
+      {paginationBar}
+    </div>
+  ) : (
+    gridContent
   );
 
   return editable ? (
     <EditContext.Provider value={{ editState, config: editable }}>
-      {gridContent}
+      {wrappedContent}
     </EditContext.Provider>
   ) : (
-    gridContent
+    wrappedContent
   );
 }

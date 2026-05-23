@@ -120,6 +120,17 @@ describe('DataGrid — keyboard navigation', () => {
     expect(container.querySelector('#strata-cell-0-0')).toHaveTextContent('Alpha');
   });
 
+  it('selects an individual cell by clicking it', () => {
+    const { container } = render(<DataGrid data={flatData} columns={flatColumns} />);
+    const grid = container.querySelector('.strata-grid')!;
+
+    fireEvent.click(screen.getByText('20'));
+
+    expect(container.querySelectorAll('.strata-cell-focused')).toHaveLength(1);
+    expect(container.querySelector('.strata-cell-focused')).toHaveTextContent('20');
+    expect(grid).toHaveAttribute('aria-activedescendant', 'strata-cell-1-1');
+  });
+
   it('toggles tree expansion with Enter on the tree column', () => {
     const { container } = render(
       <DataGrid

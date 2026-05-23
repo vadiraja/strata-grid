@@ -201,6 +201,18 @@ export interface AggregationConfig {
 }
 
 /**
+ * Configures pagination behavior.
+ */
+export interface PaginationConfig {
+  /** Rows per page. Default: 50. */
+  pageSize?: number;
+  /** Available page size options for the user to choose from. */
+  pageSizeOptions?: number[];
+  /** Pagination mode. Default: 'pages'. */
+  mode?: 'pages' | 'loadMore' | 'infinite';
+}
+
+/**
  * Context passed to a custom editor component.
  */
 export interface EditorContext<TRow> {
