@@ -205,8 +205,49 @@ to `localStorage` for "remember my last view" behavior.
 
 ## Step 4: row actions
 
-Row-level actions (view, edit, delete, etc.) are a synthetic column at the
-right edge with a `cell` renderer:
+Use the first-class `rowActions` prop (available from `0.2.0-alpha.0`):
+
+```tsx
+<DataGrid
+  // ...
+  rowActions={{
+    display: 'inline',          // or 'menu' for a kebab dropdown
+    pin: 'right',
+    actions: [
+      {
+        id: 'view',
+        label: 'View',
+        icon: <EyeIcon />,
+        onClick: (row) => navigate(`/suppliers/${row.id}`),
+      },
+      {
+        id: 'edit',
+        label: 'Edit',
+        icon: <EditIcon />,
+        onClick: (row) => openEditDialog(row),
+        disabled: (row) => row.status === 'archived',
+      },
+      {
+        id: 'delete',
+        label: 'Delete',
+        icon: <TrashIcon />,
+        onClick: (row) => confirmDelete(row),
+        visible: (row) => canDelete(row),
+      },
+    ],
+  }}
+/>
+```
+
+Per-row visibility (`visible(row)`) and disabled state (`disabled(row)`)
+are evaluated for every row. Keyboard navigation, ARIA semantics, and
+focus management are handled by the grid.
+
+#### Escape hatch — custom cell renderer
+
+If `rowActions` doesn't fit your case (e.g., you need a custom layout, a
+bulk-action toolbar that swaps in on selection, or grouped submenus), drop
+back to a synthetic column with a `cell` renderer:
 
 ```tsx
 const columns: ColumnDef<Supplier>[] = [
@@ -216,19 +257,12 @@ const columns: ColumnDef<Supplier>[] = [
     header: '',
     width: 96,
     pin: 'right',
-    cell: ({ row }) => (
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button onClick={() => navigate(`/suppliers/${row.id}`)}>View</button>
-        <button onClick={() => openEditDialog(row)}>Edit</button>
-      </div>
-    ),
+    cell: ({ row }) => <YourCustomActions row={row} />,
   },
 ];
 ```
 
-Pin it `right` so it stays visible during horizontal scroll. We're tracking
-a first-class `rowActions` prop as a follow-up; until then, this pattern is
-the supported approach.
+Both patterns are supported; `rowActions` is the more ergonomic default.
 
 ## Step 5: status bar (count, selection, active filters)
 
@@ -377,12 +411,17 @@ adapter looked like or what you wished was first-class.
 Shipped in `0.2.0-alpha.0`:
 
 - **`onPaginationChange`** — surfaces `{ currentPage, totalCount, isLoading,
-  hasMore, error }` directly from the grid, replacing the adapter-subscribe
-  pattern in Step 5.
-
-Planned (no breaking changes):
-
-- **Typed column filters** — `filter: { type: 'select', options, multi? }`
-  and friends, for enum/boolean/date columns with constrained operators.
+  hasMore, error }` directly from the grid.
+- **Typed column filters** — `filter: { type: 'select' | 'boolean' | 'date'
+  | 'text' | 'number', options?, multi?, range?, operators? }` for
+  constrained per-column UIs and emitted operators. See the
+  [typed filters guide](/strata-grid/guides/typed-filters/).
 - **`rowActions` prop** — first-class actions column with inline / kebab
   display, conditional visibility, and built-in keyboard accessibility.
+
+Planned (0.3.0+):
+
+- **`type: 'lookup'`** — async option loading for foreign-key columns.
+- **`type: 'custom'`** — escape hatch for fully custom filter UIs.
+- **Discrete `onSortChange` / `onFilterChange` / `onSearchChange`** —
+  surgical callbacks beyond `onViewStateChange`.

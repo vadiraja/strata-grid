@@ -186,6 +186,46 @@ export interface SelectionState {
   selectedIds: Set<string>;
 }
 
+/**
+ * A single per-row action shown in the row-actions column.
+ */
+export interface RowAction<TRow> {
+  /** Stable, unique id for the action. */
+  id: string;
+  /** Human-readable label (used for aria-label, menu text, and tooltip). */
+  label: string;
+  /** Optional icon node. Renders as the button content in `inline` mode. */
+  icon?: ReactNode;
+  /** Click handler — receives the row and the original mouse event. */
+  onClick: (row: TRow, event: React.MouseEvent) => void;
+  /** When provided, hides the action for rows where this returns false. */
+  visible?: (row: TRow) => boolean;
+  /** When provided, disables the action for rows where this returns true. */
+  disabled?: (row: TRow) => boolean;
+}
+
+/**
+ * Configures the row-actions column. When set, `<DataGrid>` injects a
+ * synthetic pinned column at the configured edge that renders per-row
+ * action buttons.
+ */
+export interface RowActionsConfig<TRow> {
+  /** The actions to render per row. */
+  actions: RowAction<TRow>[];
+  /**
+   * Display style. `'inline'` renders icon buttons in a horizontal strip.
+   * `'menu'` renders a kebab dropdown. Defaults to `'inline'`.
+   */
+  display?: 'inline' | 'menu';
+  /**
+   * Which edge to pin the actions column to. Default: `'right'`. Set to
+   * `false` to leave it unpinned.
+   */
+  pin?: 'left' | 'right' | false;
+  /** Column width in pixels. Defaults to a width derived from the action count. */
+  width?: number;
+}
+
 /** Built-in grid themes. */
 export type GridTheme = 'light' | 'dark' | 'high-contrast-light' | 'high-contrast-dark' | 'auto' | (string & {});
 

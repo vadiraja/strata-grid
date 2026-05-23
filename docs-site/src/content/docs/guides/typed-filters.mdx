@@ -1,0 +1,222 @@
+---
+title: Typed column filters
+description: Per-column filter configuration for text, number, select, boolean, and date columns with constrained operators.
+sidebar:
+  order: 12
+---
+
+import TypedFiltersExample from '../../../components/examples/typed-filters/TypedFiltersExample.tsx';
+
+A text input is fine for filtering names and notes — but enums, booleans,
+dates, and numeric ranges need constrained UIs and constrained operators.
+Strata's `ColumnDef.filter` field accepts a typed configuration object
+that controls both:
+
+```ts
+filter: 'text' | 'number'                       // backward-compat shortcuts
+     | { type: 'text';    operators?: FilterOperator[] }
+     | { type: 'number';  operators?: FilterOperator[] }
+     | { type: 'select';  options: SelectOption[]; multi?: boolean; operators?: FilterOperator[] }
+     | { type: 'boolean' }
+     | { type: 'date';    range?: boolean; operators?: FilterOperator[] }
+```
+
+The same operator constraints flow into the emitted `FilterExpression`,
+so your server-driven adapter can rely on receiving only operators the
+backend actually supports.
+
+## String shortcuts (backward compatible)
+
+The old `filter: 'text'` and `filter: 'number'` shortcuts still work and
+expand to sensible defaults:
+
+```tsx
+{ id: 'name', header: 'Name', accessor: 'name', filter: 'text' }
+{ id: 'qty',  header: 'Qty',  accessor: 'qty',  filter: 'number' }
+```
+
+`'text'` allows `contains`, `equals`, `notEquals`, `startsWith`, `endsWith`,
+`isEmpty`, `isNotEmpty`. `'number'` allows `equals`, `notEquals`,
+`greaterThan`, `lessThan`, `greaterOrEqual`, `lessOrEqual`, `between`,
+`isEmpty`, `isNotEmpty`.
+
+When `operators.length > 1`, the filter popover shows an operator dropdown
+alongside the text input. The emitted `FilterExpression` carries the chosen
+operator.
+
+## `type: 'select'` — enum columns
+
+For a single-select dropdown over a fixed set of values:
+
+```tsx
+{
+  id: 'status',
+  header: 'Status',
+  accessor: 'status',
+  filter: {
+    type: 'select',
+    options: [
+      { label: 'Active', value: 'active' },
+      { label: 'Pending', value: 'pending' },
+      { label: 'Inactive', value: 'inactive' },
+    ],
+  },
+}
+```
+
+Default operators: `equals`, `notEquals`. The emitted filter expression
+when the user picks "Active":
+
+```ts
+{ columnId: 'status', operator: 'equals', value: 'active' }
+```
+
+### Multi-select
+
+Set `multi: true` to render a checkbox list. The user can pick multiple
+values and the emitted operator becomes `in`:
+
+```tsx
+{
+  id: 'kind',
+  header: 'Kind',
+  accessor: 'kind',
+  filter: {
+    type: 'select',
+    multi: true,
+    options: [
+      { label: 'Vendor', value: 'vendor' },
+      { label: 'Supplier', value: 'supplier' },
+      { label: 'Both', value: 'both' },
+    ],
+  },
+}
+```
+
+Emitted expression:
+
+```ts
+{ columnId: 'kind', operator: 'in', value: ['vendor', 'both'] }
+```
+
+## `type: 'boolean'`
+
+A tri-state Yes / No / Any filter:
+
+```tsx
+{
+  id: 'isPreferred',
+  header: 'Preferred',
+  accessor: 'isPreferred',
+  filter: { type: 'boolean' },
+}
+```
+
+Emits:
+
+```ts
+{ columnId: 'isPreferred', operator: 'equals', value: true }
+```
+
+…or clears the filter when "Any" is selected.
+
+## `type: 'date'`
+
+Single date or date range:
+
+```tsx
+{
+  id: 'createdAt',
+  header: 'Created',
+  accessor: 'createdAt',
+  filter: { type: 'date' },
+}
+```
+
+Default single-date operators: `equals`, `notEquals`, `greaterThan`,
+`lessThan`. When more than one is allowed, an operator dropdown appears
+next to the date input.
+
+### Date ranges
+
+Set `range: true` for from-to inputs that emit a `between` filter:
+
+```tsx
+{
+  id: 'onboardedAt',
+  header: 'Onboarded',
+  accessor: 'onboardedAt',
+  filter: { type: 'date', range: true },
+}
+```
+
+Emits:
+
+```ts
+{ columnId: 'onboardedAt', operator: 'between', value: ['2025-01-01', '2025-06-30'] }
+```
+
+Values are ISO date strings (`YYYY-MM-DD`). The filter is only emitted when
+both ends of the range have a value; clearing both clears the filter.
+
+## Constraining operators per column
+
+The `operators?` array constrains both:
+
+1. **The filter UI menu** — only listed operators appear in the dropdown.
+2. **The emitted operator** — the default is `operators[0]`.
+
+Example: restrict the `status` column to equals/notEquals/in so the server
+never receives a malformed `contains` request:
+
+```tsx
+{
+  id: 'status',
+  header: 'Status',
+  accessor: 'status',
+  filter: {
+    type: 'select',
+    options: [/* ... */],
+    operators: ['equals', 'notEquals', 'in', 'notIn'],
+  },
+}
+```
+
+This is the cleanest way to keep client-side filter UIs aligned with
+server-side capabilities — no defensive cleanup in your adapter needed.
+
+## Live example
+
+The grid below shows all five filter types in one place. Apply filters
+and watch the emitted `FilterExpression[]` update in real time.
+
+<TypedFiltersExample client:load />
+
+## Mapping to your server contract
+
+Your data-source adapter's job is to translate `FilterExpression[]` into
+your server's wire format. For an ADR-026-style `where[]=field:op:value`
+contract:
+
+```ts
+function encodeWhere(filters: FilterExpression[]): string[] {
+  return filters.flatMap((f) => {
+    if (!f.columnId || !f.operator) return [];
+    const value = Array.isArray(f.value) ? f.value.join(',') : String(f.value);
+    return [`${f.columnId}:${f.operator}:${value}`];
+  });
+}
+```
+
+Operator names map cleanly: `equals` → `eq`, `notEquals` → `neq`, `in` →
+`in`, `between` → `between`, etc. Adjust the mapping in `encodeWhere` to
+your server's vocabulary.
+
+## What about custom filter UIs?
+
+`{ type: 'custom' }` isn't shipping in 0.2.0 — for unusual cases (e.g.,
+foreign-key picker with async option loading) you can still embed any
+React UI in a column's `cell` renderer or render the filter UI in your
+application shell and feed `FilterExpression[]` via the `advancedFilter`
+prop or `defaultViewState`. A `type: 'lookup'` filter with async option
+loading is on the 0.3.0 candidate list.

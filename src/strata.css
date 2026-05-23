@@ -242,6 +242,113 @@
   color: var(--strata-text-muted);
 }
 
+/* 0.2.0 — row actions column */
+.strata-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.strata-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--strata-border);
+  border-radius: var(--strata-radius-button);
+  background: var(--strata-bg-input);
+  color: var(--strata-text);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.strata-row-action:hover:not(:disabled) {
+  background: var(--strata-bg-filter-button-hover);
+}
+
+.strata-row-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.strata-row-actions-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.strata-row-actions-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--strata-radius-button);
+  background: transparent;
+  color: var(--strata-text);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.strata-row-actions-menu-button:hover {
+  background: var(--strata-bg-filter-button-hover);
+}
+
+.strata-row-actions-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--strata-border);
+  border-radius: 6px;
+  background: var(--strata-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 140px;
+}
+
+.strata-row-actions-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--strata-text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.strata-row-actions-menu-item:hover:not(:disabled) {
+  background: var(--strata-bg-filter-button-hover);
+}
+
+.strata-row-actions-menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.strata-row-actions-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
 .strata-row-container {
   box-sizing: border-box;
   display: flex;

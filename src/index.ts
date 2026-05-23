@@ -33,6 +33,8 @@ export type {
   RowEditEvent,
   RowEditEndEvent,
   AggregateType,
+  RowAction,
+  RowActionsConfig,
 } from './model/types';
 export { isColumnGroup } from './model/types';
 export { computeFlexWidths } from './model/compute-flex-widths';

@@ -7,6 +7,7 @@ import type {
   AdvancedFilterConfig,
   AnyColumn,
   AggregationConfig,
+  ColumnDef,
   ColumnManagementConfig,
   ColumnOrderState,
   ColumnPinningState,
@@ -17,11 +18,13 @@ import type {
   ExportConfig,
   GridTheme,
   PaginationConfig,
+  RowActionsConfig,
   SelectionConfig,
   SelectionState,
   TreeDataConfig,
   ViewState,
 } from '../model/types';
+import { RowActionsCell } from './RowActionsCell';
 import { useColorScheme } from '../themes/use-color-scheme';
 import { resolveTheme } from '../themes/resolve-theme';
 import { DEFAULT_GRID_HEIGHT } from '../model/constants';
@@ -178,6 +181,13 @@ export interface DataGridProps<TRow> {
     hasMore: boolean;
     error: Error | null;
   }) => void;
+  /**
+   * Renders a built-in actions column with per-row buttons. Supports inline
+   * icon buttons and kebab-menu displays. The column is pinned to the right
+   * edge by default; set `pin: false` to leave it unpinned, or `pin: 'left'`
+   * to pin it to the left.
+   */
+  rowActions?: RowActionsConfig<TRow>;
 }
 
 function collectAllRowIds<TRow>(
@@ -318,6 +328,7 @@ export function DataGrid<TRow>({
   onRowEditStart,
   onRowEditEnd,
   onPaginationChange,
+  rowActions,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -406,8 +417,32 @@ export function DataGrid<TRow>({
   const effectiveRows = capabilities.liveUpdates ? liveUpdates.data : rows;
 
   const lazyTree = useLazyTree(dataSource);
-  const leafColumns = useMemo(() => getLeafColumns(columns), [columns]);
-  const tanstackColumns = useMemo(() => normalizeColumns(columns), [columns]);
+
+  // Inject row-actions column when configured. The synthetic column is
+  // appended to the user's columns array and pinned to the configured edge.
+  const columnsWithActions = useMemo<AnyColumn<TRow>[]>(() => {
+    if (!rowActions?.actions?.length) return columns;
+    const visibleActions = rowActions.actions;
+    const defaultWidth = Math.max(40, visibleActions.length * 36 + 16);
+    const actionsColumn: ColumnDef<TRow> = {
+      id: '__strata_actions__',
+      header: '',
+      width: rowActions.width ?? defaultWidth,
+      pin: rowActions.pin === false ? undefined : rowActions.pin ?? 'right',
+      sortable: false,
+      cell: ({ row }) => <RowActionsCell config={rowActions} row={row} />,
+    };
+    return [...columns, actionsColumn];
+  }, [columns, rowActions]);
+
+  const leafColumns = useMemo(
+    () => getLeafColumns(columnsWithActions),
+    [columnsWithActions],
+  );
+  const tanstackColumns = useMemo(
+    () => normalizeColumns(columnsWithActions),
+    [columnsWithActions],
+  );
 
   const tree = useMemo(
     () => (treeData ? normalizeTreeData(effectiveRows, treeData) : null),
