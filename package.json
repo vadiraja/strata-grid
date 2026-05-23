@@ -45,8 +45,16 @@
   },
   "files": [
     "dist",
-    "NOTICE"
+    "LICENSE",
+    "NOTICE",
+    "README.md"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "workspaces": [
     "docs-site"
   ],
@@ -56,7 +64,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs"
+    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",
