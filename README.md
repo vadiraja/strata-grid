@@ -45,6 +45,23 @@ but you must build the entire UI yourself.** Strata fills exactly that gap — i
 *is* that UI, built on TanStack Table's tree-native row model so sorting and
 filtering compose correctly with the hierarchy.
 
+## Built for the enterprise application landscape
+
+Hierarchical and transactional data is the lifeblood of enterprise systems.
+Strata is a drop-in tree grid for the screens those systems live on:
+
+| Domain | Where Strata fits |
+|---|---|
+| **PLM** | Bills of materials, where-used analyses, multi-level part hierarchies, engineering change orders |
+| **ERP** | Chart of accounts, organization hierarchies, project WBS, inventory rollups, approval workflows |
+| **CRM** | Account/contact trees, opportunity pipelines, territory hierarchies, nested case histories |
+| **EAM** | Asset hierarchies, location/site trees, maintenance work-order rollups |
+| **HRIS** | Org charts, reporting lines, position management, compensation rollups |
+| **Other** | E-commerce category trees, IAM nested permissions, JSON/data inspectors, file explorers |
+
+Free, Apache-2.0 licensed, no paywalled enterprise tier — the same grid for
+your prototype and your shipping product.
+
 ## Status
 
 Strata is in **alpha**. The core grid, tree data, editing, aggregation,
