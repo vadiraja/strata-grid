@@ -29,3 +29,11 @@ export type {
   OutdentNodeOptions,
 } from './commands';
 export { isDescendant, validateCycleAndSelf } from './validators';
+export { calculateDropPosition } from './drop-position';
+export type { DropPosition } from './drop-position';
+export { useDragDrop } from './use-drag-drop';
+export type {
+  UseDragDropOptions,
+  UseDragDropReturn,
+  DragDropState,
+} from './use-drag-drop';

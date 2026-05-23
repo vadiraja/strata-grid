@@ -677,3 +677,53 @@
   color: #fff;
   background: var(--strata-accent);
 }
+
+
+/* ===== M3 · drag-and-drop ===== */
+
+.strata-row-dragging {
+  opacity: 0.5;
+}
+
+.strata-row-drop-target {
+  position: relative;
+}
+
+.strata-drop-indicator-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--strata-accent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.strata-drop-indicator-before {
+  top: -1px;
+}
+
+.strata-drop-indicator-after {
+  bottom: -1px;
+}
+
+.strata-drop-indicator-child {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--strata-accent) 18%, transparent);
+  outline: 1px solid var(--strata-accent);
+  outline-offset: -1px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.strata-drop-indicator-line.strata-drop-indicator-invalid {
+  background: var(--strata-error, #c0392b);
+}
+
+.strata-drop-indicator-child.strata-drop-indicator-invalid {
+  background: color-mix(in srgb, var(--strata-error, #c0392b) 18%, transparent);
+  outline-color: var(--strata-error, #c0392b);
+  cursor: not-allowed;
+}
+
