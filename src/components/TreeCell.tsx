@@ -9,6 +9,10 @@ export interface TreeCellProps<TRow> {
   isFocused?: boolean;
   /** Stable active-descendant id when focused. */
   focusId?: string;
+  /** Column id that displays computed BOM extended quantities. */
+  rollupTargetColumnId?: string;
+  /** Extended quantities keyed by row id. */
+  extendedQuantities?: Map<string, number>;
 }
 
 /**
@@ -20,6 +24,8 @@ export function TreeCell<TRow>({
   cell,
   isFocused,
   focusId,
+  rollupTargetColumnId,
+  extendedQuantities,
 }: TreeCellProps<TRow>) {
   const { row } = cell;
   const width = cell.column.getSize();
@@ -54,7 +60,12 @@ export function TreeCell<TRow>({
           aria-hidden="true"
         />
       )}
-      <span className="strata-tree-label">{renderCellContent(cell)}</span>
+      <span className="strata-tree-label">
+        {cell.column.id === rollupTargetColumnId &&
+        extendedQuantities?.has(cell.row.id)
+          ? extendedQuantities.get(cell.row.id)
+          : renderCellContent(cell)}
+      </span>
     </div>
   );
 }

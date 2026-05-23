@@ -16,7 +16,21 @@ export type {
   SelectionConfig,
   SelectionState,
   GridTheme,
+  AggregationConfig,
+  ExtendedQuantityConfig,
+  EditableConfig,
+  EditorContext,
+  EditorType,
+  ValidationState,
+  Validator,
+  ValidationResult,
+  CellEditEvent,
+  CellEditEndEvent,
+  RowEditEvent,
+  RowEditEndEvent,
+  AggregateType,
 } from './model/types';
 export { isColumnGroup } from './model/types';
 export { InMemoryDataSource } from './data/in-memory-data-source';
 export type { DataSource } from './data/data-source';
+export type { GridApi } from './model/use-grid-api';

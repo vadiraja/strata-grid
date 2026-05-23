@@ -3,8 +3,13 @@ import type { Table, Row, Cell } from '@tanstack/react-table';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { GridRow } from './GridRow';
 import { GroupRow } from './GroupRow';
+import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import type { ColumnLayout } from './column-layout';
+import { useEditContext } from '../model/edit-context';
+import type { ColumnDef } from '../model/types';
+import type { UseAggregationReturn } from '../model/use-aggregation';
+import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -25,6 +30,10 @@ export interface BodyViewportProps<TRow> {
   activeCell?: [number, number];
   /** Visible column ids in keyboard order, including the synthetic selection column. */
   keyboardColumnIds?: string[];
+  /** Aggregate state for grouped rows. */
+  aggregation?: UseAggregationReturn<TRow>;
+  /** Computed BOM extended quantities. */
+  bomRollup?: UseBomRollupReturn;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -38,9 +47,13 @@ export function BodyViewport<TRow>({
   selection,
   activeCell,
   keyboardColumnIds = [],
+  aggregation,
+  bomRollup,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
+  const editCtx = useEditContext();
+  const showRowEditControls = editCtx?.config.mode === 'row';
 
   if (rows.length === 0) {
     return (
@@ -97,6 +110,10 @@ export function BodyViewport<TRow>({
                 style={rowStyle}
                 isFocused={activeCell?.[0] === virtualRow.index}
                 focusId={focusId}
+                aggregateColumns={
+                  aggregation?.aggregateColumns as ColumnDef<TRow>[] | undefined
+                }
+                aggregates={aggregation?.getGroupAggregates(row)}
               />
             );
           }
@@ -104,9 +121,13 @@ export function BodyViewport<TRow>({
           return (
             <div
               key={virtualRow.key}
-              className={`strata-row-container${
-                selection?.isSelected(row.id) ? ' strata-row-selected' : ''
-              }`}
+              className={[
+                'strata-row-container',
+                selection?.isSelected(row.id) && 'strata-row-selected',
+                showRowEditControls && 'strata-row-editing-enabled',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               role="row"
               aria-level={isTree ? row.depth + 1 : undefined}
               aria-expanded={
@@ -124,6 +145,8 @@ export function BodyViewport<TRow>({
                     selection={selection}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                 </div>
               )}
@@ -139,6 +162,8 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                 </div>
               )}
@@ -166,6 +191,8 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -175,6 +202,11 @@ export function BodyViewport<TRow>({
                   )}
                 </div>
               </div>
+              {showRowEditControls && (
+                <div className="strata-row-edit-pane">
+                  <RowEditControls row={row} />
+                </div>
+              )}
               {columnLayout.rightColumns.length > 0 && (
                 <div
                   className="strata-pane-right"

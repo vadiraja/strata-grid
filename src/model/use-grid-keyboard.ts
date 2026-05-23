@@ -13,6 +13,8 @@ export interface GridKeyboardOptions {
   onExpandToggle?: (rowIndex: number) => void;
   /** Called when Enter/Space toggles a selectable row. */
   onSelectionToggle?: (rowIndex: number) => void;
+  /** Called when Enter activates the focused editable cell. */
+  onCellActivate?: (rowIndex: number, colIndex: number) => void;
   /** Returns whether a column index is the tree column. */
   isTreeColumn?: (colIndex: number) => boolean;
   /** Returns whether a column index is the selection column. */
@@ -39,6 +41,7 @@ export function useGridKeyboard({
   initialCell = [0, 0],
   onExpandToggle,
   onSelectionToggle,
+  onCellActivate,
   isTreeColumn = () => false,
   isSelectionColumn = () => false,
 }: GridKeyboardOptions): GridKeyboardReturn {
@@ -92,11 +95,21 @@ export function useGridKeyboard({
           );
           break;
         case 'Enter':
+          if (isSelectionColumn(activeCell[1])) {
+            onSelectionToggle?.(activeCell[0]);
+          } else if (isTreeColumn(activeCell[1])) {
+            onExpandToggle?.(activeCell[0]);
+          } else {
+            onCellActivate?.(activeCell[0], activeCell[1]);
+          }
+          break;
         case ' ':
           if (isSelectionColumn(activeCell[1])) {
             onSelectionToggle?.(activeCell[0]);
           } else if (isTreeColumn(activeCell[1])) {
             onExpandToggle?.(activeCell[0]);
+          } else {
+            handled = false;
           }
           break;
         default:
@@ -114,6 +127,7 @@ export function useGridKeyboard({
       isSelectionColumn,
       isTreeColumn,
       onExpandToggle,
+      onCellActivate,
       onSelectionToggle,
       rowCount,
     ],

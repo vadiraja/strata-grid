@@ -4,6 +4,7 @@ import { isColumnGroup } from './types';
 import { readValue } from './read-value';
 import { DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './constants';
 import { textFilterFn, numberFilterFn } from './tree-filter-fn';
+import { toTanstackAggregationFn } from './aggregate-fns';
 
 function resolveFilterFn(filterType: FilterType | false | undefined) {
   if (filterType === 'text') {
@@ -31,6 +32,9 @@ function toTanstackLeaf<TRow>(
     filterFn: resolveFilterFn(column.filter),
     enablePinning: true,
     enableGrouping: true,
+    aggregationFn: column.aggregate
+      ? toTanstackAggregationFn(column.aggregate)
+      : undefined,
   };
 }
 

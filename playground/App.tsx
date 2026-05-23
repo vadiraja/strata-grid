@@ -3,13 +3,23 @@ import {
   DataGrid,
   type AnyColumn,
   type ColumnDef,
+  type EditorContext,
   type GridTheme,
   type SelectionConfig,
   type TreeDataConfig,
 } from '../src/index';
 import '../src/strata.css';
 
-type ExampleKey = 'tree' | 'wide' | 'selection' | 'columnGroups' | 'rowGrouping';
+type ExampleKey =
+  | 'flat'
+  | 'tree'
+  | 'wide'
+  | 'selection'
+  | 'columnGroups'
+  | 'rowGrouping'
+  | 'bomEditing'
+  | 'editing'
+  | 'rowEditing';
 
 interface ExampleConfig {
   key: ExampleKey;
@@ -18,6 +28,11 @@ interface ExampleConfig {
 }
 
 const examples: ExampleConfig[] = [
+  {
+    key: 'flat',
+    label: 'Data Grid',
+    summary: 'A regular flat data grid with sorting, filtering, column resize, and reorder.',
+  },
   {
     key: 'tree',
     label: 'Tree BOM',
@@ -43,6 +58,21 @@ const examples: ExampleConfig[] = [
     label: 'Row Grouping',
     summary: 'Flat product rows grouped by category and subcategory with collapsible group headers.',
   },
+  {
+    key: 'bomEditing',
+    label: 'BOM Editing',
+    summary: 'Editable BOM quantities with extended quantity roll-up, validation, and a custom type editor.',
+  },
+  {
+    key: 'editing',
+    label: 'Editing',
+    summary: 'Inline text, number, select, date, and checkbox editors with Enter, blur, and Escape handling.',
+  },
+  {
+    key: 'rowEditing',
+    label: 'Row Editing',
+    summary: 'Row-level editing with Edit, Save, Cancel, and validation-gated commits.',
+  },
 ];
 
 interface BomNode {
@@ -52,6 +82,7 @@ interface BomNode {
   qty: number;
   plant: string;
   status: string;
+  materialType?: 'Finished Good' | 'Subassembly' | 'Component';
   uom: string;
   children?: BomNode[];
 }
@@ -112,6 +143,61 @@ const bomColumns: ColumnDef<BomNode>[] = [
   { id: 'plant', header: 'Plant', accessor: 'plant', width: 100, filter: 'text' },
   { id: 'status', header: 'Status', accessor: 'status', width: 120, filter: 'text' },
   { id: 'qty', header: 'Qty', accessor: 'qty', width: 80, filter: 'number' },
+  { id: 'extQty', header: 'Ext Qty', width: 90 },
+  { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
+];
+
+const materialTypeChoices = ['Finished Good', 'Subassembly', 'Component'] as const;
+
+function MaterialTypeEditor(ctx: EditorContext<BomNode>) {
+  return (
+    <select
+      className="strata-editor-input"
+      value={String(ctx.value ?? '')}
+      onChange={(event) => {
+        ctx.onChange(event.target.value);
+        void ctx.onCommit();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') ctx.onDiscard();
+      }}
+      autoFocus
+    >
+      {materialTypeChoices.map((choice) => (
+        <option key={choice} value={choice}>
+          {choice}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const editableBomColumns: ColumnDef<BomNode>[] = [
+  { id: 'material', header: 'Material', accessor: 'material', width: 150, isTreeColumn: true, pin: 'left', filter: 'text' },
+  { id: 'description', header: 'Description', accessor: 'description', width: 240, filter: 'text' },
+  {
+    id: 'materialType',
+    header: 'Type',
+    accessor: (row) =>
+      row.materialType ?? (row.id.startsWith('FG') ? 'Finished Good' : row.children ? 'Subassembly' : 'Component'),
+    width: 140,
+    editable: true,
+    editor: MaterialTypeEditor,
+  },
+  {
+    id: 'qty',
+    header: 'Qty',
+    accessor: 'qty',
+    width: 90,
+    filter: 'number',
+    editable: true,
+    editorType: 'number',
+    validate: (value) => {
+      const qty = Number(value);
+      return Number.isFinite(qty) && qty > 0 ? true : 'Qty must be greater than 0';
+    },
+  },
+  { id: 'extQty', header: 'Ext Qty', width: 100 },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
 ];
 
@@ -195,15 +281,25 @@ const groupedProductColumns: AnyColumn<Product>[] = [
     columns: [
       { id: 'planner', header: 'Planner', accessor: 'planner', width: 120, filter: 'text' },
       { id: 'status', header: 'Status', accessor: 'status', width: 130, filter: 'text' },
-      { id: 'stock', header: 'Stock', accessor: 'stock', width: 100, sortable: true, filter: 'number' },
-      { id: 'demand', header: 'Demand', accessor: 'demand', width: 110, sortable: true, filter: 'number' },
+      { id: 'stock', header: 'Stock', accessor: 'stock', width: 100, sortable: true, filter: 'number', aggregate: 'sum' },
+      { id: 'demand', header: 'Demand', accessor: 'demand', width: 110, sortable: true, filter: 'number', aggregate: 'sum' },
     ],
   },
   {
     groupId: 'commercial',
     header: 'Commercial',
     columns: [
-      { id: 'price', header: 'Price', accessor: 'price', width: 100, sortable: true, filter: 'number' },
+      {
+        id: 'price',
+        header: 'Price',
+        accessor: 'price',
+        width: 100,
+        sortable: true,
+        filter: 'number',
+        aggregate: 'avg',
+        aggregateFormatter: (value) =>
+          typeof value === 'number' ? `$${value.toFixed(0)}` : '',
+      },
     ],
   },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
@@ -235,19 +331,136 @@ const selectionConfig: SelectionConfig = {
   cascade: true,
 };
 
+// --- Flat grid example data ---
+
+interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  title: string;
+  location: string;
+  salary: number;
+  startDate: string;
+  email: string;
+}
+
+const employees: Employee[] = [
+  { id: '1', name: 'Alice Chen', department: 'Engineering', title: 'Staff Engineer', location: 'San Francisco', salary: 185000, startDate: '2019-03-15', email: 'alice.chen@acme.io' },
+  { id: '2', name: 'Bob Martinez', department: 'Engineering', title: 'Senior Engineer', location: 'Austin', salary: 155000, startDate: '2020-07-01', email: 'bob.martinez@acme.io' },
+  { id: '3', name: 'Carol Johnson', department: 'Design', title: 'Design Lead', location: 'New York', salary: 145000, startDate: '2018-11-20', email: 'carol.j@acme.io' },
+  { id: '4', name: 'David Kim', department: 'Engineering', title: 'Engineer', location: 'San Francisco', salary: 130000, startDate: '2022-01-10', email: 'david.kim@acme.io' },
+  { id: '5', name: 'Eva Müller', department: 'Product', title: 'Product Manager', location: 'Berlin', salary: 140000, startDate: '2021-04-05', email: 'eva.muller@acme.io' },
+  { id: '6', name: 'Frank Okafor', department: 'Engineering', title: 'Senior Engineer', location: 'London', salary: 150000, startDate: '2020-09-14', email: 'frank.o@acme.io' },
+  { id: '7', name: 'Grace Liu', department: 'Design', title: 'UX Designer', location: 'San Francisco', salary: 125000, startDate: '2022-06-01', email: 'grace.liu@acme.io' },
+  { id: '8', name: 'Henry Patel', department: 'Product', title: 'Senior PM', location: 'Austin', salary: 160000, startDate: '2019-08-22', email: 'henry.p@acme.io' },
+  { id: '9', name: 'Iris Tanaka', department: 'Engineering', title: 'Engineer', location: 'Tokyo', salary: 120000, startDate: '2023-02-13', email: 'iris.t@acme.io' },
+  { id: '10', name: 'James Wilson', department: 'Sales', title: 'Account Executive', location: 'New York', salary: 110000, startDate: '2021-10-01', email: 'james.w@acme.io' },
+  { id: '11', name: 'Karen Singh', department: 'Engineering', title: 'Tech Lead', location: 'Austin', salary: 170000, startDate: '2018-05-07', email: 'karen.s@acme.io' },
+  { id: '12', name: 'Leo Rossi', department: 'Sales', title: 'Sales Manager', location: 'London', salary: 135000, startDate: '2020-01-20', email: 'leo.r@acme.io' },
+  { id: '13', name: 'Mia Thompson', department: 'Design', title: 'Senior Designer', location: 'Berlin', salary: 138000, startDate: '2019-12-03', email: 'mia.t@acme.io' },
+  { id: '14', name: 'Noah Garcia', department: 'Engineering', title: 'Principal Engineer', location: 'San Francisco', salary: 210000, startDate: '2017-06-15', email: 'noah.g@acme.io' },
+  { id: '15', name: 'Olivia Brown', department: 'Product', title: 'Director of Product', location: 'New York', salary: 195000, startDate: '2018-02-28', email: 'olivia.b@acme.io' },
+];
+
+const employeeColumns: ColumnDef<Employee>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', width: 180, filter: 'text' },
+  { id: 'department', header: 'Department', accessor: 'department', width: 140, filter: 'text' },
+  { id: 'title', header: 'Title', accessor: 'title', width: 180, filter: 'text' },
+  { id: 'location', header: 'Location', accessor: 'location', width: 140, filter: 'text' },
+  { id: 'salary', header: 'Salary', accessor: (row) => `$${row.salary.toLocaleString()}`, width: 120, sortable: true, filter: 'number' },
+  { id: 'startDate', header: 'Start Date', accessor: 'startDate', width: 120, sortable: true },
+  { id: 'email', header: 'Email', accessor: 'email', width: 200 },
+];
+
+interface EditableTask {
+  id: string;
+  item: string;
+  owner: string;
+  status: 'Draft' | 'In Review' | 'Released' | 'Blocked';
+  dueDate: string;
+  qty: number;
+  approved: boolean;
+}
+
+const initialEditableTasks: EditableTask[] = [
+  { id: 'task-1', item: 'Frame tolerance review', owner: 'Maya', status: 'In Review', dueDate: '2026-06-03', qty: 12, approved: false },
+  { id: 'task-2', item: 'Supplier sample order', owner: 'Noah', status: 'Draft', dueDate: '2026-06-07', qty: 6, approved: false },
+  { id: 'task-3', item: 'Release wheel spec', owner: 'Ava', status: 'Released', dueDate: '2026-06-12', qty: 24, approved: true },
+  { id: 'task-4', item: 'Blocked bearing change', owner: 'Lena', status: 'Blocked', dueDate: '2026-06-18', qty: 4, approved: false },
+  { id: 'task-5', item: 'Packaging signoff', owner: 'Iris', status: 'In Review', dueDate: '2026-06-21', qty: 18, approved: true },
+];
+
+const editableTaskColumns: ColumnDef<EditableTask>[] = [
+  { id: 'item', header: 'Item', accessor: 'item', width: 220, filter: 'text', editable: true, editorType: 'text' },
+  { id: 'owner', header: 'Owner', accessor: 'owner', width: 120, filter: 'text', editable: true, editorType: 'text' },
+  {
+    id: 'status',
+    header: 'Status',
+    accessor: 'status',
+    width: 130,
+    filter: 'text',
+    editable: true,
+    editorType: 'select',
+    editorOptions: {
+      choices: ['Draft', 'In Review', 'Released', 'Blocked'],
+    },
+  },
+  { id: 'dueDate', header: 'Due Date', accessor: 'dueDate', width: 130, editable: true, editorType: 'date' },
+  { id: 'qty', header: 'Qty', accessor: 'qty', width: 90, filter: 'number', editable: true, editorType: 'number' },
+  { id: 'approved', header: 'Approved', accessor: 'approved', width: 110, editable: true, editorType: 'checkbox' },
+];
+
+interface PlaygroundCellEditEndEvent {
+  rowId: string;
+  columnId: string;
+  value: unknown;
+  newValue: unknown;
+  committed: boolean;
+}
+
+interface PlaygroundRowEditEndEvent {
+  rowId: string;
+  changes: Record<string, { oldValue: unknown; newValue: unknown }>;
+  committed: boolean;
+}
+
 function exampleGrid(
   activeExample: ExampleKey,
   theme: GridTheme,
   onSelectionChange: (selectedIds: string[]) => void,
+  editableTasks: EditableTask[],
+  editableBom: BomNode[],
+  onBomEditEnd: (event: PlaygroundCellEditEndEvent) => void,
+  onTaskEditEnd: (event: PlaygroundCellEditEndEvent) => void,
+  onTaskRowEditEnd: (event: PlaygroundRowEditEndEvent) => void,
 ) {
   switch (activeExample) {
+    case 'flat':
+      return (
+        <DataGrid
+          key="flat"
+          data={employees}
+          columns={employeeColumns}
+          defaultSort={[{ columnId: 'name', direction: 'asc' }]}
+          height={500}
+          theme={theme}
+        />
+      );
     case 'tree':
       return (
         <DataGrid
+          key="tree"
           data={bom}
           columns={bomColumns}
           treeData={treeData}
           defaultExpanded
+          aggregation={{
+            extendedQuantity: {
+              sourceColumn: 'qty',
+              targetColumn: 'extQty',
+              compute: 'multiply-down',
+            },
+          }}
           height={500}
           theme={theme}
         />
@@ -255,6 +468,7 @@ function exampleGrid(
     case 'wide':
       return (
         <DataGrid
+          key="wide"
           data={virtualProducts}
           columns={wideColumns}
           defaultSort={[{ columnId: 'sku', direction: 'asc' }]}
@@ -265,6 +479,7 @@ function exampleGrid(
     case 'selection':
       return (
         <DataGrid
+          key="selection"
           data={bom}
           columns={bomColumns}
           treeData={treeData}
@@ -278,6 +493,7 @@ function exampleGrid(
     case 'columnGroups':
       return (
         <DataGrid
+          key="column-groups"
           data={bom}
           columns={groupedBomColumns}
           treeData={treeData}
@@ -289,27 +505,153 @@ function exampleGrid(
     case 'rowGrouping':
       return (
         <DataGrid
+          key="row-grouping"
           data={products}
           columns={groupedProductColumns}
           groupBy={['category', 'subcategory']}
+          aggregation={{ showFooterAggregates: true }}
           defaultExpanded
           defaultSort={[{ columnId: 'price', direction: 'desc' }]}
           height={500}
           theme={theme}
         />
       );
+    case 'bomEditing':
+      return (
+        <DataGrid
+          key="bom-editing"
+          data={editableBom}
+          columns={editableBomColumns}
+          treeData={treeData}
+          defaultExpanded
+          height={500}
+          theme={theme}
+          editable={{ mode: 'cell', activateOn: 'singleClick' }}
+          onCellEditEnd={onBomEditEnd}
+          aggregation={{
+            extendedQuantity: {
+              sourceColumn: 'qty',
+              targetColumn: 'extQty',
+              compute: 'multiply-down',
+            },
+          }}
+        />
+      );
+    case 'editing':
+      return (
+        <DataGrid
+          key="editing"
+          data={editableTasks}
+          columns={editableTaskColumns}
+          height={500}
+          theme={theme}
+          editable={{ mode: 'cell' }}
+          onCellEditEnd={onTaskEditEnd}
+        />
+      );
+    case 'rowEditing':
+      return (
+        <DataGrid
+          key="row-editing"
+          data={editableTasks}
+          columns={editableTaskColumns}
+          height={500}
+          theme={theme}
+          editable={{ mode: 'row' }}
+          onRowEditEnd={onTaskRowEditEnd}
+        />
+      );
   }
 }
 
 export function App() {
-  const [activeExample, setActiveExample] = useState<ExampleKey>('tree');
+  const [activeExample, setActiveExample] = useState<ExampleKey>('flat');
   const [theme, setTheme] = useState<GridTheme>('light');
   const [selectionInfo, setSelectionInfo] = useState('None');
+  const [editableTasks, setEditableTasks] = useState(initialEditableTasks);
+  const [editableBom, setEditableBom] = useState(bom);
+  const [editInfo, setEditInfo] = useState('None');
   const isDark = theme === 'dark';
   const active = useMemo(
     () => examples.find((example) => example.key === activeExample) ?? examples[0],
     [activeExample],
   );
+
+  function handleTaskEditEnd(event: PlaygroundCellEditEndEvent) {
+    const task = editableTasks[Number(event.rowId)];
+
+    if (!event.committed) {
+      setEditInfo(`Discarded ${event.columnId} on ${task?.item ?? event.rowId}`);
+      return;
+    }
+
+    setEditableTasks((current) =>
+      current.map((currentTask, index) =>
+        String(index) === event.rowId
+          ? { ...currentTask, [event.columnId]: event.newValue }
+          : currentTask,
+      ),
+    );
+    setEditInfo(`${task?.item ?? event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
+  }
+
+  function updateBomRows(rows: BomNode[], event: PlaygroundCellEditEndEvent): BomNode[] {
+    return rows.map((row) => {
+      const nextChildren = row.children
+        ? updateBomRows(row.children, event)
+        : undefined;
+      if (row.id !== event.rowId) {
+        return nextChildren === row.children ? row : { ...row, children: nextChildren };
+      }
+
+      return {
+        ...row,
+        children: nextChildren,
+        [event.columnId]:
+          event.columnId === 'qty' ? Number(event.newValue) : event.newValue,
+      };
+    });
+  }
+
+  function handleBomEditEnd(event: PlaygroundCellEditEndEvent) {
+    if (!event.committed) {
+      setEditInfo(`Discarded ${event.columnId} on ${event.rowId}`);
+      return;
+    }
+
+    setEditableBom((current) => updateBomRows(current, event));
+    setEditInfo(`${event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
+  }
+
+  function handleTaskRowEditEnd(event: PlaygroundRowEditEndEvent) {
+    const task = editableTasks[Number(event.rowId)];
+
+    if (!event.committed) {
+      setEditInfo(`Discarded row edits on ${task?.item ?? event.rowId}`);
+      return;
+    }
+
+    setEditableTasks((current) =>
+      current.map((currentTask, index) => {
+        if (String(index) !== event.rowId) return currentTask;
+
+        return Object.entries(event.changes).reduce(
+          (updatedTask, [columnId, change]) => ({
+            ...updatedTask,
+            [columnId]: change.newValue,
+          }),
+          currentTask,
+        );
+      }),
+    );
+
+    const changedColumns = Object.keys(event.changes);
+    setEditInfo(
+      `${task?.item ?? event.rowId}: ${changedColumns.length} row change${
+        changedColumns.length === 1 ? '' : 's'
+      } saved`,
+    );
+  }
 
   return (
     <div
@@ -382,13 +724,26 @@ export function App() {
           Selection: {selectionInfo}
         </p>
       )}
+      {(activeExample === 'editing' ||
+        activeExample === 'rowEditing' ||
+        activeExample === 'bomEditing') && (
+        <p style={{ color: isDark ? '#98989d' : '#515154', fontSize: 13, margin: '0 0 8px' }}>
+          Last edit: {editInfo}
+        </p>
+      )}
       <p style={{ color: isDark ? '#98989d' : '#86868b', fontSize: 12, margin: '0 0 20px' }}>
-        Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.
+        {activeExample === 'editing'
+          ? 'Double-click editable cells to edit. Enter or blur commits; Escape discards.'
+          : activeExample === 'bomEditing'
+            ? 'Single-click editable BOM cells to edit. Invalid quantities stay open until corrected.'
+          : activeExample === 'rowEditing'
+            ? 'Click Edit on a row, update multiple cells, then Save or Cancel.'
+          : 'Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.'}
       </p>
 
       {exampleGrid(activeExample, theme, (selectedIds) => {
         setSelectionInfo(selectedIds.length > 0 ? selectedIds.join(', ') : 'None');
-      })}
+      }, editableTasks, editableBom, handleBomEditEnd, handleTaskEditEnd, handleTaskRowEditEnd)}
     </div>
   );
 }

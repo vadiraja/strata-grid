@@ -24,6 +24,13 @@ const columns: ColumnDef<Product>[] = [
   { id: 'price', header: 'Price', accessor: 'price', sortable: true, filter: 'number' },
 ];
 
+const catalog: Product[] = [
+  ...products,
+  { id: '5', name: 'Speaker', category: 'Electronics', subcategory: 'Audio', price: 199 },
+  { id: '6', name: 'Standing Desk', category: 'Furniture', subcategory: 'Desks', price: 699 },
+  { id: '7', name: 'Monitor Arm', category: 'Furniture', subcategory: 'Accessories', price: 89 },
+];
+
 describe('DataGrid — row grouping', () => {
   it('renders group rows with values and leaf counts', () => {
     const { container } = render(
@@ -73,7 +80,7 @@ describe('DataGrid — row grouping', () => {
   it('supports nested grouping by multiple columns', () => {
     const { container } = render(
       <DataGrid
-        data={products}
+        data={catalog}
         columns={columns}
         groupBy={['category', 'subcategory']}
         defaultExpanded
@@ -83,16 +90,18 @@ describe('DataGrid — row grouping', () => {
     const labels = [...container.querySelectorAll('.strata-group-label')].map(
       (label) => label.textContent,
     );
-    expect(container.querySelectorAll('.strata-group-row')).toHaveLength(5);
+    expect(container.querySelectorAll('.strata-group-row')).toHaveLength(7);
     const topGroups = container.querySelectorAll('.strata-group-row-depth-0');
     expect(topGroups).toHaveLength(2);
-    expect(container.querySelectorAll('.strata-group-row-depth-1')).toHaveLength(3);
+    expect(container.querySelectorAll('.strata-group-row-depth-1')).toHaveLength(5);
     expect(topGroups[0]).toHaveTextContent('Electronics');
-    expect(topGroups[0]).toHaveTextContent('(3)');
+    expect(topGroups[0]).toHaveTextContent('(4)');
     expect(topGroups[1]).toHaveTextContent('Furniture');
-    expect(topGroups[1]).toHaveTextContent('(1)');
+    expect(topGroups[1]).toHaveTextContent('(3)');
     expect(labels).toContain('Computers');
     expect(labels).toContain('Audio');
+    expect(labels).toContain('Desks');
+    expect(labels).toContain('Accessories');
   });
 
   it('exposes row and expansion aria on group rows', () => {
@@ -111,6 +120,74 @@ describe('DataGrid — row grouping', () => {
     expect(topGroup).toHaveAttribute('aria-expanded', 'true');
     expect(topGroup).toHaveAttribute('aria-level', '1');
     expect(nestedGroup).toHaveAttribute('aria-level', '2');
+  });
+});
+
+describe('DataGrid — row grouping pipeline behavior', () => {
+  it('sorts rows inside each group', () => {
+    const { container } = render(
+      <DataGrid
+        data={catalog}
+        columns={columns}
+        groupBy={['category']}
+        defaultExpanded
+        defaultSort={[{ columnId: 'price', direction: 'asc' }]}
+      />,
+    );
+
+    const text = container.textContent ?? '';
+    expect(text.indexOf('Speaker')).toBeLessThan(text.indexOf('Headphones'));
+    expect(text.indexOf('Headphones')).toBeLessThan(text.indexOf('Laptop Air'));
+    expect(text.indexOf('Laptop Air')).toBeLessThan(text.indexOf('Laptop Pro'));
+    expect(text.indexOf('Monitor Arm')).toBeLessThan(text.indexOf('Desk Chair'));
+    expect(text.indexOf('Desk Chair')).toBeLessThan(text.indexOf('Standing Desk'));
+  });
+
+  it('filters before grouping so group counts reflect visible leaf rows', () => {
+    const { container } = render(
+      <DataGrid
+        data={catalog}
+        columns={columns}
+        groupBy={['category']}
+        defaultExpanded
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Filter name'));
+    fireEvent.change(screen.getByLabelText('Filter value for name'), {
+      target: { value: 'Laptop' },
+    });
+
+    expect(container.querySelectorAll('.strata-group-row')).toHaveLength(1);
+    expect(container.querySelector('.strata-group-label')).toHaveTextContent(
+      'Electronics',
+    );
+    expect(screen.getByText('(2)')).toBeInTheDocument();
+    expect(screen.getByText('Laptop Pro')).toBeInTheDocument();
+    expect(screen.getByText('Laptop Air')).toBeInTheDocument();
+    expect(screen.queryByText('Headphones')).not.toBeInTheDocument();
+    expect(screen.queryByText('Furniture')).not.toBeInTheDocument();
+  });
+
+  it('labels empty group values consistently', () => {
+    const rows: Product[] = [
+      { id: 'empty', name: 'Unassigned', category: '', subcategory: '', price: 10 },
+      { id: 'filled', name: 'Assigned', category: 'Hardware', subcategory: 'Tools', price: 20 },
+    ];
+    render(
+      <DataGrid
+        data={rows}
+        columns={columns}
+        groupBy={['category']}
+        defaultExpanded
+      />,
+    );
+
+    expect(screen.getByText('(empty)')).toBeInTheDocument();
+    const labels = [...document.querySelectorAll('.strata-group-label')].map(
+      (label) => label.textContent,
+    );
+    expect(labels).toContain('Hardware');
   });
 });
 

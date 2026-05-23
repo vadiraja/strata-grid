@@ -132,6 +132,41 @@ describe('DataGrid — horizontal column layout', () => {
     expect(headerCenterStrip.style.transform).toBe('translateX(-180px)');
     expect(bodyCenterStrip.style.transform).toBe('translateX(-180px)');
   });
+
+  it('clamps stale horizontal scroll when center columns no longer overflow', () => {
+    const columns: ColumnDef<Row>[] = [
+      { id: 'a', header: 'Col A', accessor: 'a', width: 120 },
+      { id: 'b', header: 'Col B', accessor: 'b', width: 120 },
+    ];
+
+    const { container } = render(<DataGrid data={data} columns={columns} />);
+    const scrollbar = container.querySelector(
+      '.strata-horizontal-native-scrollbar',
+    ) as HTMLElement;
+
+    Object.defineProperty(scrollbar, 'clientWidth', {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(scrollbar, 'scrollWidth', {
+      configurable: true,
+      value: 300,
+    });
+
+    scrollbar.scrollLeft = 80;
+    fireEvent.scroll(scrollbar);
+
+    const headerCenterStrip = container.querySelector(
+      '.strata-header-center-strip',
+    ) as HTMLElement;
+    const bodyCenterStrip = container.querySelector(
+      '.strata-body-center .strata-center-strip',
+    ) as HTMLElement;
+
+    expect(scrollbar.scrollLeft).toBe(0);
+    expect(headerCenterStrip.style.transform).toBe('translateX(0px)');
+    expect(bodyCenterStrip.style.transform).toBe('translateX(0px)');
+  });
 });
 
 describe('DataGrid — column resize', () => {
