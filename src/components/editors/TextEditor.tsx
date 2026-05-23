@@ -5,6 +5,7 @@ export interface TextEditorProps {
   onChange: (value: string) => void;
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
 }
 
 export function TextEditor({
@@ -12,10 +13,12 @@ export function TextEditor({
   onChange,
   onCommit,
   onDiscard,
+  autoFocus,
 }: TextEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
+    autoFocus,
     selectOnMount: true,
   });
 

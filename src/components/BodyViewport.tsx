@@ -108,9 +108,13 @@ export function BodyViewport<TRow>({
           return (
             <div
               key={virtualRow.key}
-              className={`strata-row-container${
-                selection?.isSelected(row.id) ? ' strata-row-selected' : ''
-              }`}
+              className={[
+                'strata-row-container',
+                selection?.isSelected(row.id) && 'strata-row-selected',
+                showRowEditControls && 'strata-row-editing-enabled',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               role="row"
               aria-level={isTree ? row.depth + 1 : undefined}
               aria-expanded={
@@ -179,6 +183,11 @@ export function BodyViewport<TRow>({
                   )}
                 </div>
               </div>
+              {showRowEditControls && (
+                <div className="strata-row-edit-pane">
+                  <RowEditControls row={row} />
+                </div>
+              )}
               {columnLayout.rightColumns.length > 0 && (
                 <div
                   className="strata-pane-right"
@@ -192,11 +201,6 @@ export function BodyViewport<TRow>({
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
                   />
-                </div>
-              )}
-              {showRowEditControls && (
-                <div className="strata-row-edit-pane">
-                  <RowEditControls row={row} />
                 </div>
               )}
             </div>

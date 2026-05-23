@@ -122,6 +122,7 @@ export function GridRoot<TRow>({
     scrollRef: horizontalScrollRef,
     columnWidths: centerWidths,
   });
+  const showRowEditControls = editCtx?.config.mode === 'row';
 
   const columnLayout = useMemo<ColumnLayout<TRow>>(() => {
     const leftWidth = sumColumnWidths(leftColumns);
@@ -294,6 +295,7 @@ export function GridRoot<TRow>({
         columnLayout={columnLayout}
         scrollLeft={effectiveScrollLeft}
         selection={selection}
+        showRowEditControls={showRowEditControls}
       />
       <BodyViewport
         table={table}
@@ -344,6 +346,9 @@ export function GridRoot<TRow>({
             />
           </div>
         </div>
+        {showRowEditControls && (
+          <div className="strata-horizontal-scrollbar-spacer strata-row-edit-scrollbar-spacer" />
+        )}
         {columnLayout.rightWidth > 0 && (
           <div
             className="strata-horizontal-scrollbar-spacer"

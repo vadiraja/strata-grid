@@ -3,18 +3,22 @@ import { useEffect, useRef } from 'react';
 export interface EditorBehaviorOptions {
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
   selectOnMount?: boolean;
 }
 
 export function useEditorBehavior<T extends HTMLInputElement | HTMLSelectElement>({
   onCommit,
   onDiscard,
+  autoFocus = true,
   selectOnMount,
 }: EditorBehaviorOptions) {
   const ref = useRef<T>(null);
   const discardedRef = useRef(false);
 
   useEffect(() => {
+    if (!autoFocus) return;
+
     const element = ref.current;
     if (!element) return;
 
@@ -22,7 +26,7 @@ export function useEditorBehavior<T extends HTMLInputElement | HTMLSelectElement
     if (selectOnMount && 'select' in element) {
       element.select();
     }
-  }, [selectOnMount]);
+  }, [autoFocus, selectOnMount]);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     event.stopPropagation();

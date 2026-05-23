@@ -11,6 +11,7 @@ export interface SelectEditorProps {
   onChange: (value: SelectChoice['value']) => void;
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
 }
 
 export function SelectEditor({
@@ -19,10 +20,12 @@ export function SelectEditor({
   onChange,
   onCommit,
   onDiscard,
+  autoFocus,
 }: SelectEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLSelectElement>({
     onCommit,
     onDiscard,
+    autoFocus,
   });
   const selectedIndex = choices.findIndex((choice) => choice.value === value);
 

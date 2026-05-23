@@ -5,6 +5,7 @@ export interface DateEditorProps {
   onChange: (value: string) => void;
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
 }
 
 function toDateInputValue(value: unknown): string {
@@ -20,10 +21,12 @@ export function DateEditor({
   onChange,
   onCommit,
   onDiscard,
+  autoFocus,
 }: DateEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
+    autoFocus,
   });
 
   return (

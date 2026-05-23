@@ -5,6 +5,7 @@ export interface NumberEditorProps {
   onChange: (value: number | null) => void;
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
 }
 
 export function NumberEditor({
@@ -12,10 +13,12 @@ export function NumberEditor({
   onChange,
   onCommit,
   onDiscard,
+  autoFocus,
 }: NumberEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
+    autoFocus,
     selectOnMount: true,
   });
 

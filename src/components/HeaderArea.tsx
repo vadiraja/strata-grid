@@ -15,6 +15,8 @@ export interface HeaderAreaProps<TRow> {
   scrollLeft: number;
   /** Selection state and actions. Present only when selection is enabled. */
   selection?: UseSelectionReturn;
+  /** Whether row-edit actions reserve a right-side action pane in body rows. */
+  showRowEditControls?: boolean;
 }
 
 /** Renders the grid header with pinned-left, center, and pinned-right panes matching the body layout. */
@@ -23,6 +25,7 @@ export function HeaderArea<TRow>({
   columnLayout,
   scrollLeft,
   selection,
+  showRowEditControls,
 }: HeaderAreaProps<TRow>) {
   const handleColumnReorder = useCallback(
     (draggedId: string, targetId: string) => {
@@ -56,7 +59,13 @@ export function HeaderArea<TRow>({
   return (
     <div className="strata-header" role="rowgroup">
       {Array.from({ length: headerRowCount }, (_, rowIndex) => (
-        <div className="strata-header-row" role="row" key={rowIndex}>
+        <div
+          className={`strata-header-row${
+            showRowEditControls ? ' strata-row-editing-enabled' : ''
+          }`}
+          role="row"
+          key={rowIndex}
+        >
           {selection && (
             <div className="strata-selection-pane">
               {rowIndex === 0 ? (
@@ -92,6 +101,13 @@ export function HeaderArea<TRow>({
               {renderHeaderRow(centerGroups[rowIndex]?.headers ?? [], handleColumnReorder)}
             </div>
           </div>
+          {showRowEditControls && (
+            <div className="strata-row-edit-pane strata-row-edit-header-pane">
+              <div className="strata-header-cell strata-row-edit-header-cell" role="columnheader">
+                Actions
+              </div>
+            </div>
+          )}
           {hasRight && (
             <div
               className="strata-pane-right"

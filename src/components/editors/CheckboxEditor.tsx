@@ -5,6 +5,7 @@ export interface CheckboxEditorProps {
   onChange: (value: boolean) => void;
   onCommit: () => void;
   onDiscard: () => void;
+  autoFocus?: boolean;
 }
 
 export function CheckboxEditor({
@@ -12,12 +13,14 @@ export function CheckboxEditor({
   onChange,
   onCommit,
   onDiscard,
+  autoFocus = true,
 }: CheckboxEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!autoFocus) return;
     inputRef.current?.focus();
-  }, []);
+  }, [autoFocus]);
 
   return (
     <input

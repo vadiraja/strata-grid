@@ -36,6 +36,7 @@ describe('DataGrid — row edit mode', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
 
     expect(onRowEditStart).toHaveBeenCalledWith({ rowId: '0' });
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument();
     expect(screen.getByDisplayValue('Alice')).toBeInTheDocument();
     expect(screen.getByDisplayValue('30')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();

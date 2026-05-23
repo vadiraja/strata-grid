@@ -16,7 +16,8 @@ type ExampleKey =
   | 'selection'
   | 'columnGroups'
   | 'rowGrouping'
-  | 'editing';
+  | 'editing'
+  | 'rowEditing';
 
 interface ExampleConfig {
   key: ExampleKey;
@@ -59,6 +60,11 @@ const examples: ExampleConfig[] = [
     key: 'editing',
     label: 'Editing',
     summary: 'Inline text, number, select, date, and checkbox editors with Enter, blur, and Escape handling.',
+  },
+  {
+    key: 'rowEditing',
+    label: 'Row Editing',
+    summary: 'Row-level editing with Edit, Save, Cancel, and validation-gated commits.',
   },
 ];
 
@@ -339,12 +345,19 @@ interface PlaygroundCellEditEndEvent {
   committed: boolean;
 }
 
+interface PlaygroundRowEditEndEvent {
+  rowId: string;
+  changes: Record<string, { oldValue: unknown; newValue: unknown }>;
+  committed: boolean;
+}
+
 function exampleGrid(
   activeExample: ExampleKey,
   theme: GridTheme,
   onSelectionChange: (selectedIds: string[]) => void,
   editableTasks: EditableTask[],
   onTaskEditEnd: (event: PlaygroundCellEditEndEvent) => void,
+  onTaskRowEditEnd: (event: PlaygroundRowEditEndEvent) => void,
 ) {
   switch (activeExample) {
     case 'flat':
@@ -432,6 +445,18 @@ function exampleGrid(
           onCellEditEnd={onTaskEditEnd}
         />
       );
+    case 'rowEditing':
+      return (
+        <DataGrid
+          key="row-editing"
+          data={editableTasks}
+          columns={editableTaskColumns}
+          height={500}
+          theme={theme}
+          editable={{ mode: 'row' }}
+          onRowEditEnd={onTaskRowEditEnd}
+        />
+      );
   }
 }
 
@@ -463,6 +488,36 @@ export function App() {
       ),
     );
     setEditInfo(`${task?.item ?? event.rowId}: ${event.columnId} -> ${String(event.newValue)}`);
+  }
+
+  function handleTaskRowEditEnd(event: PlaygroundRowEditEndEvent) {
+    const task = editableTasks[Number(event.rowId)];
+
+    if (!event.committed) {
+      setEditInfo(`Discarded row edits on ${task?.item ?? event.rowId}`);
+      return;
+    }
+
+    setEditableTasks((current) =>
+      current.map((currentTask, index) => {
+        if (String(index) !== event.rowId) return currentTask;
+
+        return Object.entries(event.changes).reduce(
+          (updatedTask, [columnId, change]) => ({
+            ...updatedTask,
+            [columnId]: change.newValue,
+          }),
+          currentTask,
+        );
+      }),
+    );
+
+    const changedColumns = Object.keys(event.changes);
+    setEditInfo(
+      `${task?.item ?? event.rowId}: ${changedColumns.length} row change${
+        changedColumns.length === 1 ? '' : 's'
+      } saved`,
+    );
   }
 
   return (
@@ -536,7 +591,7 @@ export function App() {
           Selection: {selectionInfo}
         </p>
       )}
-      {activeExample === 'editing' && (
+      {(activeExample === 'editing' || activeExample === 'rowEditing') && (
         <p style={{ color: isDark ? '#98989d' : '#515154', fontSize: 13, margin: '0 0 8px' }}>
           Last edit: {editInfo}
         </p>
@@ -544,12 +599,14 @@ export function App() {
       <p style={{ color: isDark ? '#98989d' : '#86868b', fontSize: 12, margin: '0 0 20px' }}>
         {activeExample === 'editing'
           ? 'Double-click editable cells to edit. Enter or blur commits; Escape discards.'
+          : activeExample === 'rowEditing'
+            ? 'Click Edit on a row, update multiple cells, then Save or Cancel.'
           : 'Click headers to sort, filter buttons to filter, drag header edges to resize, and drag headers to reorder.'}
       </p>
 
       {exampleGrid(activeExample, theme, (selectedIds) => {
         setSelectionInfo(selectedIds.length > 0 ? selectedIds.join(', ') : 'None');
-      }, editableTasks, handleTaskEditEnd)}
+      }, editableTasks, handleTaskEditEnd, handleTaskRowEditEnd)}
     </div>
   );
 }

@@ -32,11 +32,12 @@ export function DataCell<TRow>({
 
   const activeCell = editCtx?.editState.activeCell;
   const activeRow = editCtx?.editState.activeRow;
+  const isRowEditing = activeRow != null && activeRow.rowId === cell.row.id && isEditable;
   const isEditing =
     (activeCell != null &&
       activeCell.rowId === cell.row.id &&
       activeCell.columnId === cell.column.id) ||
-    (activeRow != null && activeRow.rowId === cell.row.id && isEditable);
+    isRowEditing;
 
   const handleDoubleClick = () => {
     if (!editCtx) return;
@@ -79,6 +80,7 @@ export function DataCell<TRow>({
     isFocused && 'strata-cell-focused',
     isEditable && 'strata-cell-editable',
     isEditing && 'strata-cell-editing',
+    isRowEditing && 'strata-cell-row-editing',
   ]
     .filter(Boolean)
     .join(' ');

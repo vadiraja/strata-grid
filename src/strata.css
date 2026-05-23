@@ -3,6 +3,7 @@
 
 .strata-grid {
   box-sizing: border-box;
+  --strata-row-edit-pane-width: 124px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -25,6 +26,8 @@
 }
 
 .strata-header-row {
+  position: relative;
+  box-sizing: border-box;
   display: flex;
   align-items: stretch;
   min-height: var(--strata-header-height);
@@ -156,8 +159,13 @@
 }
 
 .strata-row-container {
+  box-sizing: border-box;
   display: flex;
   align-items: stretch;
+}
+
+.strata-row-editing-enabled {
+  padding-right: var(--strata-row-edit-pane-width);
 }
 
 .strata-selection-pane {
@@ -215,11 +223,26 @@
 }
 
 .strata-row-edit-pane {
-  flex: 0 0 124px;
-  width: 124px;
-  z-index: 4;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  flex: 0 0 var(--strata-row-edit-pane-width);
+  width: var(--strata-row-edit-pane-width);
+  z-index: 5;
   background: var(--strata-bg);
   border-left: var(--strata-border-width) solid var(--strata-border);
+  box-shadow: -2px 0 0 var(--strata-border);
+}
+
+.strata-row-edit-header-pane {
+  display: flex;
+  z-index: 6;
+}
+
+.strata-row-edit-header-cell {
+  width: 100%;
+  flex: 1 1 auto;
 }
 
 .strata-resize-handle {
@@ -326,6 +349,11 @@
 
 .strata-horizontal-scrollbar-spacer {
   background: var(--strata-bg-footer);
+}
+
+.strata-row-edit-scrollbar-spacer {
+  flex: 0 0 var(--strata-row-edit-pane-width);
+  width: var(--strata-row-edit-pane-width);
 }
 
 .strata-selection-scrollbar-spacer {
@@ -500,6 +528,10 @@
   overflow: visible;
   z-index: 7;
   position: relative;
+}
+
+.strata-cell-row-editing {
+  overflow: hidden;
 }
 
 .strata-cell-editor-container {

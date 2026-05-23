@@ -138,6 +138,7 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
           onCommit,
           onDiscard,
           column.editorOptions,
+          !isActiveRow,
         )
       )}
       <ValidationMessage validation={validation} />
@@ -152,6 +153,7 @@ function renderBuiltInEditor(
   onCommit: () => void,
   onDiscard: () => void,
   editorOptions?: Record<string, unknown>,
+  autoFocus?: boolean,
 ) {
   switch (editorType) {
     case 'number':
@@ -161,6 +163,7 @@ function renderBuiltInEditor(
           onChange={onChange}
           onCommit={onCommit}
           onDiscard={onDiscard}
+          autoFocus={autoFocus}
         />
       );
     case 'select':
@@ -171,6 +174,7 @@ function renderBuiltInEditor(
           onChange={onChange}
           onCommit={onCommit}
           onDiscard={onDiscard}
+          autoFocus={autoFocus}
         />
       );
     case 'date':
@@ -180,6 +184,7 @@ function renderBuiltInEditor(
           onChange={onChange}
           onCommit={onCommit}
           onDiscard={onDiscard}
+          autoFocus={autoFocus}
         />
       );
     case 'checkbox':
@@ -189,6 +194,7 @@ function renderBuiltInEditor(
           onChange={onChange}
           onCommit={onCommit}
           onDiscard={onDiscard}
+          autoFocus={autoFocus}
         />
       );
     case 'text':
@@ -199,6 +205,7 @@ function renderBuiltInEditor(
           onChange={onChange}
           onCommit={onCommit}
           onDiscard={onDiscard}
+          autoFocus={autoFocus}
         />
       );
   }
