@@ -36,6 +36,16 @@ export type {
   CloneSubtreeOptions,
   CloneSubtreeResult,
 } from './clone-subtree';
+export { useChangeTracker } from './use-change-tracker';
+export type {
+  UseChangeTrackerOptions,
+  UseChangeTrackerReturn,
+} from './use-change-tracker';
+export { useTreeEditor } from './use-tree-editor';
+export type {
+  UseTreeEditorOptions,
+  UseTreeEditorReturn,
+} from './use-tree-editor';
 export { useClipboard } from './use-clipboard';
 export type {
   UseClipboardOptions,
