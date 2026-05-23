@@ -46,6 +46,10 @@ export interface UseTreeEditorReturn<TRow> {
   canUndo: boolean;
   /** Whether redo is available. */
   canRedo: boolean;
+  /** Undo stack, most recent command last. */
+  undoStack: Command<TRow>[];
+  /** Redo stack, most recent command last. */
+  redoStack: Command<TRow>[];
   /** Whether the internal clipboard has content. */
   hasClipboardContent: boolean;
 
@@ -287,6 +291,8 @@ export function useTreeEditor<TRow>(
     isDirty: tracker.isDirty,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
+    undoStack: history.undoStack,
+    redoStack: history.redoStack,
     hasClipboardContent: clipboard.hasContent,
 
     addNode,

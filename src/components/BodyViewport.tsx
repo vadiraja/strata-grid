@@ -10,6 +10,7 @@ import { useEditContext } from '../model/edit-context';
 import type { ColumnDef } from '../model/types';
 import type { UseAggregationReturn } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
+import type { UseDragDropReturn } from '../tree-editor/use-drag-drop';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -34,6 +35,8 @@ export interface BodyViewportProps<TRow> {
   aggregation?: UseAggregationReturn<TRow>;
   /** Computed BOM extended quantities. */
   bomRollup?: UseBomRollupReturn;
+  /** Drag/drop controller for tree reparenting. */
+  dragDrop?: UseDragDropReturn;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -49,6 +52,7 @@ export function BodyViewport<TRow>({
   keyboardColumnIds = [],
   aggregation,
   bomRollup,
+  dragDrop,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -147,6 +151,7 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
                   />
                 </div>
               )}
@@ -164,6 +169,7 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
                   />
                 </div>
               )}
@@ -193,6 +199,7 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     rollupTargetColumnId={bomRollup?.targetColumnId}
                     extendedQuantities={bomRollup?.extendedQuantities}
+                    dragDrop={dragDrop}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -219,6 +226,7 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    dragDrop={dragDrop}
                   />
                 </div>
               )}

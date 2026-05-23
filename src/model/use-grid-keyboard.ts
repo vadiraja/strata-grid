@@ -35,6 +35,7 @@ export interface GridKeyboardOptions {
   onOutdent?: (rowIndex: number) => void;
   onReorderUp?: (rowIndex: number) => void;
   onReorderDown?: (rowIndex: number) => void;
+  onDelete?: (rowIndex: number) => void;
 }
 
 export interface GridKeyboardReturn {
@@ -64,6 +65,7 @@ export function useGridKeyboard({
   onOutdent,
   onReorderUp,
   onReorderDown,
+  onDelete,
 }: GridKeyboardOptions): GridKeyboardReturn {
   const clamp = useCallback(
     (rowIndex: number, colIndex: number): GridCellPosition => [
@@ -149,6 +151,14 @@ export function useGridKeyboard({
             handled = false;
           }
           break;
+        case 'Delete':
+        case 'Backspace':
+          if (onDelete) {
+            onDelete(activeCell[0]);
+          } else {
+            handled = false;
+          }
+          break;
         default:
           handled = false;
       }
@@ -170,6 +180,7 @@ export function useGridKeyboard({
       onOutdent,
       onReorderUp,
       onReorderDown,
+      onDelete,
       rowCount,
     ],
   );

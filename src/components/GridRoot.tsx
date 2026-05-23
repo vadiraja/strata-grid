@@ -12,6 +12,7 @@ import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
+import type { UseDragDropReturn, UseTreeEditorReturn } from '../tree-editor';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -43,6 +44,12 @@ export interface GridRootProps<TRow> {
   aggregation?: AggregationConfig;
   /** Computed BOM extended quantities. */
   bomRollup?: UseBomRollupReturn;
+  /** Tree editing API, present when hierarchy editing is enabled. */
+  treeEditor?: UseTreeEditorReturn<TRow>;
+  /** Drag/drop controller for tree reparenting. */
+  dragDrop?: UseDragDropReturn;
+  /** Whether keyboard indent/outdent/reorder/delete shortcuts are enabled. */
+  enableTreeKeyboard?: boolean;
 }
 
 /** The grid layout shell. */
@@ -55,6 +62,9 @@ export function GridRoot<TRow>({
   columns,
   aggregation: aggregationConfig,
   bomRollup,
+  treeEditor,
+  dragDrop,
+  enableTreeKeyboard,
 }: GridRootProps<TRow>) {
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
@@ -127,6 +137,46 @@ export function GridRoot<TRow>({
       }
     },
     onCellActivate: startEditAt,
+    onIndent:
+      enableTreeKeyboard && treeEditor
+        ? (rowIndex) => {
+            const row = rows[rowIndex];
+            if (row) treeEditor.indentNode(row.id);
+          }
+        : undefined,
+    onOutdent:
+      enableTreeKeyboard && treeEditor
+        ? (rowIndex) => {
+            const row = rows[rowIndex];
+            if (row) treeEditor.outdentNode(row.id);
+          }
+        : undefined,
+    onReorderUp:
+      enableTreeKeyboard && treeEditor
+        ? (rowIndex) => {
+            const row = rows[rowIndex];
+            if (row) treeEditor.moveUp(row.id);
+          }
+        : undefined,
+    onReorderDown:
+      enableTreeKeyboard && treeEditor
+        ? (rowIndex) => {
+            const row = rows[rowIndex];
+            if (row) treeEditor.moveDown(row.id);
+          }
+        : undefined,
+    onDelete:
+      enableTreeKeyboard && treeEditor
+        ? (rowIndex) => {
+            const selected = selection ? [...selection.selectedIds] : [];
+            if (selected.length > 0) {
+              treeEditor.deleteNodes(selected);
+              return;
+            }
+            const row = rows[rowIndex];
+            if (row) treeEditor.deleteNode(row.id);
+          }
+        : undefined,
   });
 
   const columnVirtualizer = useColumnVirtualizer({
@@ -325,6 +375,7 @@ export function GridRoot<TRow>({
         keyboardColumnIds={keyboardColumnIds}
         aggregation={aggregation}
         bomRollup={bomRollup}
+        dragDrop={dragDrop}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}

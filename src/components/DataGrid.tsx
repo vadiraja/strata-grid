@@ -23,6 +23,14 @@ import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
 import { useBomRollup } from '../model/use-bom-rollup';
 import { useGridApi, type GridApi } from '../model/use-grid-api';
+import {
+  buildTreeState,
+  useDragDrop,
+  useTreeEditor,
+  type ChangeSet,
+  type TreeEditorConfig,
+  type TreeState,
+} from '../tree-editor';
 import { GridRoot } from './GridRoot';
 
 export interface DataGridProps<TRow> {
@@ -74,6 +82,10 @@ export interface DataGridProps<TRow> {
   editable?: EditableConfig;
   /** Imperative grid API ref. */
   apiRef?: { current: GridApi<TRow> | null };
+  /** Enables tree structure editing (add/delete/move/reparent). */
+  treeEditor?: TreeEditorConfig<TRow>;
+  /** Called when the tree editor state changes. */
+  onTreeChange?: (state: TreeState<TRow>, changeSet: ChangeSet<TRow>) => void;
   /** Configures aggregate rendering for grouped rows and the footer. */
   aggregation?: AggregationConfig;
   /** Called when a cell edit starts. */
@@ -141,6 +153,30 @@ function buildSelectionMaps<TRow>(
   return { childMap, parentMap };
 }
 
+function treeStateToRows<TRow>(
+  state: TreeState<TRow>,
+  getRowId: (row: TRow) => string,
+) {
+  const rowById = new Map<string, TRow>();
+  for (const [id, node] of state.nodes) {
+    rowById.set(id, node.data);
+  }
+
+  return {
+    rootRows: state.rootIds
+      .map((id) => rowById.get(id))
+      .filter((row): row is TRow => row !== undefined),
+    getSubRows: (row: TRow) => {
+      const id = getRowId(row);
+      const childIds = state.nodes.get(id)?.childIds ?? [];
+      const children = childIds
+        .map((childId) => rowById.get(childId))
+        .filter((child): child is TRow => child !== undefined);
+      return children.length > 0 ? children : undefined;
+    },
+  };
+}
+
 /** The public Strata grid component. */
 export function DataGrid<TRow>({
   data,
@@ -164,6 +200,8 @@ export function DataGrid<TRow>({
   theme,
   editable,
   apiRef,
+  treeEditor,
+  onTreeChange,
   aggregation,
   onCellEditStart,
   onCellEditEnd,
@@ -179,6 +217,38 @@ export function DataGrid<TRow>({
     () => (treeData ? normalizeTreeData(rows, treeData) : null),
     [rows, treeData],
   );
+  const treeEditingEnabled = treeData !== undefined && treeEditor !== undefined;
+  const initialTreeState = useMemo(
+    () =>
+      treeData
+        ? buildTreeState(rows, {
+            getRowId: treeData.getRowId,
+            getChildren: treeData.getChildren,
+            getParentId: treeData.getParentId,
+          })
+        : buildTreeState<TRow>([], { getRowId: (_row) => '' }),
+    [rows, treeData],
+  );
+  const treeEditorApi = useTreeEditor({
+    initialState: initialTreeState,
+    validateMove: treeEditor?.validateMove,
+    generateId: treeEditor?.generateId,
+    createNode: treeEditor?.createNode,
+    historyDepth: treeEditor?.historyDepth,
+    onTreeChange: treeEditingEnabled ? onTreeChange : undefined,
+  });
+  const dragDrop = useDragDrop({
+    state: treeEditorApi.state,
+    execute: treeEditorApi.execute,
+    validators: treeEditor?.validateMove ? [treeEditor.validateMove] : [],
+  });
+  const editedTree = useMemo(
+    () =>
+      treeData && treeEditingEnabled
+        ? treeStateToRows(treeEditorApi.state, treeData.getRowId)
+        : null,
+    [treeData, treeEditingEnabled, treeEditorApi.state],
+  );
 
   const treeColumnId = useMemo(
     () => (treeData ? resolveTreeColumnId(leafColumns) : undefined),
@@ -186,20 +256,20 @@ export function DataGrid<TRow>({
   );
   const effectiveGroupBy = treeData ? undefined : groupBy;
   const bomRollup = useBomRollup({
-    roots: tree?.rootRows ?? [],
+    roots: editedTree?.rootRows ?? tree?.rootRows ?? [],
     columns: leafColumns,
     sourceColumnId: aggregation?.extendedQuantity?.sourceColumn,
     targetColumnId: aggregation?.extendedQuantity?.targetColumn,
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
-    getSubRows: tree?.getSubRows,
+    getSubRows: editedTree?.getSubRows ?? tree?.getSubRows,
     compute: aggregation?.extendedQuantity?.compute,
   });
 
   const table = useGridTable({
-    data: tree ? tree.rootRows : rows,
+    data: editedTree?.rootRows ?? (tree ? tree.rootRows : rows),
     columns: leafColumns,
     tanstackColumns,
-    getSubRows: tree?.getSubRows,
+    getSubRows: editedTree?.getSubRows ?? tree?.getSubRows,
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
     defaultExpanded,
     defaultSort,
@@ -216,7 +286,7 @@ export function DataGrid<TRow>({
     onColumnSizingChange,
   });
 
-  const selectableRows = tree ? tree.rootRows : rows;
+  const selectableRows = editedTree?.rootRows ?? (tree ? tree.rootRows : rows);
   const getSelectionRowId = useMemo(
     () =>
       treeData
@@ -229,16 +299,20 @@ export function DataGrid<TRow>({
       buildSelectionMaps(
         selectableRows,
         getSelectionRowId,
-        tree?.getSubRows,
+        editedTree?.getSubRows ?? tree?.getSubRows,
       ),
-    [getSelectionRowId, selectableRows, tree],
+    [getSelectionRowId, selectableRows, tree, editedTree],
   );
   const allRowIds = useMemo(
     () =>
       selection
-        ? collectAllRowIds(selectableRows, getSelectionRowId, tree?.getSubRows)
+        ? collectAllRowIds(
+            selectableRows,
+            getSelectionRowId,
+            editedTree?.getSubRows ?? tree?.getSubRows,
+          )
         : [],
-    [getSelectionRowId, selectableRows, selection, tree],
+    [getSelectionRowId, selectableRows, selection, tree, editedTree],
   );
   const selectionState = useSelection({
     config: selection ?? { mode: 'multi' },
@@ -259,6 +333,7 @@ export function DataGrid<TRow>({
     table,
     editState,
     selection: selection ? selectionState : undefined,
+    treeEditor: treeEditingEnabled ? treeEditorApi : undefined,
   });
 
   useEffect(() => {
@@ -281,6 +356,15 @@ export function DataGrid<TRow>({
       columns={leafColumns}
       aggregation={aggregation}
       bomRollup={bomRollup}
+      treeEditor={treeEditingEnabled ? treeEditorApi : undefined}
+      dragDrop={
+        treeEditingEnabled && treeEditor?.enableDrag !== false
+          ? dragDrop
+          : undefined
+      }
+      enableTreeKeyboard={
+        treeEditingEnabled && treeEditor?.enableIndent !== false
+      }
     />
   );
 

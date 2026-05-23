@@ -36,7 +36,7 @@ const examples: ExampleConfig[] = [
   {
     key: 'tree',
     label: 'Tree BOM',
-    summary: 'Hierarchy, tree expand/collapse, sorting, filtering, and pinned identity columns.',
+    summary: 'Hierarchy, structure editing, tree expand/collapse, sorting, filtering, and pinned identity columns.',
   },
   {
     key: 'wide',
@@ -454,6 +454,7 @@ function exampleGrid(
           columns={bomColumns}
           treeData={treeData}
           defaultExpanded
+          treeEditor={{}}
           aggregation={{
             extendedQuantity: {
               sourceColumn: 'qty',
