@@ -249,10 +249,49 @@ const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
 For sort, filter, search, and column state, listen to `onViewStateChange`.
 
-For **total count and loading state**, the cleanest pattern today is to
-let your adapter expose them. The adapter is where `loadPage` runs — it
-already knows the count and the in-flight state. Expose a tiny subscribe
-seam from the adapter that your status bar reads:
+For **total count and loading state** (available from `0.2.0-alpha.0`),
+use the `onPaginationChange` callback:
+
+```tsx
+const [pagination, setPagination] = useState({
+  totalCount: 0,
+  currentPage: 0,
+  pageSize: 50,
+  isLoading: false,
+});
+
+<DataGrid
+  // ...
+  onPaginationChange={setPagination}
+/>;
+
+// In your status bar:
+<div>
+  {pagination.isLoading
+    ? 'Loading…'
+    : `${pagination.totalCount.toLocaleString()} results · page ${pagination.currentPage + 1}`}
+</div>;
+```
+
+The callback fires on initial load, on every page navigation, and whenever
+loading or total-count state changes. The full event payload:
+
+```ts
+{
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  isLoading: boolean;
+  hasMore: boolean;
+  error: Error | null;
+}
+```
+
+#### Pre-0.2.0 workaround (still supported)
+
+If you're pinned to `0.1.x` or want loading state localized to the adapter
+itself, expose a subscribe seam from your adapter:
 
 ```ts
 export function createListSource<T>(opts: { endpoint: string }) {
@@ -282,10 +321,8 @@ export function createListSource<T>(opts: { endpoint: string }) {
 }
 ```
 
-Your status bar reads from `subscribe()` and re-renders. This keeps the
-grid component pure and the data-source observable, which is the right
-separation. A built-in `onPaginationChange` callback on `<DataGrid>` is
-tracked as a future ergonomic addition.
+Both patterns are valid; `onPaginationChange` is simpler when the status
+bar lives outside the data-fetching layer.
 
 ## Live example
 
@@ -337,12 +374,15 @@ list-page migrations. We're collecting friction reports from teams running
 this in production — see the GitHub repo if you want to share what your
 adapter looked like or what you wished was first-class.
 
-Planned ergonomic additions (no breaking changes):
+Shipped in `0.2.0-alpha.0`:
 
-- **`onPaginationChange`** — surface `{ currentPage, totalCount, isLoading }`
-  from the grid directly, removing the need for the adapter-subscribe
+- **`onPaginationChange`** — surfaces `{ currentPage, totalCount, isLoading,
+  hasMore, error }` directly from the grid, replacing the adapter-subscribe
   pattern in Step 5.
+
+Planned (no breaking changes):
+
+- **Typed column filters** — `filter: { type: 'select', options, multi? }`
+  and friends, for enum/boolean/date columns with constrained operators.
 - **`rowActions` prop** — first-class actions column with inline / kebab
   display, conditional visibility, and built-in keyboard accessibility.
-- **Discrete `onSortChange` / `onFilterChange` / `onSearchChange`** —
-  surgical callbacks for finer URL serialization than `onViewStateChange`.

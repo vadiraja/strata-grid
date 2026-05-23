@@ -163,6 +163,21 @@ export interface DataGridProps<TRow> {
     changes: Record<string, { oldValue: unknown; newValue: unknown }>;
     committed: boolean;
   }) => void;
+  /**
+   * Called whenever the grid's paginated state changes. Use this to drive a
+   * shell-rendered status bar with total count, current page, or loading
+   * state — `ViewState` intentionally doesn't include pagination, so this
+   * callback is the supported seam.
+   */
+  onPaginationChange?: (state: {
+    currentPage: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    isLoading: boolean;
+    hasMore: boolean;
+    error: Error | null;
+  }) => void;
 }
 
 function collectAllRowIds<TRow>(
@@ -302,6 +317,7 @@ export function DataGrid<TRow>({
   onCellEditEnd,
   onRowEditStart,
   onRowEditEnd,
+  onPaginationChange,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -342,6 +358,29 @@ export function DataGrid<TRow>({
     mode: pagination?.mode,
     query: serverQuery,
   });
+
+  // Surface pagination state to consumers (for status-bar rendering, etc.)
+  useEffect(() => {
+    if (!onPaginationChange) return;
+    onPaginationChange({
+      currentPage: paginationState.currentPage,
+      pageSize: paginationState.pageSize,
+      totalCount: paginationState.totalCount,
+      totalPages: paginationState.totalPages,
+      isLoading: paginationState.isLoading,
+      hasMore: paginationState.hasMore,
+      error: paginationState.error,
+    });
+  }, [
+    onPaginationChange,
+    paginationState.currentPage,
+    paginationState.pageSize,
+    paginationState.totalCount,
+    paginationState.totalPages,
+    paginationState.isLoading,
+    paginationState.hasMore,
+    paginationState.error,
+  ]);
 
   // Use server-loaded data when server capabilities exist, otherwise load synchronously
   const rows = useMemo(() => {
