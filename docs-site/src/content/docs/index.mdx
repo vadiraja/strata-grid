@@ -1,0 +1,35 @@
+---
+title: Strata
+description: Open-source React tree data grid for hierarchical and nested data.
+template: splash
+hero:
+  tagline: An open-source React tree data grid for hierarchical and nested data.
+  actions:
+    - text: Get started
+      link: /getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/vadiraja/strata-grid
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why Strata
+
+<CardGrid stagger>
+  <Card title="Tree-first" icon="list-format">
+    Indented, multi-level tree grid out of the box — the canonical view for
+    bills of materials, file explorers, and org charts.
+  </Card>
+  <Card title="Virtualized" icon="rocket">
+    Row *and* column virtualization for datasets in the tens of thousands.
+  </Card>
+  <Card title="Themable" icon="setting">
+    CSS-custom-property tokens, dark mode, density presets, and print support.
+  </Card>
+  <Card title="Free & MIT-spirit" icon="open-book">
+    Apache-2.0 licensed; no paywalled tree-grid, no enterprise tier.
+  </Card>
+</CardGrid>
