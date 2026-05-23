@@ -14,7 +14,7 @@ gets its own design spec → implementation plan → build cycle.
 | **M2** | Editing & aggregation | Specced — see [`docs/superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md`](superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md) |
 | **M3** | Hierarchy / BOM editor | Specced — see [`docs/superpowers/specs/2026-05-23-strata-m3-hierarchy-editor-design.md`](superpowers/specs/2026-05-23-strata-m3-hierarchy-editor-design.md) |
 | **M4** | Scale & enterprise extras | Implemented and wired into the playground (Pagination, Quick Search, Filter Builder, Export, Where Used, Column Management, Live Updates, flex columns). Spec: [`docs/superpowers/specs/2026-05-23-strata-m4-scale-enterprise-design.md`](superpowers/specs/2026-05-23-strata-m4-scale-enterprise-design.md) |
-| **M5** | Theming & visual polish | Specced — see [`docs/superpowers/specs/2026-05-23-strata-m5-theming-design.md`](superpowers/specs/2026-05-23-strata-m5-theming-design.md) |
+| **M5** | Theming & visual polish | Implemented (icons, high-contrast themes, density, striping, runtime theme composition, auto theme, transitions, themed scrollbars, print support). Spec: [`docs/superpowers/specs/2026-05-23-strata-m5-theming-design.md`](superpowers/specs/2026-05-23-strata-m5-theming-design.md) |
 | M6 | Plugin system | Backlog |
 | M7 | i18n, RTL & localization | Backlog |
 | M8 | Documentation & developer experience | Backlog |
