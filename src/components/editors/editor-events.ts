@@ -4,6 +4,7 @@ export interface EditorBehaviorOptions {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
   selectOnMount?: boolean;
 }
 
@@ -11,6 +12,7 @@ export function useEditorBehavior<T extends HTMLInputElement | HTMLSelectElement
   onCommit,
   onDiscard,
   autoFocus = true,
+  onNavigateKey,
   selectOnMount,
 }: EditorBehaviorOptions) {
   const ref = useRef<T>(null);
@@ -30,6 +32,13 @@ export function useEditorBehavior<T extends HTMLInputElement | HTMLSelectElement
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     event.stopPropagation();
+    if (
+      (event.key === 'Tab' || event.key === 'Enter') &&
+      onNavigateKey?.(event)
+    ) {
+      return;
+    }
+
     if (event.key === 'Enter') {
       event.preventDefault();
       onCommit();

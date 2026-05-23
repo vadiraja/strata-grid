@@ -6,6 +6,7 @@ export interface DateEditorProps {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
 }
 
 function toDateInputValue(value: unknown): string {
@@ -22,11 +23,13 @@ export function DateEditor({
   onCommit,
   onDiscard,
   autoFocus,
+  onNavigateKey,
 }: DateEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
     autoFocus,
+    onNavigateKey,
   });
 
   return (

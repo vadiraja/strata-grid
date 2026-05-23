@@ -6,6 +6,7 @@ export interface TextEditorProps {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
 }
 
 export function TextEditor({
@@ -14,11 +15,13 @@ export function TextEditor({
   onCommit,
   onDiscard,
   autoFocus,
+  onNavigateKey,
 }: TextEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
     autoFocus,
+    onNavigateKey,
     selectOnMount: true,
   });
 

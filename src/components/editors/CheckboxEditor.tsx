@@ -6,6 +6,7 @@ export interface CheckboxEditorProps {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
 }
 
 export function CheckboxEditor({
@@ -14,6 +15,7 @@ export function CheckboxEditor({
   onCommit,
   onDiscard,
   autoFocus = true,
+  onNavigateKey,
 }: CheckboxEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +37,13 @@ export function CheckboxEditor({
       }}
       onKeyDown={(event) => {
         event.stopPropagation();
+        if (
+          (event.key === 'Tab' || event.key === 'Enter') &&
+          onNavigateKey?.(event)
+        ) {
+          return;
+        }
+
         if (event.key === 'Escape') {
           event.preventDefault();
           onDiscard();

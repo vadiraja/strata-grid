@@ -3,6 +3,7 @@ import type { Cell } from '@tanstack/react-table';
 import type { EditorType } from '../../model/types';
 import { useEditContext } from '../../model/edit-context';
 import { useValidation } from '../../model/use-validation';
+import { resolveEditableNavigationTarget } from '../../model/use-edit-navigation';
 import { TextEditor } from './TextEditor';
 import { NumberEditor } from './NumberEditor';
 import { SelectEditor, type SelectChoice } from './SelectEditor';
@@ -109,6 +110,43 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
     if (isActiveRow) return;
     editCtx.editState.commitEdit();
   };
+  const onNavigateKey = (event: React.KeyboardEvent) => {
+    if (isActiveRow || !activeCell) return false;
+    if (event.key !== 'Tab' && event.key !== 'Enter') return false;
+
+    const table = cell.getContext().table;
+    const target = resolveEditableNavigationTarget(
+      {
+        columnIds: table.getVisibleLeafColumns().map((column) => column.id),
+        rows: table.getRowModel().rows.map((row) => ({
+          id: row.id,
+          original: row.original,
+          getIsGrouped: row.getIsGrouped,
+          cells: row.getVisibleCells().map((visibleCell) => ({
+            columnId: visibleCell.column.id,
+            value: visibleCell.getValue(),
+            column: visibleCell.column.columnDef.meta!.strataColumn,
+          })),
+        })),
+      },
+      activeCell,
+      event.key === 'Enter' ? 'down' : event.shiftKey ? 'previous' : 'next',
+    );
+
+    event.preventDefault();
+    void (async () => {
+      if (column.validate) {
+        const nextValidation = await validateNow();
+        if (nextValidation.status !== 'valid') return;
+      }
+
+      editCtx.editState.commitEdit();
+      if (target) {
+        editCtx.editState.startEdit(target.rowId, target.columnId, target.value);
+      }
+    })();
+    return true;
+  };
 
   const editorContext = {
     value,
@@ -139,6 +177,7 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
           onDiscard,
           column.editorOptions,
           !isActiveRow,
+          onNavigateKey,
         )
       )}
       <ValidationMessage validation={validation} />
@@ -154,6 +193,7 @@ function renderBuiltInEditor(
   onDiscard: () => void,
   editorOptions?: Record<string, unknown>,
   autoFocus?: boolean,
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean,
 ) {
   switch (editorType) {
     case 'number':
@@ -164,6 +204,7 @@ function renderBuiltInEditor(
           onCommit={onCommit}
           onDiscard={onDiscard}
           autoFocus={autoFocus}
+          onNavigateKey={onNavigateKey}
         />
       );
     case 'select':
@@ -175,6 +216,7 @@ function renderBuiltInEditor(
           onCommit={onCommit}
           onDiscard={onDiscard}
           autoFocus={autoFocus}
+          onNavigateKey={onNavigateKey}
         />
       );
     case 'date':
@@ -185,6 +227,7 @@ function renderBuiltInEditor(
           onCommit={onCommit}
           onDiscard={onDiscard}
           autoFocus={autoFocus}
+          onNavigateKey={onNavigateKey}
         />
       );
     case 'checkbox':
@@ -195,6 +238,7 @@ function renderBuiltInEditor(
           onCommit={onCommit}
           onDiscard={onDiscard}
           autoFocus={autoFocus}
+          onNavigateKey={onNavigateKey}
         />
       );
     case 'text':
@@ -206,6 +250,7 @@ function renderBuiltInEditor(
           onCommit={onCommit}
           onDiscard={onDiscard}
           autoFocus={autoFocus}
+          onNavigateKey={onNavigateKey}
         />
       );
   }

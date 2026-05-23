@@ -12,6 +12,7 @@ export interface SelectEditorProps {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
 }
 
 export function SelectEditor({
@@ -21,11 +22,13 @@ export function SelectEditor({
   onCommit,
   onDiscard,
   autoFocus,
+  onNavigateKey,
 }: SelectEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLSelectElement>({
     onCommit,
     onDiscard,
     autoFocus,
+    onNavigateKey,
   });
   const selectedIndex = choices.findIndex((choice) => choice.value === value);
 

@@ -6,6 +6,7 @@ export interface NumberEditorProps {
   onCommit: () => void;
   onDiscard: () => void;
   autoFocus?: boolean;
+  onNavigateKey?: (event: React.KeyboardEvent) => boolean;
 }
 
 export function NumberEditor({
@@ -14,11 +15,13 @@ export function NumberEditor({
   onCommit,
   onDiscard,
   autoFocus,
+  onNavigateKey,
 }: NumberEditorProps) {
   const { ref, handleKeyDown, handleBlur } = useEditorBehavior<HTMLInputElement>({
     onCommit,
     onDiscard,
     autoFocus,
+    onNavigateKey,
     selectOnMount: true,
   });
 
