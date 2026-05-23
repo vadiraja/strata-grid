@@ -95,11 +95,25 @@ function fromTanstackSorting(sorts: TanstackSortingState): ColumnSort[] {
 }
 
 function fromTanstackFilters(filters: ColumnFiltersState): FilterExpression[] {
-  return filters.map((filter) => ({
-    columnId: filter.id,
-    operator: 'contains',
-    value: filter.value,
-  }));
+  return filters.map((filter) => {
+    const v = filter.value;
+    // Structured filter values emitted by typed-filter UIs carry an explicit
+    // operator. Honor it.
+    if (v && typeof v === 'object' && 'operator' in v) {
+      const structured = v as { operator: FilterExpression['operator']; value: unknown };
+      return {
+        columnId: filter.id,
+        operator: structured.operator,
+        value: structured.value,
+      };
+    }
+    // Legacy primitive values (current text/number behavior).
+    return {
+      columnId: filter.id,
+      operator: 'contains',
+      value: v,
+    };
+  });
 }
 
 function getPinningFromColumns<TRow>(

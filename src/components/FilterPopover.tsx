@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Column } from '@tanstack/react-table';
-import type { ResolvedColumnFilter } from '../data/types';
+import type { FilterOperator, ResolvedColumnFilter } from '../data/types';
 import { StrataIcon } from '../icons';
+import { SelectFilterInput } from './SelectFilterInput';
+import { BooleanFilterInput } from './BooleanFilterInput';
+import { DateFilterInput } from './DateFilterInput';
 
 export interface FilterPopoverProps<TRow> {
   /** The TanStack column to filter. */
@@ -14,19 +17,126 @@ export interface FilterPopoverProps<TRow> {
  * A per-column filter input popover. Renders a text or number input
  * that sets the column's filter value on change.
  */
+interface StructuredFilterValue {
+  operator: FilterOperator;
+  value: unknown;
+}
+
+function readStructured(v: unknown): StructuredFilterValue | null {
+  if (v && typeof v === 'object' && 'operator' in v) {
+    return v as StructuredFilterValue;
+  }
+  return null;
+}
+
+function readTextValue(raw: unknown): string {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return raw;
+  const structured = readStructured(raw);
+  if (structured) {
+    return structured.value == null ? '' : String(structured.value);
+  }
+  return String(raw);
+}
+
+interface TextNumberInputProps<TRow> {
+  column: Column<TRow, unknown>;
+  resolved: Extract<ResolvedColumnFilter, { type: 'text' | 'number' }>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  filterValue: string;
+  filterType: 'text' | 'number';
+  onClear: () => void;
+}
+
+function TextNumberInput<TRow>({
+  column,
+  resolved,
+  inputRef,
+  filterValue,
+  filterType,
+  onClear,
+}: TextNumberInputProps<TRow>) {
+  const showOperatorSelect = resolved.operators.length > 1;
+  const defaultOperator: FilterOperator =
+    resolved.operators[0] ?? (filterType === 'number' ? 'equals' : 'contains');
+  const current = readStructured(column.getFilterValue());
+  const [operator, setOperator] = useState<FilterOperator>(
+    current?.operator ?? defaultOperator,
+  );
+
+  const setValueFor = (op: FilterOperator, raw: string) => {
+    if (raw === '') {
+      column.setFilterValue(undefined);
+      return;
+    }
+    if (showOperatorSelect) {
+      // Emit structured so the operator round-trips through fromTanstackFilters.
+      column.setFilterValue({ operator: op, value: raw });
+    } else {
+      // Single-operator default — preserve legacy primitive form for
+      // backward compatibility (existing client-side filterFns use it).
+      column.setFilterValue(raw);
+    }
+  };
+
+  return (
+    <>
+      {showOperatorSelect && (
+        <select
+          className="strata-filter-operator"
+          aria-label={`Filter ${column.id} operator`}
+          value={operator}
+          onChange={(e) => {
+            const next = e.target.value as FilterOperator;
+            setOperator(next);
+            if (filterValue) setValueFor(next, filterValue);
+          }}
+        >
+          {resolved.operators.map((op) => (
+            <option key={op} value={op}>
+              {op}
+            </option>
+          ))}
+        </select>
+      )}
+      <input
+        ref={inputRef}
+        className="strata-filter-input"
+        type={filterType === 'number' ? 'number' : 'text'}
+        placeholder={`Filter${filterType === 'number' ? ' (number)' : ''}…`}
+        value={filterValue}
+        onChange={(e) => setValueFor(operator, e.target.value)}
+        aria-label={`Filter value for ${column.id}`}
+      />
+      {filterValue && (
+        <button
+          type="button"
+          className="strata-filter-clear-button"
+          aria-label={`Clear filter ${column.id}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
+        >
+          ×
+        </button>
+      )}
+    </>
+  );
+}
+
 export function FilterPopover<TRow>({
   column,
   resolved,
 }: FilterPopoverProps<TRow>) {
-  // 0.2.0 task 1 ships types only — UI for select/boolean/date lands in
-  // follow-up tasks. For now we render the text/number input for all types,
-  // falling back to text for unimplemented kinds.
   const filterType: 'text' | 'number' =
     resolved.type === 'number' ? 'number' : 'text';
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const filterValue = (column.getFilterValue() as string) ?? '';
+  const rawValue = column.getFilterValue();
+  const filterValue = readTextValue(rawValue);
+  const hasValue = filterValue !== '' || readStructured(rawValue) !== null;
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -93,7 +203,7 @@ export function FilterPopover<TRow>({
           setOpen(!open);
         }}
       >
-        {filterValue ? <StrataIcon name="filter-active" /> : <StrataIcon name="filter" />}
+        {hasValue ? <StrataIcon name="filter-active" /> : <StrataIcon name="filter" />}
       </button>
       {open && (
         <div
@@ -102,27 +212,30 @@ export function FilterPopover<TRow>({
           aria-label="Column filter"
           onClick={(event) => event.stopPropagation()}
         >
-          <input
-            ref={inputRef}
-            className="strata-filter-input"
-            type={filterType === 'number' ? 'number' : 'text'}
-            placeholder={`Filter${filterType === 'number' ? ' (number)' : ''}…`}
-            value={filterValue}
-            onChange={(e) => column.setFilterValue(e.target.value || undefined)}
-            aria-label={`Filter value for ${column.id}`}
-          />
-          {filterValue && (
-            <button
-              type="button"
-              className="strata-filter-clear-button"
-              aria-label={`Clear filter ${column.id}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                clearFilter();
-              }}
-            >
-              ×
-            </button>
+          {resolved.type === 'select' ? (
+            <SelectFilterInput
+              column={column}
+              options={resolved.options}
+              multi={resolved.multi}
+              operators={resolved.operators}
+            />
+          ) : resolved.type === 'boolean' ? (
+            <BooleanFilterInput column={column} />
+          ) : resolved.type === 'date' ? (
+            <DateFilterInput
+              column={column}
+              operators={resolved.operators}
+              range={resolved.range}
+            />
+          ) : (
+            <TextNumberInput
+              column={column}
+              resolved={resolved}
+              inputRef={inputRef}
+              filterValue={filterValue}
+              filterType={filterType}
+              onClear={clearFilter}
+            />
           )}
         </div>
       )}

@@ -6,23 +6,42 @@ import { DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './constants';
 import { textFilterFn, numberFilterFn } from './tree-filter-fn';
 import { toTanstackAggregationFn } from './aggregate-fns';
 import { resolveFilterConfig } from '../data/resolve-filter-config';
-import type { ColumnFilterConfig } from '../data/types';
+import { evaluateFilter } from '../filter/evaluate-filter';
+import type { ColumnFilterConfig, FilterOperator } from '../data/types';
+
+interface StructuredFilterValue {
+  operator: FilterOperator;
+  value: unknown;
+}
+
+function isStructured(v: unknown): v is StructuredFilterValue {
+  return !!v && typeof v === 'object' && 'operator' in (v as object);
+}
 
 function resolveFilterFn(filterConfig: ColumnFilterConfig | false | undefined) {
   if (filterConfig === false || filterConfig === undefined) return undefined;
 
   const resolved = resolveFilterConfig(filterConfig);
-  if (resolved.type === 'text') {
-    return (row: any, columnId: string, filterValue: string) =>
-      textFilterFn(row.getValue(columnId), filterValue);
-  }
-  if (resolved.type === 'number') {
-    return (row: any, columnId: string, filterValue: string) =>
-      numberFilterFn(row.getValue(columnId), filterValue);
-  }
-  // select / boolean / date — UI lands in 0.2.0 follow-up tasks.
-  // For now, no client-side filterFn (server-driven assumed).
-  return undefined;
+
+  // Structured filter values produced by typed-filter UIs are handled by the
+  // shared evaluator. Primitive values fall back to the legacy text/number
+  // filter functions for backward compatibility.
+  return (row: any, columnId: string, filterValue: unknown) => {
+    if (isStructured(filterValue)) {
+      // Use TanStack's accessor for the cell value; evaluateFilter only
+      // accesses `columnId` so the row arg is unused.
+      return evaluateFilter(
+        row.original,
+        { columnId, operator: filterValue.operator, value: filterValue.value },
+        (_r, c) => row.getValue(c),
+      );
+    }
+    // Primitive — legacy behavior.
+    if (resolved.type === 'number') {
+      return numberFilterFn(row.getValue(columnId), filterValue as string);
+    }
+    return textFilterFn(row.getValue(columnId), filterValue as string);
+  };
 }
 
 function toTanstackLeaf<TRow>(

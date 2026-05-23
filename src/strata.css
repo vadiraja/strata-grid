@@ -174,6 +174,74 @@
   color: var(--strata-text);
 }
 
+/* 0.2.0 — typed filter inputs */
+.strata-filter-operator {
+  margin-right: 4px;
+  padding: var(--strata-filter-input-padding-y) var(--strata-filter-input-padding-x);
+  border: 1px solid var(--strata-border);
+  border-radius: var(--strata-radius-button);
+  background: var(--strata-bg-input);
+  color: var(--strata-text);
+  font-size: 13px;
+}
+
+.strata-filter-select,
+.strata-filter-boolean,
+.strata-filter-date,
+.strata-filter-date-range {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.strata-filter-date,
+.strata-filter-date-range {
+  gap: 8px;
+}
+
+.strata-filter-select-label {
+  font-size: 12px;
+  color: var(--strata-text-muted);
+}
+
+.strata-filter-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.strata-filter-select-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--strata-text);
+  cursor: pointer;
+}
+
+.strata-filter-boolean-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--strata-text);
+  cursor: pointer;
+}
+
+.strata-filter-date-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--strata-text-muted);
+}
+
 .strata-row-container {
   box-sizing: border-box;
   display: flex;
