@@ -6,3 +6,7 @@ export { MoveNodeCommand, MoveRejectedError } from './move-node';
 export type { MoveNodeOptions } from './move-node';
 export { ReorderNodeCommand } from './reorder-node';
 export type { ReorderNodeOptions } from './reorder-node';
+export { IndentNodeCommand } from './indent-node';
+export type { IndentNodeOptions } from './indent-node';
+export { OutdentNodeCommand } from './outdent-node';
+export type { OutdentNodeOptions } from './outdent-node';

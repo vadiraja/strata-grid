@@ -19,6 +19,22 @@ export interface GridKeyboardOptions {
   isTreeColumn?: (colIndex: number) => boolean;
   /** Returns whether a column index is the selection column. */
   isSelectionColumn?: (colIndex: number) => boolean;
+  /**
+   * Tree editor shortcuts — when supplied, the grid intercepts the
+   * corresponding key combos and calls the handler with the current row.
+   *
+   * - `onIndent`: Tab — make the focused row a child of its previous sibling.
+   * - `onOutdent`: Shift+Tab — make the focused row a sibling of its parent.
+   * - `onReorderUp`: Ctrl/Cmd+Shift+ArrowUp — swap with previous sibling.
+   * - `onReorderDown`: Ctrl/Cmd+Shift+ArrowDown — swap with next sibling.
+   *
+   * Handlers receive the focused row index. If a handler is omitted, the
+   * key combo falls through to the browser (Tab default tab order, etc.).
+   */
+  onIndent?: (rowIndex: number) => void;
+  onOutdent?: (rowIndex: number) => void;
+  onReorderUp?: (rowIndex: number) => void;
+  onReorderDown?: (rowIndex: number) => void;
 }
 
 export interface GridKeyboardReturn {
@@ -44,6 +60,10 @@ export function useGridKeyboard({
   onCellActivate,
   isTreeColumn = () => false,
   isSelectionColumn = () => false,
+  onIndent,
+  onOutdent,
+  onReorderUp,
+  onReorderDown,
 }: GridKeyboardOptions): GridKeyboardReturn {
   const clamp = useCallback(
     (rowIndex: number, colIndex: number): GridCellPosition => [
@@ -81,10 +101,27 @@ export function useGridKeyboard({
           setActiveCellRaw((current) => clamp(current[0], current[1] - 1));
           break;
         case 'ArrowDown':
-          setActiveCellRaw((current) => clamp(current[0] + 1, current[1]));
+          if (ctrl && event.shiftKey && onReorderDown) {
+            onReorderDown(activeCell[0]);
+          } else {
+            setActiveCellRaw((current) => clamp(current[0] + 1, current[1]));
+          }
           break;
         case 'ArrowUp':
-          setActiveCellRaw((current) => clamp(current[0] - 1, current[1]));
+          if (ctrl && event.shiftKey && onReorderUp) {
+            onReorderUp(activeCell[0]);
+          } else {
+            setActiveCellRaw((current) => clamp(current[0] - 1, current[1]));
+          }
+          break;
+        case 'Tab':
+          if (event.shiftKey && onOutdent) {
+            onOutdent(activeCell[0]);
+          } else if (!event.shiftKey && onIndent) {
+            onIndent(activeCell[0]);
+          } else {
+            handled = false;
+          }
           break;
         case 'Home':
           setActiveCellRaw((current) => (ctrl ? [0, 0] : [current[0], 0]));
@@ -129,6 +166,10 @@ export function useGridKeyboard({
       onExpandToggle,
       onCellActivate,
       onSelectionToggle,
+      onIndent,
+      onOutdent,
+      onReorderUp,
+      onReorderDown,
       rowCount,
     ],
   );

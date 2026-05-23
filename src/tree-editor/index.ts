@@ -17,11 +17,15 @@ export {
   MoveNodeCommand,
   MoveRejectedError,
   ReorderNodeCommand,
+  IndentNodeCommand,
+  OutdentNodeCommand,
 } from './commands';
 export type {
   AddNodeOptions,
   DeleteNodeOptions,
   MoveNodeOptions,
   ReorderNodeOptions,
+  IndentNodeOptions,
+  OutdentNodeOptions,
 } from './commands';
 export { isDescendant, validateCycleAndSelf } from './validators';
