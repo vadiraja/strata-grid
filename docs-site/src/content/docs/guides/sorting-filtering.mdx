@@ -1,0 +1,43 @@
+---
+title: Sorting & filtering
+description: Tree-aware sort and per-column filters, with multi-column sort.
+sidebar:
+  order: 2
+---
+
+import SortableGrid from '../../../components/examples/sorting-filtering/SortableGrid.tsx';
+
+Sorting and filtering in Strata are tree-aware: children stay grouped under
+their parents, and ancestors of matching rows are preserved during a filter so
+the path stays visible.
+
+## Per-column sort
+
+Click a header to sort ascending; click again to flip; click again to clear.
+Use `defaultSort` to set an initial order:
+
+```tsx
+<DataGrid
+  data={data}
+  columns={columns}
+  defaultSort={[
+    { columnId: 'partNumber', direction: 'asc' },
+    { columnId: 'qty', direction: 'desc' },
+  ]}
+/>;
+```
+
+## Per-column filter
+
+Pass a `filter` value on each column definition:
+
+| Value | Behavior |
+| --- | --- |
+| `'text'` | Case-insensitive contains match. |
+| `'number'` | Numeric comparison with an operator menu. |
+| `false` | No filter UI for this column. |
+
+Filtering preserves ancestors of every matching row, so you never see an
+orphaned child without its parent.
+
+<SortableGrid client:load />

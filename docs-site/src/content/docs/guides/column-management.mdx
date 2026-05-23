@@ -1,0 +1,37 @@
+---
+title: Column management
+description: Resize, drag-to-reorder, pin, flex, and virtualize columns.
+sidebar:
+  order: 3
+---
+
+import ManagedColumnsGrid from '../../../components/examples/columns/ManagedColumnsGrid.tsx';
+
+Strata supports per-column resize, drag-to-reorder, left/right pinning, flex
+columns, and column virtualization.
+
+## Pinning
+
+Set `pin: 'left'` or `pin: 'right'` on a column definition to pin it. Pinned
+columns stay visible during horizontal scroll.
+
+```tsx
+const columns: ColumnDef<Row>[] = [
+  { id: 'a', header: 'A', accessor: 'a', pin: 'left' },
+  { id: 'b', header: 'B', accessor: 'b' },
+  { id: 'd', header: 'D', accessor: 'd', pin: 'right' },
+];
+```
+
+## Resize and reorder
+
+Resize by dragging the column edge. Reorder by dragging the column header. The
+state can be controlled with column state props or persisted through
+`useViewState`.
+
+## Column virtualization
+
+Strata virtualizes columns as well as rows. Off-screen columns do not render
+DOM, keeping wide grids responsive.
+
+<ManagedColumnsGrid client:load />

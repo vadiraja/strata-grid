@@ -1,0 +1,44 @@
+---
+title: Tree data
+description: Indented, multi-level grids from nested or flat data.
+sidebar:
+  order: 1
+---
+
+import TreeGrid from '../../../components/examples/quick-start/TreeGrid.tsx';
+import FlatTreeGrid from '../../../components/examples/quick-start/FlatTreeGrid.tsx';
+
+Strata's defining capability is the indented, multi-level tree grid. This guide
+covers the two input shapes, the tree column, and expand/collapse behavior.
+
+## The two shapes
+
+| Input shape | Config field | Use when |
+| --- | --- | --- |
+| Nested children | `getChildren(row)` | Your rows already form a tree, such as JSON imports. |
+| Flat parent ids | `getParentId(row)` | Your rows come from a flat table with `parentId`. |
+
+Strata internally normalizes both shapes to the same row model, so sorting and
+filtering behave consistently.
+
+## The tree column
+
+Mark exactly one column as the tree column with `isTreeColumn: true`. That
+column renders indentation and the expand/collapse chevron. Other columns render
+normally.
+
+## Expand and collapse
+
+- Click the chevron in the tree column to toggle a row.
+- `defaultExpanded` expands every row on first render.
+- Expansion state is keyed by row id, so stable ids matter.
+
+## Examples
+
+Nested data:
+
+<TreeGrid client:load />
+
+Flat parent-pointer data:
+
+<FlatTreeGrid client:load />

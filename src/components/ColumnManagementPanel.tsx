@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { StrataIcon } from '../icons';
 
+/** Props for `<ColumnManagementPanel>` — show / hide / reorder columns. */
 export interface ColumnManagementPanelProps {
   columns: { id: string; header: string }[];
   hiddenColumns: string[];

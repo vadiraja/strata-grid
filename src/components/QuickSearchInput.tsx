@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { StrataIcon } from '../icons';
 
+/** Props for `<QuickSearchInput>` — debounced search box wired to `useQuickSearch`. */
 export interface QuickSearchInputProps {
   value: string;
   onChange: (value: string) => void;

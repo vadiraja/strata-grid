@@ -1,9 +1,28 @@
 {
   "name": "strata-grid",
   "version": "0.1.0-alpha.0",
-  "description": "Open-source React tree data grid for PLM bills of materials and enterprise data.",
+  "description": "Open-source React tree data grid with virtualization, lazy hierarchies, and theming for enterprise applications.",
   "license": "Apache-2.0",
+  "author": "Vadiraja <vadiraja@vadionline.com>",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vadiraja/strata-grid.git"
+  },
+  "homepage": "https://github.com/vadiraja/strata-grid#readme",
+  "bugs": {
+    "url": "https://github.com/vadiraja/strata-grid/issues"
+  },
+  "keywords": [
+    "react",
+    "data-grid",
+    "tree-grid",
+    "table",
+    "virtualization",
+    "tanstack-table",
+    "hierarchy",
+    "datatable"
+  ],
   "sideEffects": [
     "*.css"
   ],
@@ -27,14 +46,29 @@
   },
   "files": [
     "dist",
-    "NOTICE"
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "workspaces": [
+    "docs-site"
   ],
   "scripts": {
     "dev": "vite",
     "build": "tsup && cp src/strata.css dist/strata.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs",
+    "lint:publish": "publint",
+    "lint:types": "attw --pack .",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",
@@ -46,6 +80,7 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^25.9.1",
@@ -54,9 +89,12 @@
     "@vitejs/plugin-react": "^4.3.4",
     "fast-check": "^4.8.0",
     "jsdom": "^26.0.0",
+    "publint": "^0.3.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.3.5",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.11.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vitest": "^3.0.5"

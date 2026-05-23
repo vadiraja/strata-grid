@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { StrataIcon } from '../icons';
 
+/** Props for `<PaginationBar>` — the page-navigation control. */
 export interface PaginationBarProps {
   currentPage: number;
   totalPages: number;

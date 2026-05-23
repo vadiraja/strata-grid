@@ -1,0 +1,36 @@
+---
+title: Aggregation
+description: Group-row aggregates, footer totals, and BOM extended-quantity rollups.
+sidebar:
+  order: 6
+---
+
+import AggregatedTree from '../../../components/examples/aggregation/AggregatedTree.tsx';
+
+Strata aggregates child values onto parent rows when you set the `aggregate`
+field on a column and enable aggregate display through the grid's `aggregation`
+config.
+
+| `aggregate` value | Result |
+| --- | --- |
+| `'sum'` | Sum of descendant values. |
+| `'avg'` | Mean of descendant values. |
+| `'min'` / `'max'` | Min or max of descendant values. |
+| `'count'` | Count of descendant rows. |
+
+```tsx
+const columns: ColumnDef<Part>[] = [
+  { id: 'qty', header: 'Qty', accessor: 'qty', aggregate: 'sum' },
+];
+
+<DataGrid
+  data={parts}
+  columns={columns}
+  aggregation={{ showParentAggregates: true, showFooterAggregates: true }}
+/>;
+```
+
+For BOMs, `aggregation.extendedQuantity` can compute quantity rollups from a
+source quantity column into a target column.
+
+<AggregatedTree client:load />

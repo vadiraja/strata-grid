@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import type { FilterExpression } from '../data/types';
 
+/** Props for `<FilterBuilderPanel>` — UI for composing nested filter expressions. */
 export interface FilterBuilderPanelProps {
   expression: FilterExpression;
   columns: { id: string; header: string }[];

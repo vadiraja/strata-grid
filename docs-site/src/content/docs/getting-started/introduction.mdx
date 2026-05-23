@@ -1,0 +1,21 @@
+---
+title: Introduction
+description: What Strata is and why it exists.
+sidebar:
+  order: 1
+---
+
+import SmokeTestGrid from '../../../components/examples/SmokeTestGrid.tsx';
+
+Strata is a fast, accessible, themable **tree data grid** delivered as a single
+`<DataGrid>` React component. The defining capability is the **indented,
+multi-level tree grid** — delivered free, where comparable libraries either
+paywall it or omit it.
+
+It renders any parent/child hierarchy, and works equally with **nested data**
+(objects that hold a `children` array) and **flat, parent-pointer data** (rows
+that reference a `parentId`).
+
+## Smoke test
+
+<SmokeTestGrid client:load />

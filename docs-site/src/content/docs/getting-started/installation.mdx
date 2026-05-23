@@ -1,0 +1,55 @@
+---
+title: Installation
+description: Install strata-grid and import its styles.
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Install the package
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install strata-grid
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add strata-grid
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add strata-grid
+    ```
+  </TabItem>
+</Tabs>
+
+## Peer dependencies
+
+Strata requires React 18 or later:
+
+```bash
+npm install react@>=18 react-dom@>=18
+```
+
+## Import the stylesheet
+
+The base stylesheet is required:
+
+```tsx
+import 'strata-grid/styles.css';
+```
+
+Optional theme files expose the token reset and dark theme:
+
+```tsx
+import 'strata-grid/theme/tokens.css';
+import 'strata-grid/theme/dark.css';
+```
+
+## TypeScript
+
+Strata ships its own type definitions. No separate `@types` package is needed.

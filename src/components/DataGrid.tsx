@@ -60,6 +60,10 @@ import { PaginationBar } from './PaginationBar';
 import type { IconOverrides } from '../icons';
 import { IconProvider } from '../icons';
 
+/**
+ * Props for the `<DataGrid>` component — the single entry point that renders
+ * both flat and tree-mode grids. `TRow` is the row data type.
+ */
 export interface DataGridProps<TRow> {
   /** The rows to display. */
   data: TRow[];

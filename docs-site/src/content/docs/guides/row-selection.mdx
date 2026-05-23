@@ -1,0 +1,25 @@
+---
+title: Row selection
+description: Single and multi-select with tri-state cascade in tree mode.
+sidebar:
+  order: 4
+---
+
+import SelectableTree from '../../../components/examples/selection/SelectableTree.tsx';
+
+Pass a `selection` config to enable checkbox selection. In tree mode, set
+`cascade: true` for tri-state behavior: selecting a parent selects all
+descendants, and partial selection shows an indeterminate checkbox.
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  selection={{ mode: 'multi', cascade: true }}
+  onSelectionChange={(state) => {
+    console.log(state.selectedIds);
+  }}
+/>;
+```
+
+<SelectableTree client:load />

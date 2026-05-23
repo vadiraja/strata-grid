@@ -1,0 +1,56 @@
+---
+title: Theming
+description: CSS-custom-property tokens, dark mode, density, high-contrast, print.
+sidebar:
+  order: 10
+---
+
+import ThemedGrid from '../../../components/examples/theming/ThemedGrid.tsx';
+
+Strata is styled with CSS custom properties. Override the `--strata-*` tokens
+in your own CSS to match your design system, or compose a branded theme at
+runtime with `createTheme`.
+
+## Token-based theming
+
+```css
+.my-app {
+  --strata-accent: #7c3aed;
+  --strata-row-hover-bg: #f3e8ff;
+}
+```
+
+## Built-in themes
+
+Optional CSS files expose the standard token set and dark mode:
+
+```tsx
+import 'strata-grid/theme/tokens.css';
+import 'strata-grid/theme/dark.css';
+```
+
+Use `theme="high-contrast-light"` or `theme="high-contrast-dark"` for bundled
+high-contrast presets, and `theme="auto"` to follow the operating system color
+scheme.
+
+## Runtime composition
+
+```tsx
+import { createTheme } from 'strata-grid';
+
+const theme = createTheme('dark', {
+  tokens: { '--strata-accent': '#7c3aed' },
+});
+
+<DataGrid theme={theme.className} />;
+theme.dispose();
+```
+
+## Density, striping, and print
+
+- `density`: `'compact' | 'standard' | 'comfortable'`.
+- `striped`: toggles alternating row backgrounds.
+- `transitions`: opts into smooth token transitions.
+- `usePrintMode()`: exposes print media state for printable layouts.
+
+<ThemedGrid client:load />

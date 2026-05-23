@@ -1,0 +1,34 @@
+---
+title: PR conventions
+description: Branch naming, commit style, required checks.
+sidebar:
+  order: 4
+---
+
+## Branch naming
+
+Use `mN-feature-slug`, for example `m8-docs-site` or `m6-plugin-loader`.
+
+## Commit style
+
+- Use an imperative, scoped subject line, such as `feat(m8): add docs guide`.
+- Wrap the body at 72 characters.
+- Group related changes per commit; avoid mega-commits.
+- Do not include AI attribution in commit messages.
+
+## Required checks
+
+A PR should pass:
+
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run build -w @strata-grid/docs-site`
+- `npm pack --dry-run`
+- `publint`
+- `@arethetypeswrong/cli`
+
+## Code review
+
+Open the PR with a short summary and a test plan. Address reviewer comments by
+pushing follow-up commits; squash-merge is the default.

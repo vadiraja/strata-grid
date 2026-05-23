@@ -207,6 +207,10 @@ export interface ExtendedQuantityConfig {
   compute?: 'multiply-down' | ((parentQty: number, childQty: number) => number);
 }
 
+/**
+ * Grid-level aggregation configuration. Aggregated values appear on group/parent
+ * rows in tree mode and in the optional footer totals row.
+ */
 export interface AggregationConfig {
   /** When true, the footer shows aggregate values for configured columns. */
   showFooterAggregates?: boolean;

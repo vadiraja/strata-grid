@@ -1,0 +1,45 @@
+---
+title: Spec to plan to TDD workflow
+description: How features land in Strata, from idea to merge.
+sidebar:
+  order: 3
+---
+
+Strata uses a deliberate, document-first workflow. Every non-trivial change
+goes through four stages.
+
+## 1. Brainstorm
+
+Talk through goals, constraints, scope. The output is a shared understanding of
+what and why.
+
+## 2. Spec
+
+Write a design document to `docs/superpowers/specs/YYYY-MM-DD-topic-design.md`.
+The spec describes architecture, components, data flow, error handling, testing
+strategy, and acceptance criteria.
+
+## 3. Plan
+
+Decompose the spec into an implementation plan at
+`docs/superpowers/plans/YYYY-MM-DD-topic-plan-N.md`. Each plan is a sequence of
+small tasks with files, code, and verification steps.
+
+## 4. TDD implementation
+
+For each task: write the failing test first, run it to confirm it fails,
+implement the minimum to make it pass, then commit. Keep commits small.
+
+## Branches
+
+Use `mN-feature-slug`, such as `m8-docs-site`. Open a PR against `master` once
+all plan tasks are complete.
+
+## Local checks
+
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run build -w @strata-grid/docs-site
+```

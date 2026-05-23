@@ -1,0 +1,37 @@
+---
+title: Hierarchy editor
+description: Command-driven add/delete/move/reorder with history, clipboard, and drag/drop.
+sidebar:
+  order: 7
+---
+
+import HierarchyEditorDemo from '../../../components/examples/hierarchy/HierarchyEditorDemo.tsx';
+
+The `useTreeEditor` hook turns tree state into a fully editable hierarchy with
+add, delete, move, reorder, indent/outdent, clipboard, drag/drop, and
+multi-level undo/redo.
+
+## Commands
+
+Every mutation is a command that flows through a history stack. Built-in
+commands include `AddNodeCommand`, `DeleteNodeCommand`, `MoveNodeCommand`,
+`ReorderNodeCommand`, `IndentNodeCommand`, `OutdentNodeCommand`,
+`InsertSubtreeCommand`, and `BatchCommand` for grouping mutations into a single
+undo unit.
+
+## History
+
+`useTreeEditor` exposes `undo`, `redo`, `canUndo`, and `canRedo`. The lower-level
+`useHistoryManager` hook is exported for custom command orchestration.
+
+## Change tracking
+
+`useChangeTracker` records added, moved, and deleted rows for diff-based saves.
+Call `markClean()` after a successful persistence round trip.
+
+## Validators
+
+Pass a `MoveValidator` to reject domain-specific moves. Built-in validation
+already prevents cycles and self moves.
+
+<HierarchyEditorDemo client:load />

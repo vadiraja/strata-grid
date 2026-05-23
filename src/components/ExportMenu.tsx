@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { StrataIcon } from '../icons';
 
+/** Props for `<ExportMenu>` — drop-down that triggers CSV / XLSX exports. */
 export interface ExportMenuProps {
   /** Which formats to show in the menu. */
   formats: ('csv' | 'xlsx')[];

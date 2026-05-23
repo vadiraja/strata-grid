@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { WhereUsedResult } from '../data/types';
 import { StrataIcon } from '../icons';
 
+/** Props for `<WhereUsedDialog>` — shows reverse-lookup results for a row. */
 export interface WhereUsedDialogProps<TRow> {
   /** The node being queried. */
   nodeLabel: string;
