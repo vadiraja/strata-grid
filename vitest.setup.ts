@@ -6,6 +6,23 @@ afterEach(() => {
   cleanup();
 });
 
+// --- matchMedia stub -------------------------------------------------------
+// jsdom does not implement window.matchMedia. Provide a minimal stub so hooks
+// like useColorScheme work in tests (defaults to light scheme).
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});
+
 // --- Virtualization test environment ---------------------------------------
 // jsdom has no layout engine and no ResizeObserver. TanStack Virtual measures
 // its scroll element with offsetHeight/offsetWidth and observes it with a

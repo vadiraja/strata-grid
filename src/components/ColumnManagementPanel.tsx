@@ -1,4 +1,5 @@
 import { useState, type FC } from 'react';
+import { StrataIcon } from '../icons';
 
 export interface ColumnManagementPanelProps {
   columns: { id: string; header: string }[];
@@ -59,17 +60,23 @@ export const ColumnManagementPanel: FC<ColumnManagementPanelProps> = ({
 
           return (
             <li key={col.id} className="strata-column-panel-item">
-              <label className="strata-column-panel-label">
-                <input
-                  type="checkbox"
-                  checked={!isHidden}
-                  onChange={() => onToggleColumn(col.id)}
-                  disabled={isLocked}
-                  aria-label={`Toggle ${col.header}`}
-                />
+              <button
+                className="strata-column-panel-toggle"
+                onClick={() => onToggleColumn(col.id)}
+                disabled={isLocked}
+                aria-label={`Toggle ${col.header}`}
+                aria-pressed={!isHidden}
+              >
+                <span className="strata-column-panel-icon">
+                  {isHidden ? (
+                    <StrataIcon name="eye-off" />
+                  ) : (
+                    <StrataIcon name="check" />
+                  )}
+                </span>
                 <span>{col.header}</span>
                 {isLocked && <span className="strata-column-panel-locked">(locked)</span>}
-              </label>
+              </button>
             </li>
           );
         })}

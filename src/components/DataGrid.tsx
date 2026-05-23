@@ -12,6 +12,7 @@ import type {
   ColumnPinningState,
   ColumnSizingState,
   ColumnSort,
+  Density,
   EditableConfig,
   ExportConfig,
   GridTheme,
@@ -21,6 +22,8 @@ import type {
   TreeDataConfig,
   ViewState,
 } from '../model/types';
+import { useColorScheme } from '../themes/use-color-scheme';
+import { resolveTheme } from '../themes/resolve-theme';
 import { DEFAULT_GRID_HEIGHT } from '../model/constants';
 import { useGridTable } from '../model/use-grid-table';
 import { normalizeTreeData } from '../model/normalize-tree-data';
@@ -54,6 +57,8 @@ import {
 import { GridRoot } from './GridRoot';
 import { LoadingOverlay } from './LoadingOverlay';
 import { PaginationBar } from './PaginationBar';
+import type { IconOverrides } from '../icons';
+import { IconProvider } from '../icons';
 
 export interface DataGridProps<TRow> {
   /** The rows to display. */
@@ -106,6 +111,14 @@ export interface DataGridProps<TRow> {
   onSelectionChange?: (state: SelectionState) => void;
   /** Visual theme. Defaults to light. */
   theme?: GridTheme;
+  /** Visual density. Default: 'standard'. */
+  density?: Density;
+  /** Alternating row background. Default: false. */
+  striped?: boolean;
+  /** Smooth CSS transitions on theme/density changes. Default: false. */
+  transitions?: boolean;
+  /** Icon overrides for the grid's built-in icons. */
+  icons?: IconOverrides;
   /** Enables cell editing. Omit to keep the grid read-only. */
   editable?: EditableConfig;
   /** Imperative grid API ref. */
@@ -266,6 +279,10 @@ export function DataGrid<TRow>({
   selection,
   onSelectionChange,
   theme,
+  density,
+  striped,
+  transitions,
+  icons,
   editable,
   apiRef,
   treeEditor,
@@ -283,6 +300,10 @@ export function DataGrid<TRow>({
   onRowEditEnd,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
+  // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
+  const osScheme = useColorScheme();
+  const resolved = resolveTheme(theme, osScheme);
+
   const internalDataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const dataSource: DataSource<TRow> = externalDataSource ?? internalDataSource;
 
@@ -382,6 +403,14 @@ export function DataGrid<TRow>({
     [treeData, treeEditingEnabled, treeEditorApi.state],
   );
   const lazyTreeEnabled = !!(treeData && capabilities.lazyChildren);
+  const canLazyExpand = useCallback(
+    (row: TRow) => {
+      const hasChildrenHint = (row as Record<string, unknown>).hasChildren;
+      if (typeof hasChildrenHint === 'boolean') return hasChildrenHint;
+      return !!tree?.getSubRows(row)?.length;
+    },
+    [tree],
+  );
   const lazyGetSubRows = useCallback(
     (row: TRow) => {
       if (!treeData) return undefined;
@@ -438,7 +467,7 @@ export function DataGrid<TRow>({
     columnSizing,
     defaultColumnSizing,
     onColumnSizingChange,
-    getRowCanExpand: lazyTreeEnabled ? () => true : undefined,
+    getRowCanExpand: lazyTreeEnabled ? (row) => canLazyExpand(row.original) : undefined,
   });
 
   const selectableRows = effectiveTreeRows;
@@ -605,7 +634,10 @@ export function DataGrid<TRow>({
       height={height}
       treeColumnId={treeColumnId}
       selection={selection ? selectionState : undefined}
-      theme={theme}
+      theme={resolved.dataTheme ?? resolved.className}
+      density={density}
+      striped={striped}
+      transitions={transitions}
       columns={leafColumns}
       aggregation={aggregation}
       bomRollup={bomRollup}
@@ -656,11 +688,15 @@ export function DataGrid<TRow>({
     gridContent
   );
 
-  return editable ? (
-    <EditContext.Provider value={{ editState, config: editable }}>
-      {wrappedContent}
-    </EditContext.Provider>
-  ) : (
-    wrappedContent
+  return (
+    <IconProvider overrides={icons ?? {}}>
+      {editable ? (
+        <EditContext.Provider value={{ editState, config: editable }}>
+          {wrappedContent}
+        </EditContext.Provider>
+      ) : (
+        wrappedContent
+      )}
+    </IconProvider>
   );
 }

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DataGrid } from './DataGrid';
-import type { ColumnDef, TreeDataConfig } from '../model/types';
+import type { ColumnDef, GridTheme, TreeDataConfig } from '../model/types';
 
 interface FlatRow {
   id: string;
@@ -163,5 +163,57 @@ describe('DataGrid — keyboard navigation', () => {
     expect(parentCheckbox).not.toBeChecked();
     fireEvent.keyDown(grid, { key: ' ' });
     expect(parentCheckbox).toBeChecked();
+  });
+});
+
+
+const themeVariants: GridTheme[] = [
+  'light',
+  'dark',
+  'high-contrast-light',
+  'high-contrast-dark',
+];
+
+describe.each(themeVariants)('DataGrid — a11y with theme "%s"', (theme) => {
+  it('renders without errors', () => {
+    const { container } = render(
+      <DataGrid data={flatData} columns={flatColumns} theme={theme} />,
+    );
+    expect(container.querySelector('.strata-grid')).toBeInTheDocument();
+  });
+
+  it('sets the correct data-theme attribute on the grid root', () => {
+    const { container } = render(
+      <DataGrid data={flatData} columns={flatColumns} theme={theme} />,
+    );
+    expect(container.querySelector('.strata-grid')).toHaveAttribute(
+      'data-theme',
+      theme,
+    );
+  });
+
+  it('has role="grid" for flat data', () => {
+    const { container } = render(
+      <DataGrid data={flatData} columns={flatColumns} theme={theme} />,
+    );
+    expect(container.querySelector('.strata-grid')).toHaveAttribute('role', 'grid');
+  });
+
+  it('has role="treegrid" for tree data', () => {
+    const { container } = render(
+      <DataGrid
+        data={treeRows}
+        columns={treeColumns}
+        treeData={treeData}
+        theme={theme}
+      />,
+    );
+    expect(container.querySelector('.strata-grid')).toHaveAttribute('role', 'treegrid');
+  });
+
+  it('renders column headers', () => {
+    render(<DataGrid data={flatData} columns={flatColumns} theme={theme} />);
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers.length).toBeGreaterThanOrEqual(flatColumns.length);
   });
 });

@@ -29,7 +29,7 @@ const columns: ColumnDef<Product>[] = [
 ];
 
 describe('DataGrid — aggregation', () => {
-  it('shows aggregate values on group rows', () => {
+  it('shows aggregate values on group rows', async () => {
     const { container } = render(
       <DataGrid
         data={products}
@@ -38,6 +38,8 @@ describe('DataGrid — aggregation', () => {
         defaultExpanded
       />,
     );
+
+    await screen.findByText('Laptop Pro');
 
     const electronicsGroup = [...container.querySelectorAll('.strata-group-row')]
       .find((row) => row.textContent?.includes('Electronics'));

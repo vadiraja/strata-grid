@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { StrataIcon } from '../icons';
 
 export interface PaginationBarProps {
   currentPage: number;
@@ -80,11 +81,19 @@ export const PaginationBar: FC<PaginationBarProps> = ({
       <div className="strata-pagination-nav">
         <button
           className="strata-pagination-btn"
+          onClick={() => onPageChange(0)}
+          disabled={currentPage === 0}
+          aria-label="First page"
+        >
+          <StrataIcon name="chevrons-left" />
+        </button>
+        <button
+          className="strata-pagination-btn"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 0}
           aria-label="Previous page"
         >
-          ‹
+          <StrataIcon name="chevron-left" />
         </button>
         <button
           className="strata-pagination-btn"
@@ -92,7 +101,15 @@ export const PaginationBar: FC<PaginationBarProps> = ({
           disabled={currentPage >= totalPages - 1}
           aria-label="Next page"
         >
-          ›
+          <StrataIcon name="chevron-right" />
+        </button>
+        <button
+          className="strata-pagination-btn"
+          onClick={() => onPageChange(totalPages - 1)}
+          disabled={currentPage >= totalPages - 1}
+          aria-label="Last page"
+        >
+          <StrataIcon name="chevrons-right" />
         </button>
       </div>
     </div>

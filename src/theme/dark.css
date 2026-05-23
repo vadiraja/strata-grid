@@ -4,6 +4,7 @@
   --strata-bg-header-hover: #3a3a3c;
   --strata-bg-footer: #2c2c2e;
   --strata-bg-row-selected: rgba(10, 132, 255, 0.16);
+  --strata-row-stripe-bg: rgba(255, 255, 255, 0.03);
   --strata-bg-group-row: #263143;
   --strata-bg-group-row-hover: #2d3b52;
   --strata-bg-popover: #2c2c2e;
@@ -11,6 +12,14 @@
   --strata-bg-scrollbar-track: #3a3a3c;
   --strata-bg-scrollbar-thumb: #8e8e93;
   --strata-bg-scrollbar-thumb-hover: #aeaeb2;
+
+  /* Scrollbar */
+  --strata-scrollbar-size: 12px;
+  --strata-scrollbar-track-bg: var(--strata-bg-scrollbar-track);
+  --strata-scrollbar-thumb-bg: var(--strata-bg-scrollbar-thumb);
+  --strata-scrollbar-thumb-hover-bg: var(--strata-bg-scrollbar-thumb-hover);
+  --strata-scrollbar-radius: 6px;
+  --strata-scrollbar-width: auto;
 
   --strata-text: #f5f5f7;
   --strata-text-secondary: #98989d;
@@ -22,4 +31,8 @@
   --strata-accent-shadow: rgba(10, 132, 255, 0.28);
   --strata-focus-ring: rgba(10, 132, 255, 0.55);
   --strata-shadow-popover: rgba(0, 0, 0, 0.4);
+
+  --strata-icon-color: var(--strata-text);
+  --strata-icon-color-hover: var(--strata-text);
+  --strata-icon-color-disabled: var(--strata-text-muted);
 }

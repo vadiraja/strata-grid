@@ -1,0 +1,23 @@
+/* Density token overrides — applied via [data-strata-density] attribute on grid root */
+
+.strata-grid[data-strata-density="compact"] {
+  --strata-row-height: 24px;
+  --strata-cell-padding-y: 2px;
+  --strata-cell-padding-x: 6px;
+  --strata-scrollbar-size: 8px;
+  --strata-scrollbar-width: thin;
+}
+
+.strata-grid[data-strata-density="standard"] {
+  --strata-row-height: 32px;
+  --strata-cell-padding-y: 6px;
+  --strata-cell-padding-x: 10px;
+}
+
+.strata-grid[data-strata-density="comfortable"] {
+  --strata-row-height: 44px;
+  --strata-cell-padding-y: 10px;
+  --strata-cell-padding-x: 12px;
+  --strata-scrollbar-size: 14px;
+  --strata-scrollbar-width: auto;
+}

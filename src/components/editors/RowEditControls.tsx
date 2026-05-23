@@ -1,5 +1,6 @@
 import type { Row } from '@tanstack/react-table';
 import { useEditContext } from '../../model/edit-context';
+import { StrataIcon } from '../../icons';
 
 export interface RowEditControlsProps<TRow> {
   row: Row<TRow>;
@@ -42,15 +43,17 @@ export function RowEditControls<TRow>({ row }: RowEditControlsProps<TRow>) {
             type="button"
             onClick={() => editCtx.editState.commitRowEdit()}
             disabled={saveDisabled}
+            aria-label="Save"
           >
-            Save
+            <StrataIcon name="check" label="Save" />
           </button>
           <button
             className="strata-row-edit-button"
             type="button"
             onClick={() => editCtx.editState.discardRowEdit()}
+            aria-label="Cancel"
           >
-            Cancel
+            <StrataIcon name="x" label="Cancel" />
           </button>
         </>
       ) : (

@@ -1,5 +1,6 @@
 import type { Cell } from '@tanstack/react-table';
 import { TREE_INDENT_WIDTH } from '../model/constants';
+import { StrataIcon } from '../icons';
 import { renderCellContent } from './render-cell-content';
 
 export interface TreeCellProps<TRow> {
@@ -63,7 +64,7 @@ export function TreeCell<TRow>({
           }}
           tabIndex={-1}
         >
-          {expanded ? '▾' : '▸'}
+          {expanded ? <StrataIcon name="chevron-down" /> : <StrataIcon name="chevron-right" />}
         </button>
       ) : (
         <span

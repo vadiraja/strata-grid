@@ -44,7 +44,7 @@ describe('useDataSource — capability detection', () => {
     expect(result.current.capabilities).toEqual({});
   });
 
-  it('detects server-side capabilities', () => {
+  it('detects server-side capabilities', async () => {
     const caps: DataSourceCapabilities = {
       serverSort: true,
       serverFilter: true,
@@ -53,6 +53,10 @@ describe('useDataSource — capability detection', () => {
     const ds = createServerDataSource(caps);
     const { result } = renderHook(() => useDataSource(ds));
     expect(result.current.capabilities).toEqual(caps);
+
+    await waitFor(() => {
+      expect(result.current.loadingState.isLoading).toBe(false);
+    });
   });
 });
 

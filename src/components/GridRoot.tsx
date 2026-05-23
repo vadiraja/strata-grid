@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 import type { Table } from '@tanstack/react-table';
-import type { AggregationConfig, ColumnDef, GridTheme } from '../model/types';
+import type { AggregationConfig, ColumnDef, Density, GridTheme } from '../model/types';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useEditContext } from '../model/edit-context';
@@ -40,6 +40,12 @@ export interface GridRootProps<TRow> {
   selection?: UseSelectionReturn;
   /** Visual theme. */
   theme?: GridTheme;
+  /** Visual density. Default: 'standard'. */
+  density?: Density;
+  /** Alternating row background. Default: false. */
+  striped?: boolean;
+  /** Smooth CSS transitions on theme/density changes. Default: false. */
+  transitions?: boolean;
   /** Public leaf columns. */
   columns: ColumnDef<TRow>[];
   /** Aggregate rendering configuration. */
@@ -63,6 +69,9 @@ export function GridRoot<TRow>({
   treeColumnId,
   selection,
   theme,
+  density,
+  striped,
+  transitions,
   columns,
   aggregation: aggregationConfig,
   bomRollup,
@@ -360,12 +369,26 @@ export function GridRoot<TRow>({
     [maxScrollLeft, scrollCenterTo, scrollLeft, thumbWidth],
   );
 
+  // Resolve theme: known literals → data-theme attribute; arbitrary strings → className
+  const knownThemes = ['light', 'dark', 'high-contrast-light', 'high-contrast-dark'] as const;
+  const resolvedTheme = theme ?? 'light';
+  const isKnownTheme = knownThemes.includes(resolvedTheme as (typeof knownThemes)[number]) || resolvedTheme === 'auto';
+  const dataTheme = isKnownTheme
+    ? (resolvedTheme === 'auto' ? 'light' : resolvedTheme)
+    : undefined;
+  const themeClassName = isKnownTheme ? undefined : resolvedTheme;
+
+  const rootClassName = ['strata-grid', themeClassName].filter(Boolean).join(' ');
+
   return (
     <div
       ref={gridRootRef}
-      className="strata-grid"
+      className={rootClassName}
       role={treeColumnId === undefined ? 'grid' : 'treegrid'}
-      data-theme={theme ?? 'light'}
+      data-theme={dataTheme}
+      data-strata-density={density ?? 'standard'}
+      data-strata-striped={String(striped ?? false)}
+      data-strata-transitions={String(transitions ?? false)}
       tabIndex={0}
       onKeyDown={keyboard.handleKeyDown}
       aria-activedescendant={

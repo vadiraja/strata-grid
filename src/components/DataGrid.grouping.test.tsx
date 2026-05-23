@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DataGrid } from './DataGrid';
 import type { ColumnDef, TreeDataConfig } from '../model/types';
 
@@ -32,7 +32,7 @@ const catalog: Product[] = [
 ];
 
 describe('DataGrid — row grouping', () => {
-  it('renders group rows with values and leaf counts', () => {
+  it('renders group rows with values and leaf counts', async () => {
     const { container } = render(
       <DataGrid
         data={products}
@@ -42,42 +42,48 @@ describe('DataGrid — row grouping', () => {
       />,
     );
 
-    const labels = [...container.querySelectorAll('.strata-group-label')].map(
-      (label) => label.textContent,
-    );
+    await screen.findByText('Laptop Pro');
+
     expect(container.querySelectorAll('.strata-group-row')).toHaveLength(2);
-    expect(labels).toContain('Electronics');
-    expect(labels).toContain('Furniture');
+    expect([...container.querySelectorAll('.strata-group-label')]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ textContent: 'Electronics' }),
+        expect.objectContaining({ textContent: 'Furniture' }),
+      ]),
+    );
     expect(screen.getByText('(3)')).toBeInTheDocument();
     expect(screen.getByText('(1)')).toBeInTheDocument();
-    expect(screen.getByText('Laptop Pro')).toBeInTheDocument();
   });
 
-  it('starts collapsed unless defaultExpanded is set', () => {
+  it('starts collapsed unless defaultExpanded is set', async () => {
     const { container } = render(
       <DataGrid data={products} columns={columns} groupBy={['category']} />,
     );
 
-    expect(container.querySelectorAll('.strata-group-row')).toHaveLength(2);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.strata-group-row')).toHaveLength(2);
+    });
     expect(screen.queryByText('Laptop Pro')).not.toBeInTheDocument();
     expect(screen.queryByText('Desk Chair')).not.toBeInTheDocument();
   });
 
-  it('toggles a group open and closed', () => {
+  it('toggles a group open and closed', async () => {
     render(
       <DataGrid data={products} columns={columns} groupBy={['category']} />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand Electronics' }));
-    expect(screen.getByText('Laptop Pro')).toBeInTheDocument();
+    expect(await screen.findByText('Laptop Pro')).toBeInTheDocument();
     expect(screen.getByText('Headphones')).toBeInTheDocument();
     expect(screen.queryByText('Desk Chair')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse Electronics' }));
-    expect(screen.queryByText('Laptop Pro')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Laptop Pro')).not.toBeInTheDocument();
+    });
   });
 
-  it('supports nested grouping by multiple columns', () => {
+  it('supports nested grouping by multiple columns', async () => {
     const { container } = render(
       <DataGrid
         data={catalog}
@@ -86,6 +92,8 @@ describe('DataGrid — row grouping', () => {
         defaultExpanded
       />,
     );
+
+    await screen.findByText('Laptop Pro');
 
     const labels = [...container.querySelectorAll('.strata-group-label')].map(
       (label) => label.textContent,
@@ -104,7 +112,7 @@ describe('DataGrid — row grouping', () => {
     expect(labels).toContain('Accessories');
   });
 
-  it('exposes row and expansion aria on group rows', () => {
+  it('exposes row and expansion aria on group rows', async () => {
     const { container } = render(
       <DataGrid
         data={products}
@@ -113,6 +121,10 @@ describe('DataGrid — row grouping', () => {
         defaultExpanded
       />,
     );
+
+    await waitFor(() => {
+      expect(container.querySelector('.strata-group-row-depth-0')).toBeInTheDocument();
+    });
 
     const topGroup = container.querySelector('.strata-group-row-depth-0');
     const nestedGroup = container.querySelector('.strata-group-row-depth-1');
@@ -124,7 +136,7 @@ describe('DataGrid — row grouping', () => {
 });
 
 describe('DataGrid — row grouping pipeline behavior', () => {
-  it('sorts rows inside each group', () => {
+  it('sorts rows inside each group', async () => {
     const { container } = render(
       <DataGrid
         data={catalog}
@@ -135,6 +147,8 @@ describe('DataGrid — row grouping pipeline behavior', () => {
       />,
     );
 
+    await screen.findByText('Speaker');
+
     const text = container.textContent ?? '';
     expect(text.indexOf('Speaker')).toBeLessThan(text.indexOf('Headphones'));
     expect(text.indexOf('Headphones')).toBeLessThan(text.indexOf('Laptop Air'));
@@ -143,7 +157,7 @@ describe('DataGrid — row grouping pipeline behavior', () => {
     expect(text.indexOf('Desk Chair')).toBeLessThan(text.indexOf('Standing Desk'));
   });
 
-  it('filters before grouping so group counts reflect visible leaf rows', () => {
+  it('filters before grouping so group counts reflect visible leaf rows', async () => {
     const { container } = render(
       <DataGrid
         data={catalog}
@@ -158,7 +172,9 @@ describe('DataGrid — row grouping pipeline behavior', () => {
       target: { value: 'Laptop' },
     });
 
-    expect(container.querySelectorAll('.strata-group-row')).toHaveLength(1);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.strata-group-row')).toHaveLength(1);
+    });
     expect(container.querySelector('.strata-group-label')).toHaveTextContent(
       'Electronics',
     );
@@ -169,7 +185,7 @@ describe('DataGrid — row grouping pipeline behavior', () => {
     expect(screen.queryByText('Furniture')).not.toBeInTheDocument();
   });
 
-  it('labels empty group values consistently', () => {
+  it('labels empty group values consistently', async () => {
     const rows: Product[] = [
       { id: 'empty', name: 'Unassigned', category: '', subcategory: '', price: 10 },
       { id: 'filled', name: 'Assigned', category: 'Hardware', subcategory: 'Tools', price: 20 },
@@ -183,7 +199,7 @@ describe('DataGrid — row grouping pipeline behavior', () => {
       />,
     );
 
-    expect(screen.getByText('(empty)')).toBeInTheDocument();
+    expect(await screen.findByText('(empty)')).toBeInTheDocument();
     const labels = [...document.querySelectorAll('.strata-group-label')].map(
       (label) => label.textContent,
     );

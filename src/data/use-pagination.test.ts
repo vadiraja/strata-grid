@@ -103,6 +103,10 @@ describe('usePagination — goToPage', () => {
       result.current.goToPage(-1);
     });
 
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     expect(result.current.currentPage).toBe(0);
   });
 });
