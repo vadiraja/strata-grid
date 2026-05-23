@@ -3,7 +3,8 @@ import type { Header } from '@tanstack/react-table';
 import { SortIndicator } from './SortIndicator';
 import { FilterPopover } from './FilterPopover';
 import { ResizeHandle } from './ResizeHandle';
-import type { FilterType } from '../model/types';
+import { resolveFilterConfig } from '../data/resolve-filter-config';
+import type { ColumnFilterConfig } from '../data/types';
 
 export interface ColumnHeaderCellProps<TRow> {
   /** The TanStack header to render. */
@@ -21,7 +22,14 @@ export function ColumnHeaderCell<TRow>({
   const width = header.getSize();
   const canSort = header.column.getCanSort();
   const sortDirection = header.column.getIsSorted();
-  const filterType = strataColumn.filter as FilterType | false | undefined;
+  const filterConfig = strataColumn.filter as
+    | ColumnFilterConfig
+    | false
+    | undefined;
+  const resolvedFilter =
+    filterConfig === false || filterConfig === undefined
+      ? null
+      : resolveFilterConfig(filterConfig);
 
   // Track whether the current interaction is a drag/resize so we can suppress sort on click
   const didDragRef = useRef(false);
@@ -97,8 +105,8 @@ export function ColumnHeaderCell<TRow>({
     >
       <span className="strata-header-label">{strataColumn.header}</span>
       {canSort && <SortIndicator direction={sortDirection} />}
-      {!!filterType && (
-        <FilterPopover column={header.column} filterType={filterType} />
+      {resolvedFilter && (
+        <FilterPopover column={header.column} resolved={resolvedFilter} />
       )}
       <ResizeHandle header={header} />
     </div>

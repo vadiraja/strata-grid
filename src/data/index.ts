@@ -16,6 +16,7 @@ export type { BuildDataQueryParams } from './build-data-query';
 export { findWhereUsed } from './where-used';
 export { useWhereUsed } from './use-where-used';
 export type { UseWhereUsedReturn } from './use-where-used';
+export { resolveFilterConfig } from './resolve-filter-config';
 export type {
   DataQuery,
   FilterExpression,
@@ -27,4 +28,7 @@ export type {
   DataChangeHandler,
   WhereUsedResult,
   LoadingState,
+  ColumnFilterConfig,
+  ResolvedColumnFilter,
+  SelectOption,
 } from './types';

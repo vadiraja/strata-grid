@@ -1,20 +1,27 @@
 import type { ColumnDef as TanstackColumnDef } from '@tanstack/react-table';
-import type { AnyColumn, ColumnDef, ColumnGroup, FilterType } from './types';
+import type { AnyColumn, ColumnDef, ColumnGroup } from './types';
 import { isColumnGroup } from './types';
 import { readValue } from './read-value';
 import { DEFAULT_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './constants';
 import { textFilterFn, numberFilterFn } from './tree-filter-fn';
 import { toTanstackAggregationFn } from './aggregate-fns';
+import { resolveFilterConfig } from '../data/resolve-filter-config';
+import type { ColumnFilterConfig } from '../data/types';
 
-function resolveFilterFn(filterType: FilterType | false | undefined) {
-  if (filterType === 'text') {
+function resolveFilterFn(filterConfig: ColumnFilterConfig | false | undefined) {
+  if (filterConfig === false || filterConfig === undefined) return undefined;
+
+  const resolved = resolveFilterConfig(filterConfig);
+  if (resolved.type === 'text') {
     return (row: any, columnId: string, filterValue: string) =>
       textFilterFn(row.getValue(columnId), filterValue);
   }
-  if (filterType === 'number') {
+  if (resolved.type === 'number') {
     return (row: any, columnId: string, filterValue: string) =>
       numberFilterFn(row.getValue(columnId), filterValue);
   }
+  // select / boolean / date — UI lands in 0.2.0 follow-up tasks.
+  // For now, no client-side filterFn (server-driven assumed).
   return undefined;
 }
 

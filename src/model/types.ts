@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { RowData } from '@tanstack/react-table';
 import type { ExportOptions } from '../export/types';
-import type { FilterExpression } from '../data/types';
+import type { ColumnFilterConfig, FilterExpression } from '../data/types';
 import type { ViewState } from './view-state-types';
 
 /** Context passed to a custom cell renderer. */
@@ -90,11 +90,18 @@ export interface ColumnDef<TRow> {
    */
   sortable?: boolean;
   /**
-   * The filter type for this column. Set to `'text'` for case-insensitive
-   * substring matching, `'number'` for numeric comparison, or `false` to
-   * disable filtering. Defaults to `false` (no filter).
+   * Filter configuration for this column. Accepts:
+   *
+   * - `'text'` — case-insensitive substring matching (default text operators)
+   * - `'number'` — numeric comparison (default number operators)
+   * - `{ type, operators?, ... }` — typed config: `text` | `number` | `select`
+   *   | `boolean` | `date`. Constrains the filter UI and emitted operators
+   * - `false` — disable filtering
+   *
+   * Defaults to `false` (no filter). See `ColumnFilterConfig` for the full
+   * object shape.
    */
-  filter?: FilterType | false;
+  filter?: ColumnFilterConfig | false;
   /**
    * Pins (freezes) this column to the left or right edge of the grid.
    * Pinned columns are always visible and never column-virtualized.

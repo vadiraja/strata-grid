@@ -38,6 +38,59 @@ export interface FilterExpression {
   children?: FilterExpression[];
 }
 
+// --- Typed column filter configs (0.2.0) ---
+
+/** An option for a `select` column filter. */
+export interface SelectOption<TValue = unknown> {
+  label: string;
+  value: TValue;
+}
+
+/**
+ * Column filter configuration. Strings are backward-compat shortcuts for the
+ * simple cases — `'text'` resolves to `{ type: 'text' }`, `'number'` to
+ * `{ type: 'number' }`. Use the object form to:
+ *
+ * - constrain allowed operators per column (`operators?`)
+ * - render a `select`, `boolean`, or `date` input instead of a text input
+ * - emit `in` / `notIn` for multi-select or `between` for date ranges
+ */
+export type ColumnFilterConfig<TValue = unknown> =
+  | 'text'
+  | 'number'
+  | { type: 'text'; operators?: FilterOperator[] }
+  | { type: 'number'; operators?: FilterOperator[] }
+  | {
+      type: 'select';
+      options: SelectOption<TValue>[];
+      /** When true, emits operator `'in'` (or `'notIn'`) with array values. */
+      multi?: boolean;
+      operators?: FilterOperator[];
+    }
+  | { type: 'boolean' }
+  | {
+      type: 'date';
+      operators?: FilterOperator[];
+      /** When true, emits operator `'between'` with `[from, to]` value. */
+      range?: boolean;
+    };
+
+/**
+ * Normalized form of `ColumnFilterConfig` used internally by the filter UI.
+ * All defaults filled in; no string shortcuts.
+ */
+export type ResolvedColumnFilter =
+  | { type: 'text'; operators: FilterOperator[] }
+  | { type: 'number'; operators: FilterOperator[] }
+  | {
+      type: 'select';
+      options: SelectOption[];
+      multi: boolean;
+      operators: FilterOperator[];
+    }
+  | { type: 'boolean'; operators: FilterOperator[] }
+  | { type: 'date'; operators: FilterOperator[]; range: boolean };
+
 // --- Data query (sort/filter push-down) ---
 
 /**

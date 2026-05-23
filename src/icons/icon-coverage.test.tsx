@@ -155,7 +155,10 @@ describe('Icon Coverage — SVG presence in changed components', () => {
     };
 
     const { container } = render(
-      <FilterPopover column={mockColumn as any} filterType="text" />,
+      <FilterPopover
+        column={mockColumn as any}
+        resolved={{ type: 'text', operators: ['contains'] }}
+      />,
     );
     expect(container.querySelector('svg')).not.toBeNull();
   });

@@ -107,6 +107,7 @@ export {
   reconcileChanges,
   buildDataQuery,
   findWhereUsed,
+  resolveFilterConfig,
 } from './data';
 export type {
   UseDataSourceReturn,
@@ -128,6 +129,9 @@ export type {
   DataChangeHandler,
   WhereUsedResult,
   LoadingState,
+  ColumnFilterConfig,
+  ResolvedColumnFilter,
+  SelectOption,
 } from './data';
 
 // Filter — quick search and advanced filter builder

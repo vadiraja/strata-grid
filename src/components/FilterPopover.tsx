@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Column } from '@tanstack/react-table';
-import type { FilterType } from '../model/types';
+import type { ResolvedColumnFilter } from '../data/types';
 import { StrataIcon } from '../icons';
 
 export interface FilterPopoverProps<TRow> {
   /** The TanStack column to filter. */
   column: Column<TRow, unknown>;
-  /** The filter type — determines input type. */
-  filterType: FilterType;
+  /** Resolved filter configuration — determines input type and operators. */
+  resolved: ResolvedColumnFilter;
 }
 
 /**
@@ -16,8 +16,13 @@ export interface FilterPopoverProps<TRow> {
  */
 export function FilterPopover<TRow>({
   column,
-  filterType,
+  resolved,
 }: FilterPopoverProps<TRow>) {
+  // 0.2.0 task 1 ships types only — UI for select/boolean/date lands in
+  // follow-up tasks. For now we render the text/number input for all types,
+  // falling back to text for unimplemented kinds.
+  const filterType: 'text' | 'number' =
+    resolved.type === 'number' ? 'number' : 'text';
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
