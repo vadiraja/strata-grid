@@ -37,7 +37,7 @@ M1–M4 features need to be reworked.
   and per-density overrides are all token-driven.
 - **Density prop** — `density: 'compact' | 'standard' | 'comfortable'`
   switches a small set of spacing/font tokens. Row heights:
-  compact = 28px, standard = 36px (default), comfortable = 44px.
+  compact = 24px, standard = 32px (default), comfortable = 44px.
 - **Row striping** — `striped` prop toggles zebra-striped row backgrounds.
 - **Additional theme presets** — `high-contrast-light`, `high-contrast-dark`
   (WCAG 2.1 AAA-compliant contrast), alongside existing `light` / `dark`.
@@ -121,33 +121,27 @@ pulled into the default bundle. Tree-shaking removes everything else.
 A new token group keyed by density:
 
 ```css
-/* strata.css */
-:root,
-[data-strata-density="standard"] {
-  --strata-row-height: 36px;
-  --strata-cell-padding-x: 12px;
-  --strata-cell-padding-y: 8px;
-  --strata-font-size: 14px;
-  --strata-icon-size: 16px;
-  --strata-header-height: 40px;
+/* src/theme/density.css */
+.strata-grid[data-strata-density="compact"] {
+  --strata-row-height: 24px;
+  --strata-cell-padding-y: 2px;
+  --strata-cell-padding-x: 6px;
+  --strata-scrollbar-size: 8px;
+  --strata-scrollbar-width: thin;
 }
 
-[data-strata-density="compact"] {
-  --strata-row-height: 28px;
-  --strata-cell-padding-x: 8px;
-  --strata-cell-padding-y: 4px;
-  --strata-font-size: 13px;
-  --strata-icon-size: 14px;
-  --strata-header-height: 32px;
+.strata-grid[data-strata-density="standard"] {
+  --strata-row-height: 32px;
+  --strata-cell-padding-y: 6px;
+  --strata-cell-padding-x: 10px;
 }
 
-[data-strata-density="comfortable"] {
+.strata-grid[data-strata-density="comfortable"] {
   --strata-row-height: 44px;
-  --strata-cell-padding-x: 16px;
-  --strata-cell-padding-y: 12px;
-  --strata-font-size: 15px;
-  --strata-icon-size: 18px;
-  --strata-header-height: 48px;
+  --strata-cell-padding-y: 10px;
+  --strata-cell-padding-x: 12px;
+  --strata-scrollbar-size: 14px;
+  --strata-scrollbar-width: auto;
 }
 ```
 
@@ -303,7 +297,7 @@ export { createTheme, type ThemeOverrides, type ComposedTheme };
 ## 5. Migration & backward compatibility
 
 - **No breaking changes.** All new props default to current behavior:
-  `density='standard'` matches today's row height (36px), `striped=false`,
+  `density='standard'` matches today's row height (32px), `striped=false`,
   `theme='light'`, `transitions=false`.
 - **Existing token names preserved.** New tokens are additive.
 - **Icon migration is internal.** Components that currently render `▾` / `▸`
