@@ -93,4 +93,97 @@ describe('useGridKeyboard', () => {
     act(() => result.current.setActiveCell([99, 99]));
     expect(result.current.activeCell).toEqual([4, 3]);
   });
+
+  describe('tree editor shortcuts', () => {
+    it('calls onIndent on Tab and preventsDefault', () => {
+      const onIndent = vi.fn();
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [2, 1], onIndent })),
+      );
+      const event = keydown('Tab');
+      const spy = vi.spyOn(event, 'preventDefault');
+      act(() => result.current.handleKeyDown(event));
+      expect(onIndent).toHaveBeenCalledWith(2);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('calls onOutdent on Shift+Tab', () => {
+      const onOutdent = vi.fn();
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [3, 1], onOutdent })),
+      );
+      act(() => result.current.handleKeyDown(keydown('Tab', { shiftKey: true })));
+      expect(onOutdent).toHaveBeenCalledWith(3);
+    });
+
+    it('does not preventDefault on Tab when no onIndent handler is provided', () => {
+      const { result } = renderHook(() => useGridKeyboard(options()));
+      const event = keydown('Tab');
+      const spy = vi.spyOn(event, 'preventDefault');
+      act(() => result.current.handleKeyDown(event));
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('does not preventDefault on Shift+Tab when no onOutdent handler is provided', () => {
+      const { result } = renderHook(() => useGridKeyboard(options()));
+      const event = keydown('Tab', { shiftKey: true });
+      const spy = vi.spyOn(event, 'preventDefault');
+      act(() => result.current.handleKeyDown(event));
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('calls onReorderUp on Ctrl+Shift+ArrowUp and skips arrow navigation', () => {
+      const onReorderUp = vi.fn();
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [2, 1], onReorderUp })),
+      );
+      act(() =>
+        result.current.handleKeyDown(
+          keydown('ArrowUp', { ctrlKey: true, shiftKey: true }),
+        ),
+      );
+      expect(onReorderUp).toHaveBeenCalledWith(2);
+      // Active cell stays put — we didn't navigate.
+      expect(result.current.activeCell).toEqual([2, 1]);
+    });
+
+    it('calls onReorderDown on Ctrl+Shift+ArrowDown', () => {
+      const onReorderDown = vi.fn();
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [2, 1], onReorderDown })),
+      );
+      act(() =>
+        result.current.handleKeyDown(
+          keydown('ArrowDown', { ctrlKey: true, shiftKey: true }),
+        ),
+      );
+      expect(onReorderDown).toHaveBeenCalledWith(2);
+      expect(result.current.activeCell).toEqual([2, 1]);
+    });
+
+    it('also supports Meta (Cmd) for reorder shortcuts on macOS', () => {
+      const onReorderUp = vi.fn();
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [2, 1], onReorderUp })),
+      );
+      act(() =>
+        result.current.handleKeyDown(
+          keydown('ArrowUp', { metaKey: true, shiftKey: true }),
+        ),
+      );
+      expect(onReorderUp).toHaveBeenCalledWith(2);
+    });
+
+    it('falls back to arrow navigation when no reorder handler is provided', () => {
+      const { result } = renderHook(() =>
+        useGridKeyboard(options({ initialCell: [2, 1] })),
+      );
+      act(() =>
+        result.current.handleKeyDown(
+          keydown('ArrowDown', { ctrlKey: true, shiftKey: true }),
+        ),
+      );
+      expect(result.current.activeCell).toEqual([3, 1]);
+    });
+  });
 });
