@@ -25,6 +25,10 @@ export interface GridRowProps<TRow> {
   focusedColumnId?: string;
   /** Stable active-descendant id when a cell in this row is focused. */
   focusId?: string;
+  /** Column id that displays computed BOM extended quantities. */
+  rollupTargetColumnId?: string;
+  /** Extended quantities keyed by row id. */
+  extendedQuantities?: Map<string, number>;
 }
 
 /** Renders one body row as a horizontal strip of cells. */
@@ -37,6 +41,8 @@ export function GridRow<TRow>({
   selection,
   focusedColumnId,
   focusId,
+  rollupTargetColumnId,
+  extendedQuantities,
 }: GridRowProps<TRow>) {
   const isTree = treeColumnId !== undefined;
   const cellsToRender = cells ?? row.getVisibleCells();
@@ -74,6 +80,8 @@ export function GridRow<TRow>({
             cell={cell}
             isFocused={isFocused}
             focusId={focusId}
+            rollupTargetColumnId={rollupTargetColumnId}
+            extendedQuantities={extendedQuantities}
           />
         ) : (
           <DataCell
@@ -81,6 +89,8 @@ export function GridRow<TRow>({
             cell={cell}
             isFocused={isFocused}
             focusId={focusId}
+            rollupTargetColumnId={rollupTargetColumnId}
+            extendedQuantities={extendedQuantities}
           />
         );
       })}

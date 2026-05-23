@@ -182,9 +182,22 @@ export interface EditableConfig {
 }
 
 /** Configures aggregate rendering in grouped rows and the footer. */
+export interface ExtendedQuantityConfig {
+  /** Per-component quantity column used as the roll-up source. */
+  sourceColumn: string;
+  /** Column where the computed extended quantity is displayed. */
+  targetColumn: string;
+  /** Built-in multiply-down roll-up or a custom cascade function. */
+  compute?: 'multiply-down' | ((parentQty: number, childQty: number) => number);
+}
+
 export interface AggregationConfig {
   /** When true, the footer shows aggregate values for configured columns. */
   showFooterAggregates?: boolean;
+  /** Tree-mode BOM extended quantity roll-up. */
+  extendedQuantity?: ExtendedQuantityConfig;
+  /** Reserved for tree parent aggregate display. */
+  showParentAggregates?: boolean;
 }
 
 /**

@@ -10,6 +10,10 @@ export interface DataCellProps<TRow> {
   isFocused?: boolean;
   /** Stable active-descendant id when focused. */
   focusId?: string;
+  /** Column id that displays computed BOM extended quantities. */
+  rollupTargetColumnId?: string;
+  /** Extended quantities keyed by row id. */
+  extendedQuantities?: Map<string, number>;
 }
 
 /** Renders a single ordinary body cell, delegating content rendering. */
@@ -17,6 +21,8 @@ export function DataCell<TRow>({
   cell,
   isFocused,
   focusId,
+  rollupTargetColumnId,
+  extendedQuantities,
 }: DataCellProps<TRow>) {
   const width = cell.column.getSize();
   const editCtx = useEditContext();
@@ -94,7 +100,14 @@ export function DataCell<TRow>({
       onClick={editCtx ? handleClick : undefined}
       onDoubleClick={editCtx ? handleDoubleClick : undefined}
     >
-      {isEditing ? <CellEditor cell={cell} /> : renderCellContent(cell)}
+      {isEditing ? (
+        <CellEditor cell={cell} />
+      ) : cell.column.id === rollupTargetColumnId &&
+        extendedQuantities?.has(cell.row.id) ? (
+        extendedQuantities.get(cell.row.id)
+      ) : (
+        renderCellContent(cell)
+      )}
     </div>
   );
 }

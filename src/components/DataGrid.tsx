@@ -21,6 +21,7 @@ import { getLeafColumns, normalizeColumns } from '../model/normalize-columns';
 import { InMemoryDataSource } from '../data/in-memory-data-source';
 import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
+import { useBomRollup } from '../model/use-bom-rollup';
 import { GridRoot } from './GridRoot';
 
 export interface DataGridProps<TRow> {
@@ -180,6 +181,15 @@ export function DataGrid<TRow>({
     [treeData, leafColumns],
   );
   const effectiveGroupBy = treeData ? undefined : groupBy;
+  const bomRollup = useBomRollup({
+    roots: tree?.rootRows ?? [],
+    columns: leafColumns,
+    sourceColumnId: aggregation?.extendedQuantity?.sourceColumn,
+    targetColumnId: aggregation?.extendedQuantity?.targetColumn,
+    getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
+    getSubRows: tree?.getSubRows,
+    compute: aggregation?.extendedQuantity?.compute,
+  });
 
   const table = useGridTable({
     data: tree ? tree.rootRows : rows,
@@ -251,6 +261,7 @@ export function DataGrid<TRow>({
       theme={theme}
       columns={leafColumns}
       aggregation={aggregation}
+      bomRollup={bomRollup}
     />
   );
 

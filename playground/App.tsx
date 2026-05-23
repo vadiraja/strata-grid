@@ -135,6 +135,7 @@ const bomColumns: ColumnDef<BomNode>[] = [
   { id: 'plant', header: 'Plant', accessor: 'plant', width: 100, filter: 'text' },
   { id: 'status', header: 'Status', accessor: 'status', width: 120, filter: 'text' },
   { id: 'qty', header: 'Qty', accessor: 'qty', width: 80, filter: 'number' },
+  { id: 'extQty', header: 'Ext Qty', width: 90 },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
 ];
 
@@ -389,6 +390,13 @@ function exampleGrid(
           columns={bomColumns}
           treeData={treeData}
           defaultExpanded
+          aggregation={{
+            extendedQuantity: {
+              sourceColumn: 'qty',
+              targetColumn: 'extQty',
+              compute: 'multiply-down',
+            },
+          }}
           height={500}
           theme={theme}
         />

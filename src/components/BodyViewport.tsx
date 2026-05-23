@@ -9,6 +9,7 @@ import type { ColumnLayout } from './column-layout';
 import { useEditContext } from '../model/edit-context';
 import type { ColumnDef } from '../model/types';
 import type { UseAggregationReturn } from '../model/use-aggregation';
+import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -31,6 +32,8 @@ export interface BodyViewportProps<TRow> {
   keyboardColumnIds?: string[];
   /** Aggregate state for grouped rows. */
   aggregation?: UseAggregationReturn<TRow>;
+  /** Computed BOM extended quantities. */
+  bomRollup?: UseBomRollupReturn;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -45,6 +48,7 @@ export function BodyViewport<TRow>({
   activeCell,
   keyboardColumnIds = [],
   aggregation,
+  bomRollup,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -141,6 +145,8 @@ export function BodyViewport<TRow>({
                     selection={selection}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                 </div>
               )}
@@ -156,6 +162,8 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                 </div>
               )}
@@ -183,6 +191,8 @@ export function BodyViewport<TRow>({
                     renderAsRow={false}
                     focusedColumnId={focusedColumnId}
                     focusId={focusId}
+                    rollupTargetColumnId={bomRollup?.targetColumnId}
+                    extendedQuantities={bomRollup?.extendedQuantities}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div

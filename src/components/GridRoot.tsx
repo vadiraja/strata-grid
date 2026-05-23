@@ -11,6 +11,7 @@ import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
+import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -40,6 +41,8 @@ export interface GridRootProps<TRow> {
   columns: ColumnDef<TRow>[];
   /** Aggregate rendering configuration. */
   aggregation?: AggregationConfig;
+  /** Computed BOM extended quantities. */
+  bomRollup?: UseBomRollupReturn;
 }
 
 /** The grid layout shell. */
@@ -51,6 +54,7 @@ export function GridRoot<TRow>({
   theme,
   columns,
   aggregation: aggregationConfig,
+  bomRollup,
 }: GridRootProps<TRow>) {
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
@@ -320,6 +324,7 @@ export function GridRoot<TRow>({
         activeCell={keyboard.activeCell}
         keyboardColumnIds={keyboardColumnIds}
         aggregation={aggregation}
+        bomRollup={bomRollup}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
