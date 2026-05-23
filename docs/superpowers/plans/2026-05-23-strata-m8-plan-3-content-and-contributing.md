@@ -1,6 +1,6 @@
 # Strata — M8 · Plan 3: Guide content & contributing guide
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Author the user-facing content — Getting Started (3 pages beyond the introduction stub), 10 Guides pages (one per shipped capability, each with at least one live `<DataGrid>` example), and a 4-page Contributing guide. Also add a top-level `CONTRIBUTING.md` that points into the docs.
 
@@ -10,6 +10,10 @@
 
 **Date:** 2026-05-23
 **Depends on:** M8 Plans 1 and 2.
+
+**Status:** Completed. Getting-started pages, feature guides, React example
+islands, contributor docs, top-level `CONTRIBUTING.md`, and README documentation
+links are implemented and verified through the docs-site build.
 
 ---
 
@@ -29,7 +33,7 @@
 **Files:**
 - Create: `docs-site/src/content/docs/getting-started/installation.mdx`
 
-- [ ] **Step 1: Write `installation.mdx`**
+- [x] **Step 1: Write `installation.mdx`**
 
 ```mdx
 ---
@@ -89,12 +93,12 @@ import 'strata-grid/theme/dark.css';
 Strata ships its own type definitions. No separate `@types` package is needed.
 ```
 
-- [ ] **Step 2: Build to verify**
+- [x] **Step 2: Build to verify**
 
 Run: `npm run build -w @strata-grid/docs-site`
 Expected: passes.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs-site/src/content/docs/getting-started/installation.mdx
@@ -109,7 +113,7 @@ git commit -m "docs(m8): installation page"
 - Create: `docs-site/src/components/examples/quick-start/FlatGrid.tsx`
 - Create: `docs-site/src/content/docs/getting-started/quick-start-flat.mdx`
 
-- [ ] **Step 1: Create the example**
+- [x] **Step 1: Create the example**
 
 `docs-site/src/components/examples/quick-start/FlatGrid.tsx`:
 
@@ -149,7 +153,7 @@ export default function FlatGrid() {
 }
 ```
 
-- [ ] **Step 2: Write the MDX page**
+- [x] **Step 2: Write the MDX page**
 
 `docs-site/src/content/docs/getting-started/quick-start-flat.mdx`:
 
@@ -200,12 +204,12 @@ const data: Person[] = [
 <FlatGrid client:load />
 ```
 
-- [ ] **Step 3: Build & view**
+- [x] **Step 3: Build & view**
 
 Run: `npm run build -w @strata-grid/docs-site`
 Expected: passes.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs-site/src/components/examples/quick-start/FlatGrid.tsx docs-site/src/content/docs/getting-started/quick-start-flat.mdx
@@ -221,7 +225,7 @@ git commit -m "docs(m8): quick-start flat grid example"
 - Create: `docs-site/src/components/examples/quick-start/FlatTreeGrid.tsx`
 - Create: `docs-site/src/content/docs/getting-started/quick-start-tree.mdx`
 
-- [ ] **Step 1: Create the nested-data example**
+- [x] **Step 1: Create the nested-data example**
 
 `docs-site/src/components/examples/quick-start/TreeGrid.tsx`:
 
@@ -283,7 +287,7 @@ export default function TreeGrid() {
 }
 ```
 
-- [ ] **Step 2: Create the flat parent-pointer variant**
+- [x] **Step 2: Create the flat parent-pointer variant**
 
 `docs-site/src/components/examples/quick-start/FlatTreeGrid.tsx`:
 
@@ -328,7 +332,7 @@ export default function FlatTreeGrid() {
 }
 ```
 
-- [ ] **Step 3: Write the MDX page**
+- [x] **Step 3: Write the MDX page**
 
 `docs-site/src/content/docs/getting-started/quick-start-tree.mdx`:
 
@@ -383,12 +387,12 @@ For flat rows that reference a parent by id, supply `getParentId` instead:
 <FlatTreeGrid client:load />
 ```
 
-- [ ] **Step 4: Build & spot-check**
+- [x] **Step 4: Build & spot-check**
 
 Run: `npm run build -w @strata-grid/docs-site`
 Expected: passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs-site/src/components/examples/quick-start/TreeGrid.tsx docs-site/src/components/examples/quick-start/FlatTreeGrid.tsx docs-site/src/content/docs/getting-started/quick-start-tree.mdx
@@ -403,7 +407,7 @@ git commit -m "docs(m8): quick-start tree grid examples (nested + flat)"
 - Create: `docs-site/src/content/docs/guides/tree-data.mdx`
 - Reuse: examples from Task 3.
 
-- [ ] **Step 1: Write `tree-data.mdx`**
+- [x] **Step 1: Write `tree-data.mdx`**
 
 ```mdx
 ---
@@ -454,7 +458,7 @@ Flat parent-pointer:
 <FlatTreeGrid client:load />
 ```
 
-- [ ] **Step 2: Build & commit**
+- [x] **Step 2: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -471,7 +475,7 @@ git commit -m "docs(m8): guide — tree data"
 - Create: `docs-site/src/components/examples/sorting-filtering/SortableGrid.tsx`
 - Create: `docs-site/src/content/docs/guides/sorting-filtering.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/sorting-filtering/SortableGrid.tsx`:
 
@@ -521,7 +525,7 @@ export default function SortableGrid() {
 }
 ```
 
-- [ ] **Step 2: Write `sorting-filtering.mdx`**
+- [x] **Step 2: Write `sorting-filtering.mdx`**
 
 ```mdx
 ---
@@ -569,7 +573,7 @@ orphaned child without its parent.
 <SortableGrid client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -586,7 +590,7 @@ git commit -m "docs(m8): guide — sorting & filtering"
 - Create: `docs-site/src/components/examples/columns/ManagedColumnsGrid.tsx`
 - Create: `docs-site/src/content/docs/guides/column-management.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/columns/ManagedColumnsGrid.tsx`:
 
@@ -622,7 +626,7 @@ export default function ManagedColumnsGrid() {
 }
 ```
 
-- [ ] **Step 2: Write `column-management.mdx`**
+- [x] **Step 2: Write `column-management.mdx`**
 
 ```mdx
 ---
@@ -666,7 +670,7 @@ DOM, keeping wide grids snappy.
 <ManagedColumnsGrid client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -683,7 +687,7 @@ git commit -m "docs(m8): guide — column management"
 - Create: `docs-site/src/components/examples/selection/SelectableTree.tsx`
 - Create: `docs-site/src/content/docs/guides/row-selection.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/selection/SelectableTree.tsx`:
 
@@ -733,7 +737,7 @@ export default function SelectableTree() {
 }
 ```
 
-- [ ] **Step 2: Write `row-selection.mdx`**
+- [x] **Step 2: Write `row-selection.mdx`**
 
 ```mdx
 ---
@@ -761,7 +765,7 @@ descendants; partial selection shows an indeterminate checkbox.
 <SelectableTree client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -778,7 +782,7 @@ git commit -m "docs(m8): guide — row selection"
 - Create: `docs-site/src/components/examples/editing/EditableGrid.tsx`
 - Create: `docs-site/src/content/docs/guides/editing.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/editing/EditableGrid.tsx`:
 
@@ -824,7 +828,7 @@ export default function EditableGrid() {
 }
 ```
 
-- [ ] **Step 2: Write `editing.mdx`**
+- [x] **Step 2: Write `editing.mdx`**
 
 ```mdx
 ---
@@ -877,7 +881,7 @@ For multi-cell edits with a Save/Cancel action, set the grid's edit mode to
 <EditableGrid client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -894,7 +898,7 @@ git commit -m "docs(m8): guide — editing"
 - Create: `docs-site/src/components/examples/aggregation/AggregatedTree.tsx`
 - Create: `docs-site/src/content/docs/guides/aggregation.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/aggregation/AggregatedTree.tsx`:
 
@@ -939,7 +943,7 @@ export default function AggregatedTree() {
 }
 ```
 
-- [ ] **Step 2: Write `aggregation.mdx`**
+- [x] **Step 2: Write `aggregation.mdx`**
 
 ```mdx
 ---
@@ -972,7 +976,7 @@ field.
 <AggregatedTree client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -989,7 +993,7 @@ git commit -m "docs(m8): guide — aggregation"
 - Create: `docs-site/src/components/examples/hierarchy/HierarchyEditorDemo.tsx`
 - Create: `docs-site/src/content/docs/guides/hierarchy-editor.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/hierarchy/HierarchyEditorDemo.tsx`:
 
@@ -1044,7 +1048,7 @@ Note: the exact `editor.dispatch` payload shape should match what
 when wiring this up. Adjust the `dispatch` signature in the snippet if it
 differs.
 
-- [ ] **Step 2: Write `hierarchy-editor.mdx`**
+- [x] **Step 2: Write `hierarchy-editor.mdx`**
 
 ```mdx
 ---
@@ -1085,7 +1089,7 @@ built-in check, or a domain rule like "an assembly cannot contain itself").
 <HierarchyEditorDemo client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -1102,7 +1106,7 @@ git commit -m "docs(m8): guide — hierarchy editor"
 - Create: `docs-site/src/components/examples/data-sources/InMemoryExample.tsx`
 - Create: `docs-site/src/content/docs/guides/data-sources.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/data-sources/InMemoryExample.tsx`:
 
@@ -1136,7 +1140,7 @@ export default function InMemoryExample() {
 }
 ```
 
-- [ ] **Step 2: Write `data-sources.mdx`**
+- [x] **Step 2: Write `data-sources.mdx`**
 
 ```mdx
 ---
@@ -1189,7 +1193,7 @@ const source = new ODataDataSource({
 See the [API reference](/strata-grid/api/) for the full interface.
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -1206,7 +1210,7 @@ git commit -m "docs(m8): guide — data sources"
 - Create: `docs-site/src/components/examples/export/ExportExample.tsx`
 - Create: `docs-site/src/content/docs/guides/export.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/export/ExportExample.tsx`:
 
@@ -1238,7 +1242,7 @@ export default function ExportExample() {
 }
 ```
 
-- [ ] **Step 2: Write `export.mdx`**
+- [x] **Step 2: Write `export.mdx`**
 
 ```mdx
 ---
@@ -1272,7 +1276,7 @@ const blob = await new XlsxWriter().write(rows, columns);
 <ExportExample client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -1289,7 +1293,7 @@ git commit -m "docs(m8): guide — export"
 - Create: `docs-site/src/components/examples/theming/ThemedGrid.tsx`
 - Create: `docs-site/src/content/docs/guides/theming.mdx`
 
-- [ ] **Step 1: Create example**
+- [x] **Step 1: Create example**
 
 `docs-site/src/components/examples/theming/ThemedGrid.tsx`:
 
@@ -1330,7 +1334,7 @@ export default function ThemedGrid() {
 }
 ```
 
-- [ ] **Step 2: Write `theming.mdx`**
+- [x] **Step 2: Write `theming.mdx`**
 
 ```mdx
 ---
@@ -1384,7 +1388,7 @@ theme.dispose();
 <ThemedGrid client:load />
 ```
 
-- [ ] **Step 3: Build & commit**
+- [x] **Step 3: Build & commit**
 
 Run: `npm run build -w @strata-grid/docs-site`
 
@@ -1400,7 +1404,7 @@ git commit -m "docs(m8): guide — theming"
 **Files:**
 - Create: `docs-site/src/content/docs/contributing/overview.mdx`
 
-- [ ] **Step 1: Write `overview.mdx`**
+- [x] **Step 1: Write `overview.mdx`**
 
 ```mdx
 ---
@@ -1444,7 +1448,7 @@ not listed there is considered internal and may change without notice.
 - Astro Starlight for these docs.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs-site/src/content/docs/contributing/overview.mdx
@@ -1458,7 +1462,7 @@ git commit -m "docs(m8): contributing — project overview"
 **Files:**
 - Create: `docs-site/src/content/docs/contributing/development.mdx`
 
-- [ ] **Step 1: Write `development.mdx`**
+- [x] **Step 1: Write `development.mdx`**
 
 ```mdx
 ---
@@ -1501,7 +1505,7 @@ The docs site automatically regenerates the API reference (`docs:api`) before
 `dev` and `build`.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs-site/src/content/docs/contributing/development.mdx
@@ -1515,7 +1519,7 @@ git commit -m "docs(m8): contributing — development setup"
 **Files:**
 - Create: `docs-site/src/content/docs/contributing/workflow.mdx`
 
-- [ ] **Step 1: Write `workflow.mdx`**
+- [x] **Step 1: Write `workflow.mdx`**
 
 ```mdx
 ---
@@ -1569,7 +1573,7 @@ npm run build -w @strata-grid/docs-site
 ```
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs-site/src/content/docs/contributing/workflow.mdx
@@ -1583,7 +1587,7 @@ git commit -m "docs(m8): contributing — spec/plan/TDD workflow"
 **Files:**
 - Create: `docs-site/src/content/docs/contributing/pr-conventions.mdx`
 
-- [ ] **Step 1: Write `pr-conventions.mdx`**
+- [x] **Step 1: Write `pr-conventions.mdx`**
 
 ```mdx
 ---
@@ -1622,7 +1626,7 @@ Open the PR with a short summary and a test plan. Address reviewer comments by
 pushing new commits; squash-merge is the default.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs-site/src/content/docs/contributing/pr-conventions.mdx
@@ -1639,7 +1643,7 @@ pointer there that links into the docs site.
 **Files:**
 - Create: `CONTRIBUTING.md`
 
-- [ ] **Step 1: Write `CONTRIBUTING.md`**
+- [x] **Step 1: Write `CONTRIBUTING.md`**
 
 ```markdown
 # Contributing to Strata
@@ -1666,7 +1670,7 @@ Open issues to discuss substantial changes before opening a PR. PR titles use
 the `scope(mN): subject` convention; commits do not include AI attribution.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add CONTRIBUTING.md
@@ -1680,7 +1684,7 @@ git commit -m "docs(m8): add top-level CONTRIBUTING.md"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Add a Documentation section before the Roadmap section**
+- [x] **Step 1: Add a Documentation section before the Roadmap section**
 
 In `README.md`, immediately before the existing `## Roadmap` section, insert:
 
@@ -1695,7 +1699,7 @@ Full documentation lives at <https://vadiraja.github.io/strata-grid/>:
 
 ```
 
-- [ ] **Step 2: Update the existing Contributing section**
+- [x] **Step 2: Update the existing Contributing section**
 
 Replace the existing `## Contributing` paragraph with:
 
@@ -1708,7 +1712,7 @@ The project follows a spec → plan → test-first cycle; design specs live in
 `docs/superpowers/specs/` and implementation plans in `docs/superpowers/plans/`.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add README.md

@@ -22,10 +22,9 @@ jobs:
       - run: npm run build
       - run: npm pack --dry-run
       - run: npm run lint:publish
-      # TODO(m8): attw fails with "Cannot read properties of undefined (reading
-      # 'filename')" on our tarball — likely the CSS-only sub-exports. Track as
-      # follow-up and re-enable once configured.
-      # - run: npm run lint:types
+      # Uses an @arethetypeswrong/core wrapper because the official CLI crashes
+      # while reading this package tarball before analysis.
+      - run: npm run lint:types
 
   docs:
     name: Docs site build

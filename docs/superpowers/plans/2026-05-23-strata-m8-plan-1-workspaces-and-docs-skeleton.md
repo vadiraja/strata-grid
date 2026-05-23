@@ -1,6 +1,6 @@
 # Strata — M8 · Plan 1: npm workspaces & Astro Starlight skeleton
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Convert the repo to an npm workspace, scaffold an Astro Starlight docs site at `docs-site/` that consumes `strata-grid` from the workspace, and render a placeholder landing page.
 
@@ -12,6 +12,10 @@
 **Depends on:** M5 (theming) merged — already in `master`.
 **Spec:** `docs/superpowers/specs/2026-05-23-m8-docs-and-npm-prep-design.md`
 
+**Status:** Completed. The npm workspace and Astro Starlight docs skeleton are
+implemented, the introduction smoke-test page imports `DataGrid` from the
+workspace package, and the docs site builds successfully.
+
 ---
 
 ### Task 1: Enable npm workspaces at the repo root
@@ -19,7 +23,7 @@
 **Files:**
 - Modify: `package.json`
 
-- [ ] **Step 1: Add `workspaces` field to root `package.json`**
+- [x] **Step 1: Add `workspaces` field to root `package.json`**
 
 Add to `package.json` immediately after the `"files"` array:
 
@@ -29,7 +33,7 @@ Add to `package.json` immediately after the `"files"` array:
   ],
 ```
 
-- [ ] **Step 2: Verify nothing breaks**
+- [x] **Step 2: Verify nothing breaks**
 
 Run: `npm install`
 Expected: completes without error; no new dependencies installed (no `docs-site/` yet).
@@ -40,7 +44,7 @@ Expected: passes — library still builds.
 Run: `npm test`
 Expected: all existing tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -59,7 +63,7 @@ git commit -m "build: enable npm workspaces for docs-site"
 - Create: `docs-site/src/content/docs/index.mdx`
 - Create: `docs-site/src/content.config.ts`
 
-- [ ] **Step 1: Create `docs-site/package.json`**
+- [x] **Step 1: Create `docs-site/package.json`**
 
 ```json
 {
@@ -89,7 +93,7 @@ git commit -m "build: enable npm workspaces for docs-site"
 }
 ```
 
-- [ ] **Step 2: Create `docs-site/astro.config.mjs`**
+- [x] **Step 2: Create `docs-site/astro.config.mjs`**
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -130,7 +134,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Create `docs-site/tsconfig.json`**
+- [x] **Step 3: Create `docs-site/tsconfig.json`**
 
 ```json
 {
@@ -140,7 +144,7 @@ export default defineConfig({
 }
 ```
 
-- [ ] **Step 4: Create `docs-site/.gitignore`**
+- [x] **Step 4: Create `docs-site/.gitignore`**
 
 ```
 dist/
@@ -151,7 +155,7 @@ src/content/docs/api/
 
 (The `api/` line is for the TypeDoc-generated content added in Plan 2.)
 
-- [ ] **Step 5: Create `docs-site/src/content.config.ts`**
+- [x] **Step 5: Create `docs-site/src/content.config.ts`**
 
 ```ts
 import { defineCollection } from 'astro:content';
@@ -163,7 +167,7 @@ export const collections = {
 };
 ```
 
-- [ ] **Step 6: Create placeholder landing page `docs-site/src/content/docs/index.mdx`**
+- [x] **Step 6: Create placeholder landing page `docs-site/src/content/docs/index.mdx`**
 
 ```mdx
 ---
@@ -203,17 +207,17 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 </CardGrid>
 ```
 
-- [ ] **Step 7: Install workspace dependencies**
+- [x] **Step 7: Install workspace dependencies**
 
 Run: `npm install`
 Expected: installs Astro/Starlight/React under `docs-site/node_modules` (or hoisted to root), and links `strata-grid` from the root as a workspace dependency.
 
-- [ ] **Step 8: Build the docs site to verify the scaffold**
+- [x] **Step 8: Build the docs site to verify the scaffold**
 
 Run: `npm run build -w @strata-grid/docs-site`
 Expected: Astro builds without errors; `docs-site/dist/index.html` exists.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add docs-site/ package.json package-lock.json
@@ -230,7 +234,7 @@ This verifies the workspace wiring works end-to-end before we write any real con
 - Create: `docs-site/src/components/examples/SmokeTestGrid.tsx`
 - Create: `docs-site/src/content/docs/getting-started/introduction.mdx`
 
-- [ ] **Step 1: Create the example component**
+- [x] **Step 1: Create the example component**
 
 `docs-site/src/components/examples/SmokeTestGrid.tsx`:
 
@@ -259,7 +263,7 @@ export default function SmokeTestGrid() {
 }
 ```
 
-- [ ] **Step 2: Create a minimal introduction page that mounts the component**
+- [x] **Step 2: Create a minimal introduction page that mounts the component**
 
 `docs-site/src/content/docs/getting-started/introduction.mdx`:
 
@@ -287,19 +291,19 @@ that reference a `parentId`).
 <SmokeTestGrid client:load />
 ```
 
-- [ ] **Step 3: Build the site again**
+- [x] **Step 3: Build the site again**
 
 Run: `npm run build -w @strata-grid/docs-site`
 Expected: passes. `docs-site/dist/getting-started/introduction/index.html` exists and references the React island bundle.
 
-- [ ] **Step 4: Run the dev server and manually verify**
+- [x] **Step 4: Run the dev server and manually verify**
 
 Run: `npm run dev -w @strata-grid/docs-site`
 Open `http://localhost:4321/strata-grid/getting-started/introduction/` in a browser.
 Expected: page renders, the smoke-test grid shows two rows with names and roles.
 Stop the dev server with Ctrl-C.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs-site/

@@ -1,6 +1,6 @@
 # Strata — M8 · Plan 2: API reference pipeline (TypeDoc)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Auto-generate the API reference for the public surface (`src/index.ts`) from TSDoc into Markdown that Starlight renders, plus a small frontmatter shim and a TSDoc audit pass.
 
@@ -11,6 +11,11 @@
 **Date:** 2026-05-23
 **Depends on:** M8 Plan 1.
 
+**Status:** Completed. TypeDoc generation, Starlight frontmatter processing,
+API landing-page copying, and docs-site build integration are implemented. The
+pipeline currently builds with known TypeDoc/Starlight warnings that are tracked
+as documentation hygiene rather than M8 blockers.
+
 ---
 
 ### Task 1: Install TypeDoc & plugin
@@ -18,7 +23,7 @@
 **Files:**
 - Modify: `package.json` (root)
 
-- [ ] **Step 1: Install dev dependencies at the repo root**
+- [x] **Step 1: Install dev dependencies at the repo root**
 
 Run:
 ```bash
@@ -27,7 +32,7 @@ npm install -D -W typedoc@^0.27.0 typedoc-plugin-markdown@^4.4.0
 (`-W` installs to the root workspace.)
 Expected: both packages appear under `devDependencies` in root `package.json`.
 
-- [ ] **Step 2: Commit dependency change**
+- [x] **Step 2: Commit dependency change**
 
 ```bash
 git add package.json package-lock.json
@@ -41,7 +46,7 @@ git commit -m "build(m8): add typedoc + typedoc-plugin-markdown dev deps"
 **Files:**
 - Create: `typedoc.json` (root)
 
-- [ ] **Step 1: Create `typedoc.json`**
+- [x] **Step 1: Create `typedoc.json`**
 
 ```json
 {
@@ -64,17 +69,17 @@ git commit -m "build(m8): add typedoc + typedoc-plugin-markdown dev deps"
 }
 ```
 
-- [ ] **Step 2: Run TypeDoc once to verify it walks the source without errors**
+- [x] **Step 2: Run TypeDoc once to verify it walks the source without errors**
 
 Run: `npx typedoc`
 Expected: writes Markdown files under `docs-site/src/content/docs/api/`. There will be TSDoc warnings — that's expected and will be addressed in Task 5.
 
-- [ ] **Step 3: Inspect generated output**
+- [x] **Step 3: Inspect generated output**
 
 Run: `ls docs-site/src/content/docs/api/`
 Expected: an `index.md` and one or more files/subdirectories covering symbols re-exported from `src/index.ts` (e.g., `DataGrid`, `ColumnDef`, `InMemoryDataSource`).
 
-- [ ] **Step 4: Commit the config (NOT the generated output, which is gitignored)**
+- [x] **Step 4: Commit the config (NOT the generated output, which is gitignored)**
 
 ```bash
 git add typedoc.json
@@ -91,7 +96,7 @@ TypeDoc Markdown output has no frontmatter; Starlight requires at minimum a `tit
 - Create: `scripts/add-starlight-frontmatter.mjs`
 - Create: `scripts/add-starlight-frontmatter.test.mjs`
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 `scripts/add-starlight-frontmatter.test.mjs`:
 
@@ -128,12 +133,12 @@ test('withFrontmatter is idempotent when frontmatter already present', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails (module not yet implemented)**
+- [x] **Step 2: Run the test to verify it fails (module not yet implemented)**
 
 Run: `node --test scripts/add-starlight-frontmatter.test.mjs`
 Expected: FAIL — module cannot be imported.
 
-- [ ] **Step 3: Implement the script**
+- [x] **Step 3: Implement the script**
 
 `scripts/add-starlight-frontmatter.mjs`:
 
@@ -187,22 +192,22 @@ if (isMain) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `node --test scripts/add-starlight-frontmatter.test.mjs`
 Expected: 5 tests pass.
 
-- [ ] **Step 5: Run the script end-to-end against the previously generated output**
+- [x] **Step 5: Run the script end-to-end against the previously generated output**
 
 Run: `node scripts/add-starlight-frontmatter.mjs`
 Expected: prints `Added Starlight frontmatter under docs-site/src/content/docs/api`.
 
-- [ ] **Step 6: Spot-check one file**
+- [x] **Step 6: Spot-check one file**
 
 Run: `head -5 docs-site/src/content/docs/api/index.md`
 Expected: starts with `---\ntitle: "..."\n---`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/add-starlight-frontmatter.mjs scripts/add-starlight-frontmatter.test.mjs
@@ -217,7 +222,7 @@ git commit -m "build(m8): add starlight frontmatter post-processor for typedoc o
 - Modify: `package.json` (root) — add a top-level `docs:api` script
 - Modify: `docs-site/package.json` — add `predev` and `prebuild`
 
-- [ ] **Step 1: Add `docs:api` script to root `package.json`**
+- [x] **Step 1: Add `docs:api` script to root `package.json`**
 
 In the `"scripts"` object, after `"test:watch"`:
 
@@ -225,7 +230,7 @@ In the `"scripts"` object, after `"test:watch"`:
     "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs"
 ```
 
-- [ ] **Step 2: Add `predev` and `prebuild` to `docs-site/package.json`**
+- [x] **Step 2: Add `predev` and `prebuild` to `docs-site/package.json`**
 
 In `docs-site/package.json` `"scripts"`, add (and keep existing):
 
@@ -238,13 +243,13 @@ Note: `-w ..` runs the script in the parent workspace (root). If that flag form
 doesn't work on the installed npm version, use `npm --prefix .. run docs:api`
 instead.
 
-- [ ] **Step 3: Verify the build pipeline**
+- [x] **Step 3: Verify the build pipeline**
 
 Run: `rm -rf docs-site/src/content/docs/api`
 Then: `npm run build -w @strata-grid/docs-site`
 Expected: typedoc runs first, post-processor adds frontmatter, Astro builds successfully. `docs-site/dist/api/index.html` exists.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json docs-site/package.json package-lock.json
@@ -260,12 +265,12 @@ The first TypeDoc run will have surfaced warnings about missing or weak comments
 **Files:**
 - Modify: Various files under `src/` that own exports listed in `src/index.ts`
 
-- [ ] **Step 1: Capture the baseline warning list**
+- [x] **Step 1: Capture the baseline warning list**
 
 Run: `npx typedoc 2>&1 | grep -E '(warning|error)' > /tmp/typedoc-warnings.txt || true`
 Expected: a file listing all current warnings.
 
-- [ ] **Step 2: For each exported symbol with a warning, add a TSDoc comment**
+- [x] **Step 2: For each exported symbol with a warning, add a TSDoc comment**
 
 Walk `src/index.ts` top-to-bottom. For every export, ensure the underlying
 declaration has a TSDoc block:
@@ -301,12 +306,12 @@ From `src/index.ts`:
 
 Where a TSDoc block already exists and reads clearly, leave it. Only add or improve.
 
-- [ ] **Step 3: Re-run TypeDoc and confirm clean warnings**
+- [x] **Step 3: Re-run TypeDoc and confirm clean warnings**
 
 Run: `npx typedoc 2>&1 | grep -E '(warning|error)' | tee /tmp/typedoc-warnings-after.txt`
 Expected: zero or only acceptable warnings (e.g., third-party type references). Diff `/tmp/typedoc-warnings.txt` vs `/tmp/typedoc-warnings-after.txt` to confirm reduction.
 
-- [ ] **Step 4: Verify library tests still pass**
+- [x] **Step 4: Verify library tests still pass**
 
 Run: `npm test`
 Expected: all tests pass — no behavior changed, only comments.
@@ -314,7 +319,7 @@ Expected: all tests pass — no behavior changed, only comments.
 Run: `npm run typecheck`
 Expected: passes.
 
-- [ ] **Step 5: Commit (one commit per `src/` subdirectory if helpful for review)**
+- [x] **Step 5: Commit (one commit per `src/` subdirectory if helpful for review)**
 
 Example commit (collect related TSDoc additions):
 
@@ -339,7 +344,7 @@ Approach: keep TypeDoc's `index.md` but configure the post-processor to skip fil
 
 Cleaner alternative used here: configure typedoc with `entryFileName: "modules"` so the generated index is `modules.md`, and commit a separate hand-written `index.mdx`.
 
-- [ ] **Step 1: Update `typedoc.json`**
+- [x] **Step 1: Update `typedoc.json`**
 
 Change:
 
@@ -353,7 +358,7 @@ to:
   "entryFileName": "modules",
 ```
 
-- [ ] **Step 2: Update `docs-site/.gitignore`**
+- [x] **Step 2: Update `docs-site/.gitignore`**
 
 Replace the `src/content/docs/api/` line with a more precise exclusion that
 allows the hand-written `index.mdx`:
@@ -363,7 +368,7 @@ src/content/docs/api/*
 !src/content/docs/api/index.mdx
 ```
 
-- [ ] **Step 3: Create `docs-site/src/content/docs/api/index.mdx`**
+- [x] **Step 3: Create `docs-site/src/content/docs/api/index.mdx`**
 
 ```mdx
 ---
@@ -425,7 +430,7 @@ and adjust the `LinkCard` hrefs to match the actual generated paths (TypeDoc's
 slug scheme depends on plugin version). Hrefs are documentation, not contracts —
 fix any 404s after a manual visual check.
 
-- [ ] **Step 4: Rebuild and visually verify**
+- [x] **Step 4: Rebuild and visually verify**
 
 Run: `rm -rf docs-site/src/content/docs/api/*.md docs-site/src/content/docs/api/classes docs-site/src/content/docs/api/functions docs-site/src/content/docs/api/interfaces docs-site/src/content/docs/api/type-aliases`
 (Clean any stale generated files.)
@@ -437,7 +442,7 @@ Run: `npm run dev -w @strata-grid/docs-site`
 Open `http://localhost:4321/strata-grid/api/` and click through the link cards. Fix any 404s by editing the hrefs.
 Stop dev server.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add typedoc.json docs-site/.gitignore docs-site/src/content/docs/api/index.mdx

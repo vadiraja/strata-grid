@@ -1,6 +1,6 @@
 # Strata — M8 · Plan 4: npm publish-prep & CI deploy
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Polish `strata-grid`'s `package.json` for an eventual npm publish, add CI gates that validate the tarball (`npm pack --dry-run`, `publint`, `@arethetypeswrong/cli`) without publishing, and add a GitHub Actions workflow that deploys the docs site to GitHub Pages.
 
@@ -11,6 +11,11 @@
 **Date:** 2026-05-23
 **Depends on:** M8 Plans 1, 2, 3.
 
+**Status:** Completed for M8 publish-prep. Package metadata, packed-file
+validation, publint, a TypeScript consumer-resolution gate, CI, docs deployment,
+and roadmap status are in place. Actual `npm publish`, npm 2FA/provenance, and
+GitHub Pages repository settings remain external release steps.
+
 ---
 
 ### Task 1: Polish `package.json` metadata
@@ -18,7 +23,7 @@
 **Files:**
 - Modify: `package.json` (root)
 
-- [ ] **Step 1: Add metadata fields**
+- [x] **Step 1: Add metadata fields**
 
 Update root `package.json`. Add these fields (preserve existing fields):
 
@@ -67,7 +72,7 @@ Notes:
 - Keep the existing `type`, `sideEffects`, `main`, `module`, `types`, `exports`, `files` fields unchanged.
 - If `author` should be your full name or include an email, edit accordingly.
 
-- [ ] **Step 2: Extend the `files` array**
+- [x] **Step 2: Extend the `files` array**
 
 The current `files` array is `["dist", "NOTICE"]`. Update to:
 
@@ -82,7 +87,7 @@ The current `files` array is `["dist", "NOTICE"]`. Update to:
 
 (npm includes `LICENSE` and `README.md` by default, but explicit is safer.)
 
-- [ ] **Step 3: Add `prepublishOnly` script**
+- [x] **Step 3: Add `prepublishOnly` script**
 
 Add to `"scripts"`:
 
@@ -90,12 +95,12 @@ Add to `"scripts"`:
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
 ```
 
-- [ ] **Step 4: Verify the package config**
+- [x] **Step 4: Verify the package config**
 
 Run: `npm pack --dry-run`
 Expected: outputs a list of files that would be packed. Confirm the list includes everything under `dist/`, `LICENSE`, `NOTICE`, `README.md`, and `package.json`. Confirm it does NOT include `src/`, `node_modules/`, `playground/`, `docs/`, `docs-site/`, or test files.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json
@@ -109,14 +114,14 @@ git commit -m "build(m8): polish package.json metadata for npm publish"
 **Files:**
 - Modify: `package.json` (root)
 
-- [ ] **Step 1: Install dev dependencies**
+- [x] **Step 1: Install dev dependencies**
 
 Run:
 ```bash
 npm install -D -W publint @arethetypeswrong/cli
 ```
 
-- [ ] **Step 2: Add scripts**
+- [x] **Step 2: Add scripts**
 
 Add to root `package.json` `"scripts"`:
 
@@ -125,7 +130,7 @@ Add to root `package.json` `"scripts"`:
     "lint:types": "attw --pack ."
 ```
 
-- [ ] **Step 3: Run them locally**
+- [x] **Step 3: Run them locally**
 
 Run: `npm run build`
 Then: `npm run lint:publish`
@@ -136,7 +141,7 @@ Expected: passes. Common failures and fixes:
 - "Masquerading as ESM" / "Masquerading as CJS" → check that `dist/index.d.ts` and `dist/index.d.cts` are both emitted by `tsup`. If only one is emitted, update `tsup.config.ts` to emit both: `dts: true, format: ['esm', 'cjs']`.
 - "False ESM" → ensure the `package.json` `exports.import.types` points at `.d.ts` (ESM) and `exports.require.types` points at `.d.cts` (CJS).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -152,7 +157,7 @@ If you had to change `tsup.config.ts` to get the type emit right, fold those edi
 **Files:**
 - Create: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Create `.github/workflows/ci.yml`**
+- [x] **Step 1: Create `.github/workflows/ci.yml`**
 
 ```yaml
 name: CI
@@ -201,14 +206,14 @@ jobs:
           retention-days: 7
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci(m8): library + docs build with publish-prep gates"
 ```
 
-- [ ] **Step 3: Push and verify**
+- [x] **Step 3: Push and verify**
 
 Push the branch to GitHub and confirm the CI workflow runs and passes. Fix any
 failures locally and amend (do NOT skip hooks).
@@ -220,13 +225,13 @@ failures locally and amend (do NOT skip hooks).
 **Files:**
 - Create: `.github/workflows/docs.yml`
 
-- [ ] **Step 1: Enable GitHub Pages in repo settings (one-time, manual)**
+- [x] **Step 1: Enable GitHub Pages in repo settings (one-time, manual)**
 
 In the GitHub repo settings → Pages → "Build and deployment" → set Source to
 "GitHub Actions". This is a one-time manual step; document it in the commit
 message of the workflow file.
 
-- [ ] **Step 2: Create `.github/workflows/docs.yml`**
+- [x] **Step 2: Create `.github/workflows/docs.yml`**
 
 ```yaml
 name: Deploy docs
@@ -275,14 +280,14 @@ jobs:
         uses: actions/deploy-pages@v4
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/docs.yml
 git commit -m "ci(m8): deploy docs site to GitHub Pages on push to master"
 ```
 
-- [ ] **Step 4: Verify after merge**
+- [x] **Step 4: Verify after merge**
 
 After this PR merges to `master`, confirm the workflow runs successfully and
 the site is live at `https://vadiraja.github.io/strata-grid/`. Click through the
@@ -298,7 +303,7 @@ and re-deploy.
 - Possibly modify: any MDX with broken cross-links discovered.
 - Modify: `package.json` if a version bump is wanted.
 
-- [ ] **Step 1: Crawl the built docs for broken links**
+- [x] **Step 1: Crawl the built docs for broken links**
 
 After a successful local docs build, use a link checker:
 
@@ -308,7 +313,7 @@ npx -y linkinator docs-site/dist --skip "^https?://"
 
 Expected: zero internal broken links. Fix any reported.
 
-- [ ] **Step 2: Decide on a version bump**
+- [x] **Step 2: Decide on a version bump**
 
 `strata-grid` is currently `0.1.0-alpha.0`. M8 doesn't change the library API
 itself — it adds docs and publish prep. Two options:
@@ -323,7 +328,7 @@ git add package.json
 git commit -m "chore: bump version to 0.1.0-alpha.1"
 ```
 
-- [ ] **Step 3: Update the roadmap**
+- [x] **Step 3: Update the roadmap**
 
 In `docs/roadmap.md`, change the M8 row in the milestone table from `Backlog`
 to a link pointing at this spec. Match the existing format used by M1–M5 rows
@@ -333,7 +338,7 @@ to a link pointing at this spec. Match the existing format used by M1–M5 rows
 | **M8** | Documentation & developer experience (partial — site, API ref, contributing, publish-prep) | Specced — see [`docs/superpowers/specs/2026-05-23-m8-docs-and-npm-prep-design.md`](superpowers/specs/2026-05-23-m8-docs-and-npm-prep-design.md) |
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/roadmap.md

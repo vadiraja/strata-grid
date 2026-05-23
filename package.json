@@ -42,7 +42,11 @@
     },
     "./styles.css": "./dist/strata.css",
     "./theme/tokens.css": "./dist/theme/tokens.css",
-    "./theme/dark.css": "./dist/theme/dark.css"
+    "./theme/dark.css": "./dist/theme/dark.css",
+    "./theme/density.css": "./dist/theme/density.css",
+    "./theme/high-contrast-dark.css": "./dist/theme/high-contrast-dark.css",
+    "./theme/high-contrast-light.css": "./dist/theme/high-contrast-light.css",
+    "./theme/transitions.css": "./dist/theme/transitions.css"
   },
   "files": [
     "dist",
@@ -67,7 +71,7 @@
     "test:watch": "vitest",
     "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs",
     "lint:publish": "publint",
-    "lint:types": "attw --pack .",
+    "lint:types": "node scripts/check-types-resolution.mjs",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
