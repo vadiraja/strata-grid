@@ -10,3 +10,6 @@ export { IndentNodeCommand } from './indent-node';
 export type { IndentNodeOptions } from './indent-node';
 export { OutdentNodeCommand } from './outdent-node';
 export type { OutdentNodeOptions } from './outdent-node';
+export { BatchCommand } from './batch';
+export { InsertSubtreeCommand } from './insert-subtree';
+export type { InsertSubtreeOptions } from './insert-subtree';

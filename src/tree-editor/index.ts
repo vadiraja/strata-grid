@@ -19,6 +19,8 @@ export {
   ReorderNodeCommand,
   IndentNodeCommand,
   OutdentNodeCommand,
+  BatchCommand,
+  InsertSubtreeCommand,
 } from './commands';
 export type {
   AddNodeOptions,
@@ -27,7 +29,19 @@ export type {
   ReorderNodeOptions,
   IndentNodeOptions,
   OutdentNodeOptions,
+  InsertSubtreeOptions,
 } from './commands';
+export { cloneSubtree } from './clone-subtree';
+export type {
+  CloneSubtreeOptions,
+  CloneSubtreeResult,
+} from './clone-subtree';
+export { useClipboard } from './use-clipboard';
+export type {
+  UseClipboardOptions,
+  UseClipboardReturn,
+  ClipboardEntry,
+} from './use-clipboard';
 export { isDescendant, validateCycleAndSelf } from './validators';
 export { calculateDropPosition } from './drop-position';
 export type { DropPosition } from './drop-position';
