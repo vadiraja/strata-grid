@@ -1,17 +1,25 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
+  ExpandedState,
+  SortingState as TanstackSortingState,
+} from '@tanstack/react-table';
+import type {
+  AdvancedFilterConfig,
   AnyColumn,
   AggregationConfig,
+  ColumnManagementConfig,
   ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
   ColumnSort,
   EditableConfig,
+  ExportConfig,
   GridTheme,
   PaginationConfig,
   SelectionConfig,
   SelectionState,
   TreeDataConfig,
+  ViewState,
 } from '../model/types';
 import { DEFAULT_GRID_HEIGHT } from '../model/constants';
 import { useGridTable } from '../model/use-grid-table';
@@ -19,12 +27,18 @@ import { normalizeTreeData } from '../model/normalize-tree-data';
 import { resolveTreeColumnId } from '../model/resolve-tree-column-id';
 import { useSelection } from '../model/use-selection';
 import { getLeafColumns, normalizeColumns } from '../model/normalize-columns';
+import { readValue } from '../model/read-value';
 import { InMemoryDataSource } from '../data/in-memory-data-source';
 import type { DataSource } from '../data/data-source';
+import type { DataQuery, FilterExpression } from '../data/types';
 import { useLazyTree } from '../data/use-lazy-tree';
 import { useServerDataSource } from '../data/use-server-data-source';
 import { usePagination } from '../data/use-pagination';
 import { useLiveUpdates } from '../data/use-live-updates';
+import { findWhereUsed } from '../data/where-used';
+import { buildDataQuery } from '../data/build-data-query';
+import { useExport } from '../export/use-export';
+import type { ExportOptions } from '../export/types';
 import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
 import { useBomRollup } from '../model/use-bom-rollup';
@@ -104,6 +118,16 @@ export interface DataGridProps<TRow> {
   aggregation?: AggregationConfig;
   /** Configures pagination behavior. */
   pagination?: PaginationConfig;
+  /** Configures advanced filter state and server push-down. */
+  advancedFilter?: AdvancedFilterConfig;
+  /** Configures grid export defaults. */
+  export?: ExportConfig<TRow>;
+  /** Enables column management integrations. */
+  columnManagement?: boolean | ColumnManagementConfig;
+  /** Initial view state to restore after table creation. */
+  defaultViewState?: ViewState;
+  /** Called when serializable view state changes. */
+  onViewStateChange?: (state: ViewState) => void;
   /** Called when a cell edit starts. */
   onCellEditStart?: (event: { rowId: string; columnId: string; value: unknown }) => void;
   /** Called when a cell edit ends. */
@@ -193,6 +217,34 @@ function treeStateToRows<TRow>(
   };
 }
 
+function toTanstackSorting(sorts: ColumnSort[] = []): TanstackSortingState {
+  return sorts.map((sort) => ({
+    id: sort.columnId,
+    desc: sort.direction === 'desc',
+  }));
+}
+
+function fromTanstackSorting(sorts: TanstackSortingState): ColumnSort[] {
+  return sorts.map((sort) => ({
+    columnId: sort.id,
+    direction: sort.desc ? 'desc' : 'asc',
+  }));
+}
+
+function expandedIdsFromState(expanded: ExpandedState): string[] {
+  if (expanded === true) return [];
+  return Object.entries(expanded)
+    .filter(([, isExpanded]) => isExpanded)
+    .map(([id]) => id);
+}
+
+function expandedStateFromIds(ids: string[]): ExpandedState {
+  return ids.reduce<Record<string, boolean>>((state, id) => {
+    state[id] = true;
+    return state;
+  }, {});
+}
+
 /** The public Strata grid component. */
 export function DataGrid<TRow>({
   data,
@@ -220,6 +272,11 @@ export function DataGrid<TRow>({
   onTreeChange,
   aggregation,
   pagination,
+  advancedFilter,
+  export: exportConfig,
+  columnManagement: _columnManagement,
+  defaultViewState,
+  onViewStateChange,
   onCellEditStart,
   onCellEditEnd,
   onRowEditStart,
@@ -227,7 +284,7 @@ export function DataGrid<TRow>({
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   const internalDataSource = useMemo(() => new InMemoryDataSource(data), [data]);
-  const dataSource = externalDataSource ?? internalDataSource;
+  const dataSource: DataSource<TRow> = externalDataSource ?? internalDataSource;
 
   // Detect server-side capabilities
   const capabilities = useMemo(
@@ -236,6 +293,20 @@ export function DataGrid<TRow>({
   );
   const hasServerCapabilities =
     capabilities.serverSort || capabilities.serverFilter;
+  const [serverSort, setServerSort] = useState<ColumnSort[]>(
+    defaultViewState?.sorting ?? defaultSort ?? [],
+  );
+  const [serverFilters, setServerFilters] = useState<FilterExpression[]>(
+    defaultViewState?.filters ??
+      (advancedFilter?.defaultExpression ? [advancedFilter.defaultExpression] : []),
+  );
+  const serverQuery = useMemo<DataQuery>(() => {
+    const query = buildDataQuery({
+      sort: serverSort,
+      filters: serverFilters,
+    });
+    return Object.keys(query).length > 0 ? query : {};
+  }, [serverSort, serverFilters]);
 
   // Server data source hook — always called (hooks can't be conditional)
   const serverDS = useServerDataSource(dataSource);
@@ -244,6 +315,7 @@ export function DataGrid<TRow>({
   const paginationState = usePagination(dataSource, {
     pageSize: pagination?.pageSize,
     mode: pagination?.mode,
+    query: serverQuery,
   });
 
   // Use server-loaded data when server capabilities exist, otherwise load synchronously
@@ -309,6 +381,18 @@ export function DataGrid<TRow>({
         : null,
     [treeData, treeEditingEnabled, treeEditorApi.state],
   );
+  const lazyTreeEnabled = !!(treeData && capabilities.lazyChildren);
+  const lazyGetSubRows = useCallback(
+    (row: TRow) => {
+      if (!treeData) return undefined;
+      const loadedChildren = lazyTree.getChildren(treeData.getRowId(row));
+      return loadedChildren ?? tree?.getSubRows(row);
+    },
+    [lazyTree, tree, treeData],
+  );
+  const effectiveTreeRows = editedTree?.rootRows ?? (tree ? tree.rootRows : effectiveRows);
+  const effectiveGetSubRows =
+    editedTree?.getSubRows ?? (lazyTreeEnabled ? lazyGetSubRows : tree?.getSubRows);
 
   const treeColumnId = useMemo(
     () => (treeData ? resolveTreeColumnId(leafColumns) : undefined),
@@ -321,18 +405,28 @@ export function DataGrid<TRow>({
     sourceColumnId: aggregation?.extendedQuantity?.sourceColumn,
     targetColumnId: aggregation?.extendedQuantity?.targetColumn,
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
-    getSubRows: editedTree?.getSubRows ?? tree?.getSubRows,
+    getSubRows: effectiveGetSubRows,
     compute: aggregation?.extendedQuantity?.compute,
   });
 
   const table = useGridTable({
-    data: editedTree?.rootRows ?? (tree ? tree.rootRows : effectiveRows),
+    data: effectiveTreeRows,
     columns: leafColumns,
     tanstackColumns,
-    getSubRows: editedTree?.getSubRows ?? tree?.getSubRows,
+    getSubRows: effectiveGetSubRows,
     getRowId: treeData ? (row: TRow) => treeData.getRowId(row) : undefined,
     defaultExpanded,
-    defaultSort,
+    defaultSort: defaultViewState?.sorting ?? defaultSort,
+    onSortChange: (sort) => {
+      setServerSort(sort);
+      if (capabilities.serverSort) serverDS.setSort(sort);
+    },
+    onFilterChange: (filters) => {
+      setServerFilters(filters);
+      if (capabilities.serverFilter) serverDS.setFilters(filters);
+    },
+    manualSorting: !!capabilities.serverSort,
+    manualFiltering: !!capabilities.serverFilter,
     isTreeMode: treeData !== undefined,
     groupBy: effectiveGroupBy,
     columnOrder,
@@ -344,9 +438,10 @@ export function DataGrid<TRow>({
     columnSizing,
     defaultColumnSizing,
     onColumnSizingChange,
+    getRowCanExpand: lazyTreeEnabled ? () => true : undefined,
   });
 
-  const selectableRows = editedTree?.rootRows ?? (tree ? tree.rootRows : effectiveRows);
+  const selectableRows = effectiveTreeRows;
   const getSelectionRowId = useMemo(
     () =>
       treeData
@@ -359,9 +454,9 @@ export function DataGrid<TRow>({
       buildSelectionMaps(
         selectableRows,
         getSelectionRowId,
-        editedTree?.getSubRows ?? tree?.getSubRows,
+        effectiveGetSubRows,
       ),
-    [getSelectionRowId, selectableRows, tree, editedTree],
+    [effectiveGetSubRows, getSelectionRowId, selectableRows],
   );
   const allRowIds = useMemo(
     () =>
@@ -369,10 +464,10 @@ export function DataGrid<TRow>({
         ? collectAllRowIds(
             selectableRows,
             getSelectionRowId,
-            editedTree?.getSubRows ?? tree?.getSubRows,
+            effectiveGetSubRows,
           )
         : [],
-    [getSelectionRowId, selectableRows, selection, tree, editedTree],
+    [effectiveGetSubRows, getSelectionRowId, selectableRows, selection],
   );
   const selectionState = useSelection({
     config: selection ?? { mode: 'multi' },
@@ -389,12 +484,110 @@ export function DataGrid<TRow>({
     onRowEditStart,
     onRowEditEnd,
   });
-  const gridApi = useGridApi({
+  const selectedRowsForExport = useCallback(() => {
+    if (!selection) return [];
+    return table
+      .getCoreRowModel()
+      .flatRows
+      .filter((row) => selectionState.selectedIds.has(row.id))
+      .map((row) => row.original);
+  }, [selection, selectionState.selectedIds, table]);
+  const exportColumns = useMemo(
+    () =>
+      leafColumns.map((column) => ({
+        id: column.id,
+        header:
+          typeof column.header === 'string' ? column.header : String(column.id),
+        width: column.width,
+      })),
+    [leafColumns],
+  );
+  const exportApi = useExport<TRow>({
+    getVisibleRows: () => table.getRowModel().flatRows.map((row) => row.original),
+    getAllRows: () => dataSource.exportAll?.(serverQuery) ?? effectiveRows,
+    getSelectedRows: selectedRowsForExport,
+    columns: exportColumns,
+    getRowValue: (row, columnId) => {
+      const column = leafColumns.find((candidate) => candidate.id === columnId);
+      const value = column ? readValue(column, row) : undefined;
+      return value == null ? '' : String(value);
+    },
+  });
+  const exportData = useCallback(
+    (options: ExportOptions<TRow>) =>
+      exportApi.exportData({
+        filename: exportConfig?.filename,
+        formatters: exportConfig?.formatters,
+        ...options,
+      }),
+    [exportApi, exportConfig],
+  );
+  const exportViewState = useCallback(
+    (): ViewState => ({
+      columnOrder: table.getState().columnOrder,
+      columnSizing: table.getState().columnSizing,
+      columnPinning: {
+        left: table.getState().columnPinning.left ?? [],
+        right: table.getState().columnPinning.right ?? [],
+      },
+      sorting: fromTanstackSorting(table.getState().sorting),
+      filters: serverFilters,
+      expandedIds: expandedIdsFromState(table.getState().expanded),
+      hiddenColumns: [],
+    }),
+    [serverFilters, table],
+  );
+  const importViewState = useCallback(
+    (state: ViewState) => {
+      table.setColumnOrder(state.columnOrder);
+      table.setColumnSizing(state.columnSizing);
+      table.setColumnPinning(state.columnPinning);
+      table.setSorting(toTanstackSorting(state.sorting));
+      table.setExpanded(expandedStateFromIds(state.expandedIds));
+      setServerSort(state.sorting);
+      setServerFilters(state.filters);
+      if (capabilities.serverSort) serverDS.setSort(state.sorting);
+      if (capabilities.serverFilter) serverDS.setFilters(state.filters);
+    },
+    [capabilities.serverFilter, capabilities.serverSort, serverDS, table],
+  );
+  const whereUsed = useCallback(
+    async (nodeId: string) => {
+      if (dataSource.whereUsed) return dataSource.whereUsed(nodeId);
+      if (!treeData?.getParentId) return [];
+      return findWhereUsed(effectiveRows, nodeId, treeData.getRowId, treeData.getParentId);
+    },
+    [dataSource, effectiveRows, treeData],
+  );
+  const gridApi = useGridApi<TRow>({
     table,
     editState,
     selection: selection ? selectionState : undefined,
     treeEditor: treeEditingEnabled ? treeEditorApi : undefined,
+    exportData,
+    exportViewState,
+    importViewState,
+    whereUsed,
   });
+
+  useEffect(() => {
+    if (!defaultViewState) return;
+    importViewState(defaultViewState);
+    // Only restore the initial state once for this table instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    onViewStateChange?.(exportViewState());
+  }, [
+    onViewStateChange,
+    exportViewState,
+    table.getState().columnOrder,
+    table.getState().columnPinning,
+    table.getState().columnSizing,
+    table.getState().expanded,
+    table.getState().sorting,
+  ]);
 
   useEffect(() => {
     if (!apiRef) return undefined;

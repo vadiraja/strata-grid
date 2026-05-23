@@ -15,6 +15,8 @@ export interface TreeCellProps<TRow> {
   extendedQuantities?: Map<string, number>;
   /** Called when this cell is selected/focused by pointer. */
   onFocusCell?: () => void;
+  /** Called before toggling row expansion. */
+  onToggleExpand?: () => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export function TreeCell<TRow>({
   rollupTargetColumnId,
   extendedQuantities,
   onFocusCell,
+  onToggleExpand,
 }: TreeCellProps<TRow>) {
   const { row } = cell;
   const width = cell.column.getSize();
@@ -53,7 +56,11 @@ export function TreeCell<TRow>({
           type="button"
           className="strata-tree-toggle"
           aria-label={expanded ? 'Collapse row' : 'Expand row'}
-          onClick={row.getToggleExpandedHandler()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleExpand?.();
+            row.toggleExpanded();
+          }}
           tabIndex={-1}
         >
           {expanded ? '▾' : '▸'}

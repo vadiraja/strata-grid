@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 import type { RowData } from '@tanstack/react-table';
+import type { ExportOptions } from '../export/types';
+import type { FilterExpression } from '../data/types';
+import type { ViewState } from './view-state-types';
 
 /** Context passed to a custom cell renderer. */
 export interface CellContext<TRow> {
@@ -64,6 +67,16 @@ export interface ColumnDef<TRow> {
   width?: number;
   /** Minimum column width in pixels. Defaults to `MIN_COLUMN_WIDTH`. */
   minWidth?: number;
+  /** Maximum column width in pixels. Only honored when `flex` is set. */
+  maxWidth?: number;
+  /**
+   * Grow factor — when set, this column absorbs a share of the leftover
+   * horizontal space (container width minus the sum of all fixed-width
+   * columns). Multiple flex columns split the remainder by ratio. Honors
+   * `minWidth` and `maxWidth`. The user explicitly resizing a flex column
+   * converts it to fixed width.
+   */
+  flex?: number;
   /**
    * Marks this column as the tree column — the one that shows the hierarchy
    * (depth indentation and the expand/collapse control). Tree mode only;
@@ -211,6 +224,36 @@ export interface PaginationConfig {
   /** Pagination mode. Default: 'pages'. */
   mode?: 'pages' | 'loadMore' | 'infinite';
 }
+
+/** Configures advanced filter-builder and quick-search UI/state. */
+export interface AdvancedFilterConfig {
+  /** Enables the filter builder surface. */
+  filterBuilder?: boolean;
+  /** Enables global quick-search. */
+  quickSearch?: boolean | { columns?: string[]; debounceMs?: number };
+  /** Initial filter expression. */
+  defaultExpression?: FilterExpression;
+}
+
+/** Configures CSV/XLSX export. */
+export interface ExportConfig<TRow = unknown> {
+  /** Enabled export formats. */
+  formats?: ExportOptions<TRow>['format'][];
+  /** Default filename without extension. */
+  filename?: string;
+  /** Custom value formatters by column id. */
+  formatters?: ExportOptions<TRow>['formatters'];
+}
+
+/** Configures the column management panel. */
+export interface ColumnManagementConfig {
+  /** Whether the panel supports searching columns. */
+  searchable?: boolean;
+  /** Columns that cannot be hidden. */
+  alwaysVisible?: string[];
+}
+
+export type { ViewState };
 
 /**
  * Context passed to a custom editor component.

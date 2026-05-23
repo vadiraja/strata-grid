@@ -600,3 +600,88 @@ M4 is complete when:
 | **Plan 8** | Where-used / reverse BOM | `whereUsed` API, `WhereUsedDialog`, context menu integration |
 | **Plan 9** | Column management & view state | `ColumnManagementPanel`, `useViewState`, persist/restore |
 | **Plan 10** | SAP OData adapter | `ODataDataSource`, query translation, auth, batch support |
+| **Plan 11** | Flex columns | `ColumnDef.flex`, `computeFlexWidths`, `useFlexColumnSizing`, drag-to-fix policy |
+
+---
+
+## 12. Flex columns — behavior notes & caveats
+
+These notes are the source of truth for the M8 documentation site. They
+describe the intended semantics, the trade-offs taken, and the edge cases that
+docs must surface to consumers.
+
+### 12.1 Semantics
+
+- `ColumnDef.flex?: number` — when set on one or more columns, those columns
+  absorb `containerWidth − sumOfFixedColumnWidths`, split by ratio.
+- `minWidth` and `maxWidth` clamp the computed share. When the container is
+  too narrow for the fixed columns alone, flex columns collapse to `minWidth`
+  and horizontal scroll appears.
+- Flex columns may be pinned (`pin: 'left' | 'right'`). Distribution is
+  computed across all flex columns regardless of pin section — pinning only
+  affects placement, not the size share.
+
+### 12.2 User-drag policy ("drag converts flex to fixed")
+
+When the user resizes a flex column by dragging its header edge, that column
+is converted to a fixed-width column for the remainder of the session (and
+across reloads, via persisted view state). It is removed from the flex
+distribution pool on subsequent container resizes.
+
+**Why:** preserving flex on a manually-resized column would make the next
+viewport resize silently undo the user's action. The "I just dragged it to
+300px" intent must win.
+
+**Restoring flex behavior:** there is no automatic "un-fix" gesture. To
+restore flex distribution to a manually-resized column, the consumer must
+clear that column id from `columnSizing` (e.g., via a "reset column widths"
+button using the `GridApi`).
+
+### 12.3 Persisted view state precedence
+
+`ColumnSizingState` (persisted via `useViewState`) always wins over `flex`.
+On reload, any column present in the persisted sizing map renders at that
+width, regardless of its `flex` value. This is consistent with the drag
+policy: an explicit, recorded width is treated as user intent.
+
+### 12.4 Column resize interaction
+
+The header-edge drag handler writes to TanStack's `columnSizing` state. The
+`useFlexColumnSizing` hook detects this by comparing the current sizing
+value to the last value it wrote — any divergence is interpreted as a user
+drag and the column id is added to a session-local "user-fixed" set.
+
+Caveat for consumers controlling `columnSizing` externally: programmatic
+writes to `columnSizing` that differ from the last library-computed value
+will also be treated as user drags (the library cannot distinguish them).
+If a consumer wants to keep a column flex while writing other columns'
+widths, they should avoid writing the flex column's id.
+
+### 12.5 Virtualization
+
+Column virtualization consumes `column.getSize()`. Because flex widths are
+pushed into `columnSizing` (which TanStack's `getSize()` reads from), the
+virtualizer sees up-to-date widths on every container resize. Right-pinned
+columns are repositioned automatically because their absolute right offset
+is computed from the same source.
+
+### 12.6 Tests
+
+Three areas worth covering when extending:
+
+- **Pure distribution** — `compute-flex-widths.test.ts` covers ratios,
+  clamps, user-fixed exclusion, and the zero-container case.
+- **Drag-to-fix** — integration test should drag a flex column, then resize
+  the container, and assert the dragged column did not redistribute.
+- **Reload precedence** — verify that initializing the grid with both
+  `flex` and a persisted `columnSizing` entry yields the persisted width.
+
+### 12.7 Future extensions (not in M4)
+
+- `GridApi.sizeColumnsToFit()` — proportionally rescale all visible columns
+  to the container, equivalent to AG Grid's method. Trivially implementable
+  on top of `flex` by assigning `flex: 1` programmatically.
+- "Reset column widths" command — clears `columnSizing` so flex behavior
+  resumes on the user-fixed columns. Belongs in the column-management panel.
+- Per-section flex (only the center scroll area) — not currently planned;
+  the whole-container model is simpler and matches user expectation.

@@ -16,20 +16,20 @@ export interface UseExportConfig<TRow> {
   getRowValue: (row: TRow, columnId: string) => string;
 }
 
-export interface UseExportReturn {
+export interface UseExportReturn<TRow = unknown> {
   /** Trigger a data export. */
-  exportData: (options: ExportOptions) => Promise<void>;
+  exportData: (options: ExportOptions<TRow>) => Promise<void>;
 }
 
 /**
  * Hook providing data export functionality.
  * Supports CSV and Excel formats with configurable scope and formatting.
  */
-export function useExport<TRow>(config: UseExportConfig<TRow>): UseExportReturn {
+export function useExport<TRow>(config: UseExportConfig<TRow>): UseExportReturn<TRow> {
   const { getVisibleRows, getAllRows, getSelectedRows, columns, getRowValue } = config;
 
   const exportData = useCallback(
-    async (options: ExportOptions) => {
+    async (options: ExportOptions<TRow>) => {
       const { format, scope, filename, columns: colFilter, sheetName } = options;
 
       // Determine which rows to export

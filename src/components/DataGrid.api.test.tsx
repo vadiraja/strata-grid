@@ -47,6 +47,16 @@ const bomColumns: ColumnDef<BomNode>[] = [
   { id: 'name', header: 'Name', accessor: 'name', isTreeColumn: true },
 ];
 
+const flatBom = [
+  { id: 'A', name: 'Assembly A', parentId: null },
+  { id: 'A1', name: 'Part A1', parentId: 'A' },
+  { id: 'A2', name: 'Part A2', parentId: 'A' },
+];
+
+const flatBomColumns: ColumnDef<(typeof flatBom)[number]>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', isTreeColumn: true },
+];
+
 describe('DataGrid — apiRef', () => {
   it('exposes editing methods that can start and commit a cell edit', async () => {
     const apiRef = createRef<GridApi<Person> | null>();
@@ -187,5 +197,55 @@ describe('DataGrid — apiRef', () => {
     });
 
     expect(await screen.findByText('Part A3')).toBeInTheDocument();
+  });
+
+  it('exposes M4 view-state import/export methods', async () => {
+    const apiRef = createRef<GridApi<Person> | null>();
+    render(<DataGrid data={people} columns={columns} apiRef={apiRef} />);
+
+    act(() => {
+      apiRef.current!.importViewState({
+        columnOrder: ['age', 'name'],
+        columnSizing: { age: 180 },
+        columnPinning: { left: ['age'], right: [] },
+        sorting: [{ columnId: 'age', direction: 'desc' }],
+        filters: [],
+        expandedIds: [],
+        hiddenColumns: [],
+      });
+    });
+
+    await waitFor(() =>
+      expect(apiRef.current!.exportViewState()).toEqual(
+        expect.objectContaining({
+          columnOrder: ['age', 'name'],
+          columnSizing: { age: 180 },
+          columnPinning: { left: ['age'], right: [] },
+          sorting: [{ columnId: 'age', direction: 'desc' }],
+        }),
+      ),
+    );
+  });
+
+  it('exposes M4 where-used lookup from flat tree data', async () => {
+    const apiRef = createRef<GridApi<(typeof flatBom)[number]> | null>();
+    render(
+      <DataGrid
+        data={flatBom}
+        columns={flatBomColumns}
+        treeData={{
+          getRowId: (row) => row.id,
+          getParentId: (row) => row.parentId,
+        }}
+        apiRef={apiRef}
+      />,
+    );
+
+    await expect(apiRef.current!.whereUsed('A1')).resolves.toEqual([
+      {
+        parentNode: flatBom[0],
+        path: [flatBom[0]],
+      },
+    ]);
   });
 });

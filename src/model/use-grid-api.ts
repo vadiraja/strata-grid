@@ -7,6 +7,9 @@ import type {
   Command,
   UseTreeEditorReturn,
 } from '../tree-editor';
+import type { ExportOptions } from '../export/types';
+import type { WhereUsedResult } from '../data/types';
+import type { ViewState } from './view-state-types';
 
 export interface GridApi<TRow> {
   expandAll(): void;
@@ -41,6 +44,10 @@ export interface GridApi<TRow> {
   getUndoStack(): Command<TRow>[];
   getChangeSet(): ChangeSet<TRow>;
   markClean(): void;
+  exportData(options: ExportOptions<TRow>): Promise<void>;
+  exportViewState(): ViewState;
+  importViewState(state: ViewState): void;
+  whereUsed(nodeId: string): Promise<WhereUsedResult<TRow>[]>;
 }
 
 export interface UseGridApiOptions<TRow> {
@@ -48,6 +55,10 @@ export interface UseGridApiOptions<TRow> {
   editState: EditStateReturn;
   selection?: UseSelectionReturn;
   treeEditor?: UseTreeEditorReturn<TRow>;
+  exportData?: (options: ExportOptions<TRow>) => Promise<void>;
+  exportViewState?: () => ViewState;
+  importViewState?: (state: ViewState) => void;
+  whereUsed?: (nodeId: string) => Promise<WhereUsedResult<TRow>[]>;
 }
 
 function flattenRows<TRow>(rows: Row<TRow>[]): Row<TRow>[] {
@@ -82,6 +93,10 @@ export function useGridApi<TRow>({
   editState,
   selection,
   treeEditor,
+  exportData,
+  exportViewState,
+  importViewState,
+  whereUsed,
 }: UseGridApiOptions<TRow>): GridApi<TRow> {
   return useMemo(
     () => ({
@@ -210,7 +225,38 @@ export function useGridApi<TRow>({
       markClean() {
         treeEditor?.markClean();
       },
+      exportData(options) {
+        return exportData?.(options) ?? Promise.resolve();
+      },
+      exportViewState() {
+        return (
+          exportViewState?.() ?? {
+            columnOrder: [],
+            columnSizing: {},
+            columnPinning: { left: [], right: [] },
+            sorting: [],
+            filters: [],
+            expandedIds: [],
+            hiddenColumns: [],
+          }
+        );
+      },
+      importViewState(state) {
+        importViewState?.(state);
+      },
+      whereUsed(nodeId) {
+        return whereUsed?.(nodeId) ?? Promise.resolve([]);
+      },
     }),
-    [editState, selection, table, treeEditor],
+    [
+      editState,
+      selection,
+      table,
+      treeEditor,
+      exportData,
+      exportViewState,
+      importViewState,
+      whereUsed,
+    ],
   );
 }

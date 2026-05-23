@@ -18,6 +18,9 @@ export type {
   GridTheme,
   AggregationConfig,
   ExtendedQuantityConfig,
+  AdvancedFilterConfig,
+  ExportConfig,
+  ColumnManagementConfig,
   EditableConfig,
   EditorContext,
   EditorType,
@@ -31,6 +34,7 @@ export type {
   AggregateType,
 } from './model/types';
 export { isColumnGroup } from './model/types';
+export { computeFlexWidths } from './model/compute-flex-widths';
 export { InMemoryDataSource } from './data/in-memory-data-source';
 export type { DataSource } from './data/data-source';
 export type { GridApi } from './model/use-grid-api';
@@ -88,3 +92,100 @@ export type {
   OutdentNodeOptions,
   InsertSubtreeOptions,
 } from './tree-editor';
+
+// ===== M4: scale & enterprise =====
+
+// Data — pagination, server data source, lazy tree, live updates, where-used
+export {
+  useDataSource,
+  useServerDataSource,
+  useLazyTree,
+  usePagination,
+  useLiveUpdates,
+  useWhereUsed,
+  reconcileChanges,
+  buildDataQuery,
+  findWhereUsed,
+} from './data';
+export type {
+  UseDataSourceReturn,
+  UseServerDataSourceReturn,
+  UseLazyTreeReturn,
+  UsePaginationOptions,
+  UsePaginationReturn,
+  UseLiveUpdatesOptions,
+  UseLiveUpdatesReturn,
+  UseWhereUsedReturn,
+  BuildDataQueryParams,
+  DataQuery,
+  FilterExpression,
+  FilterOperator,
+  PageParams,
+  PageResult,
+  DataSourceCapabilities,
+  DataChangeEvent,
+  DataChangeHandler,
+  WhereUsedResult,
+  LoadingState,
+} from './data';
+
+// Filter — quick search and advanced filter builder
+export { evaluateFilter, useFilterBuilder, useQuickSearch } from './filter';
+export type {
+  UseFilterBuilderReturn,
+  UseQuickSearchOptions,
+  UseQuickSearchReturn,
+} from './filter';
+
+// Export — CSV/XLSX
+export { CsvWriter, XlsxWriter, useExport } from './export';
+export type {
+  ExportOptions,
+  ExportRow,
+  ExportColumn,
+  CsvWriterOptions,
+  XlsxWriterOptions,
+  UseExportConfig,
+  UseExportReturn,
+} from './export';
+
+// Column management & view state
+export { useColumnManagement } from './model/use-column-management';
+export type {
+  ColumnInfo,
+  UseColumnManagementOptions,
+  UseColumnManagementReturn,
+} from './model/use-column-management';
+export { useViewState } from './model/use-view-state';
+export type {
+  UseViewStateOptions,
+  UseViewStateReturn,
+} from './model/use-view-state';
+export type { ViewState } from './model/view-state-types';
+
+// UI components
+export { PaginationBar } from './components/PaginationBar';
+export type { PaginationBarProps } from './components/PaginationBar';
+export { ExportMenu } from './components/ExportMenu';
+export type { ExportMenuProps } from './components/ExportMenu';
+export { QuickSearchInput } from './components/QuickSearchInput';
+export type { QuickSearchInputProps } from './components/QuickSearchInput';
+export { FilterBuilderPanel } from './components/FilterBuilderPanel';
+export type { FilterBuilderPanelProps } from './components/FilterBuilderPanel';
+export { ColumnManagementPanel } from './components/ColumnManagementPanel';
+export type { ColumnManagementPanelProps } from './components/ColumnManagementPanel';
+export { WhereUsedDialog } from './components/WhereUsedDialog';
+export type { WhereUsedDialogProps } from './components/WhereUsedDialog';
+export { LoadingOverlay } from './components/LoadingOverlay';
+export type { LoadingOverlayProps } from './components/LoadingOverlay';
+export { LoadingRow } from './components/LoadingRow';
+export type { LoadingRowProps } from './components/LoadingRow';
+
+// OData adapter
+export { ODataDataSource, ODataQueryBuilder } from './adapters/odata';
+export type {
+  ODataDataSourceConfig,
+  ODataAuth,
+  ODataCollectionResponse,
+  ODataErrorResponse,
+} from './adapters/odata';

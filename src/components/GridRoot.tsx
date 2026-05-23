@@ -18,6 +18,7 @@ import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
 import { useColumnVirtualizer } from '../virtual/use-column-virtualizer';
+import { useFlexColumnSizing } from '../model/use-flex-column-sizing';
 import {
   getInitialVirtualItems,
   getVirtualPadding,
@@ -70,6 +71,7 @@ export function GridRoot<TRow>({
   enableTreeKeyboard,
   lazyTree,
 }: GridRootProps<TRow>) {
+  const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
   const scrollbarTrackRef = useRef<HTMLDivElement>(null);
@@ -185,6 +187,13 @@ export function GridRoot<TRow>({
             if (row) treeEditor.deleteNode(row.id);
           }
         : undefined,
+  });
+
+  useFlexColumnSizing({
+    table,
+    columns,
+    containerRef: gridRootRef,
+    columnSizing: table.getState().columnSizing,
   });
 
   const columnVirtualizer = useColumnVirtualizer({
@@ -353,6 +362,7 @@ export function GridRoot<TRow>({
 
   return (
     <div
+      ref={gridRootRef}
       className="strata-grid"
       role={treeColumnId === undefined ? 'grid' : 'treegrid'}
       data-theme={theme ?? 'light'}
@@ -385,6 +395,7 @@ export function GridRoot<TRow>({
         aggregation={aggregation}
         bomRollup={bomRollup}
         dragDrop={dragDrop}
+        lazyTree={lazyTree}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}

@@ -62,6 +62,7 @@ export function usePagination<TRow>(
 
   const mountedRef = useRef(true);
   const appendMode = mode === 'loadMore' || mode === 'infinite';
+  const queryKey = JSON.stringify(query ?? {});
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -99,15 +100,18 @@ export function usePagination<TRow>(
     [dataSource, query],
   );
 
-  // Initial load
+  // Initial load, then reload from the first page when sort/filter/search changes.
   useEffect(() => {
     mountedRef.current = true;
+    setCurrentPage(0);
+    if (appendMode) {
+      setData([]);
+    }
     loadPage(0, pageSize, false);
     return () => {
       mountedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [appendMode, loadPage, pageSize, queryKey]);
 
   const goToPage = useCallback(
     (page: number) => {

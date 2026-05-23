@@ -11,6 +11,7 @@ import type { ColumnDef } from '../model/types';
 import type { UseAggregationReturn } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import type { UseDragDropReturn } from '../tree-editor/use-drag-drop';
+import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -39,6 +40,8 @@ export interface BodyViewportProps<TRow> {
   bomRollup?: UseBomRollupReturn;
   /** Drag/drop controller for tree reparenting. */
   dragDrop?: UseDragDropReturn;
+  /** Lazy tree loading state. */
+  lazyTree?: UseLazyTreeReturn<TRow>;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -56,6 +59,7 @@ export function BodyViewport<TRow>({
   aggregation,
   bomRollup,
   dragDrop,
+  lazyTree,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -162,6 +166,7 @@ export function BodyViewport<TRow>({
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
@@ -181,6 +186,7 @@ export function BodyViewport<TRow>({
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
@@ -212,6 +218,7 @@ export function BodyViewport<TRow>({
                     extendedQuantities={bomRollup?.extendedQuantities}
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -240,6 +247,7 @@ export function BodyViewport<TRow>({
                     focusId={focusId}
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
+                    onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                   />
                 </div>
               )}
