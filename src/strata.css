@@ -1,5 +1,9 @@
 @import './theme/tokens.css';
 @import './theme/dark.css';
+@import './theme/high-contrast-light.css';
+@import './theme/high-contrast-dark.css';
+@import './theme/density.css';
+@import './theme/transitions.css';
 
 .strata-grid {
   box-sizing: border-box;
@@ -93,15 +97,22 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--strata-text-secondary);
+  color: var(--strata-text-muted);
   font-size: var(--strata-font-size-filter);
   cursor: pointer;
   border-radius: var(--strata-radius-button);
+  opacity: 0.6;
+}
+
+.strata-filter-button svg {
+  width: 13px;
+  height: 13px;
 }
 
 .strata-filter-button:hover {
   background: var(--strata-bg-filter-button-hover);
   color: var(--strata-text);
+  opacity: 1;
 }
 
 .strata-filter-popover {
@@ -269,6 +280,8 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--strata-bg);
+  scrollbar-color: var(--strata-scrollbar-thumb-bg) var(--strata-scrollbar-track-bg);
+  scrollbar-width: var(--strata-scrollbar-width);
 }
 
 .strata-body-sizer {
@@ -491,6 +504,10 @@
 
 .strata-row-selected .strata-cell {
   background: var(--strata-bg-row-selected);
+}
+
+.strata-grid[data-strata-striped="true"] .strata-row:nth-child(even) {
+  background-color: var(--strata-row-stripe-bg);
 }
 
 .strata-tree-cell {
@@ -793,7 +810,7 @@
   color: var(--strata-accent, #2563eb);
 }
 
-.strata-spinner-icon {
+.strata-spinner {
   animation: strata-spin 1s linear infinite;
 }
 
@@ -1212,4 +1229,125 @@
 
 .strata-column-panel-reset:hover {
   background: var(--strata-bg-row-hover, #f3f4f6);
+}
+
+
+/* ===== Scrollbar Styling ===== */
+
+.strata-body::-webkit-scrollbar {
+  width: var(--strata-scrollbar-size);
+  height: var(--strata-scrollbar-size);
+}
+
+.strata-body::-webkit-scrollbar-track {
+  background: var(--strata-scrollbar-track-bg);
+}
+
+.strata-body::-webkit-scrollbar-thumb {
+  background: var(--strata-scrollbar-thumb-bg);
+  border-radius: var(--strata-scrollbar-radius);
+}
+
+.strata-body::-webkit-scrollbar-thumb:hover {
+  background: var(--strata-scrollbar-thumb-hover-bg);
+}
+
+
+/* ===== Print Stylesheet ===== */
+
+@media print {
+  /* Remove overflow/height constraints so all rows are visible */
+  .strata-grid {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .strata-body {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .strata-body-sizer {
+    height: auto !important;
+  }
+
+  /* Rows: avoid page breaks inside */
+  .strata-row {
+    page-break-inside: avoid;
+  }
+
+  .strata-group-row {
+    page-break-inside: avoid;
+  }
+
+  /* Headers: repeat on each printed page */
+  .strata-header {
+    display: table-header-group;
+  }
+
+  /* Hide virtual padding spacers */
+  .strata-virtual-spacer {
+    display: none !important;
+  }
+
+  /* Hide horizontal scrollbar row */
+  .strata-horizontal-scrollbar-row {
+    display: none !important;
+  }
+
+  /* Hide footer and pagination */
+  .strata-footer {
+    display: none !important;
+  }
+
+  .strata-pagination {
+    display: none !important;
+  }
+
+  /* Hide interactive chrome */
+  .strata-filter-button {
+    display: none !important;
+  }
+
+  .strata-filter-popover {
+    display: none !important;
+  }
+
+  .strata-sort-indicator {
+    display: none !important;
+  }
+
+  .strata-resize-handle {
+    display: none !important;
+  }
+
+  .strata-quick-search {
+    display: none !important;
+  }
+
+  .strata-column-panel {
+    display: none !important;
+  }
+
+  .strata-row-edit-pane {
+    display: none !important;
+  }
+
+  .strata-row-edit-controls {
+    display: none !important;
+  }
+
+  .strata-loading-overlay {
+    display: none !important;
+  }
+
+  /* Hide WebKit scrollbars */
+  .strata-body::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Remove scrollbar space in Firefox */
+  .strata-body {
+    scrollbar-width: none;
+  }
 }

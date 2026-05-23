@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { WhereUsedResult } from '../data/types';
+import { StrataIcon } from '../icons';
 
 export interface WhereUsedDialogProps<TRow> {
   /** The node being queried. */
@@ -32,7 +33,7 @@ export function WhereUsedDialog<TRow>({
       <div className="strata-where-used-header">
         <h3 className="strata-where-used-title">Where used: {nodeLabel}</h3>
         <button onClick={onClose} aria-label="Close" className="strata-where-used-close">
-          ×
+          <StrataIcon name="x" />
         </button>
       </div>
 

@@ -1,0 +1,11 @@
+/* Transition rules — applied only when data-strata-transitions="true" is set on grid root */
+
+.strata-grid[data-strata-transitions="true"] * {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strata-grid[data-strata-transitions="true"] * {
+    transition: none;
+  }
+}

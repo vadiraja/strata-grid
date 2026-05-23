@@ -180,7 +180,10 @@ export interface SelectionState {
 }
 
 /** Built-in grid themes. */
-export type GridTheme = 'light' | 'dark';
+export type GridTheme = 'light' | 'dark' | 'high-contrast-light' | 'high-contrast-dark' | 'auto' | (string & {});
+
+/** Visual density — controls row height and cell padding. */
+export type Density = 'compact' | 'standard' | 'comfortable';
 
 /**
  * Configures grid-level editing behavior.

@@ -47,9 +47,10 @@ filtering compose correctly with the hierarchy.
 
 ## Status
 
-Strata is in **active early development** (Milestone 1: the read-only tree data
-grid). The API is settling and may change before a `1.0` release. It is **not
-yet published to npm**. See the [roadmap](./docs/roadmap.md) for what is planned.
+Strata is in **alpha**. The core grid, tree data, editing, aggregation,
+hierarchy editor, data-source, export, and theming APIs are implemented and
+covered by tests, but the public API may still change before a `1.0` release.
+Use the `0.x` releases for evaluation, prototypes, and early integrations.
 
 ## Features
 
@@ -63,18 +64,27 @@ yet published to npm**. See the [roadmap](./docs/roadmap.md) for what is planned
 - **Per-column filtering** — built-in `text` and `number` filters, tree-aware
   (ancestors of matches are preserved).
 - **Column management** — resize, drag-to-reorder, and left/right pinning.
+- **Row selection** — single and multi-select modes with tree-aware cascade
+  support.
+- **Editing** — built-in text, number, date, checkbox, and select editors,
+  custom editor support, validation, and row-edit workflows.
+- **Aggregation** — grouped-row and footer aggregates, plus BOM-style extended
+  quantity rollups for product structures.
+- **Hierarchy editor** — command-driven add/delete/move/reorder,
+  indent/outdent, clipboard, drag/drop, history, and change tracking helpers.
 - **Pluggable data source** — a `DataSource` seam with an `InMemoryDataSource`
   implementation included.
+- **Server-scale helpers** — pagination, lazy tree loading, live updates,
+  where-used lookup, quick search, advanced filter builders, and an OData
+  adapter.
+- **Export** — CSV and XLSX writer utilities plus a React export hook.
 - **TypeScript-first** — fully typed, generic over your row type,
   uncontrolled-by-default API.
 - **Accessible** — renders as an ARIA `treegrid`.
-- **Themable** — styled entirely with CSS custom properties.
+- **Themable** — styled with CSS custom properties, token files, dark theme
+  support, density options, and high-contrast states.
 
 ## Installation
-
-> Not yet on npm. For now, clone this repository (see [Development](#development)).
-
-Once published:
 
 ```bash
 npm install strata-grid
@@ -178,6 +188,14 @@ Strata ships unopinionated styles driven by CSS custom properties. Import the
 stylesheet (`strata-grid/styles.css`) and override the `--strata-*` tokens in
 your own CSS to match your design system.
 
+Optional theme token files are exported for direct imports:
+
+```tsx
+import 'strata-grid/styles.css';
+import 'strata-grid/theme/tokens.css';
+import 'strata-grid/theme/dark.css';
+```
+
 ## Development
 
 ```bash
@@ -197,8 +215,7 @@ npm install
 ## Roadmap
 
 Strata is built milestone by milestone. See [`docs/roadmap.md`](./docs/roadmap.md)
-for the full plan — editing & aggregation (M2), the hierarchy editor (M3),
-server-side data sources & export (M4), and more.
+for the full plan and current release track.
 
 ## Contributing
 

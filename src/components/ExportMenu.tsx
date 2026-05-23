@@ -1,4 +1,5 @@
 import { useState, type FC } from 'react';
+import { StrataIcon } from '../icons';
 
 export interface ExportMenuProps {
   /** Which formats to show in the menu. */
@@ -25,7 +26,7 @@ export const ExportMenu: FC<ExportMenuProps> = ({ formats, onExport, disabled })
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        Export ▾
+        <StrataIcon name="download" /> Export ▾
       </button>
       {open && (
         <ul className="strata-export-dropdown" role="menu">

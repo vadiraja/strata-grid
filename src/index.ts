@@ -16,6 +16,7 @@ export type {
   SelectionConfig,
   SelectionState,
   GridTheme,
+  Density,
   AggregationConfig,
   ExtendedQuantityConfig,
   AdvancedFilterConfig,
@@ -189,3 +190,16 @@ export type {
   ODataCollectionResponse,
   ODataErrorResponse,
 } from './adapters/odata';
+
+// ===== M5: theming & icons =====
+
+// Icons
+export { StrataIcon } from './icons';
+export type { StrataIconName, StrataIconProps, IconOverrides } from './icons';
+
+// Theme composition
+export { createTheme } from './themes/create-theme';
+export type { ThemeOverrides, ComposedTheme } from './themes/create-theme';
+
+// Print mode
+export { usePrintMode } from './virtual/use-print-mode';

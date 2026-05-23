@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { StrataIcon } from '../icons';
 
 const INDENT_PX = 24;
 
@@ -15,7 +16,7 @@ export interface LoadingRowProps {
 
 /**
  * Placeholder row shown while a tree node's children are being loaded.
- * Shows a skeleton animation in normal state, or an error with retry in error state.
+ * Shows a spinning loader icon in normal state, or an error with retry in error state.
  */
 export const LoadingRow: FC<LoadingRowProps> = ({
   depth,
@@ -56,7 +57,7 @@ export const LoadingRow: FC<LoadingRowProps> = ({
       aria-busy="true"
     >
       <div className="strata-loading-indent" style={{ paddingLeft: `${indentPx}px` }}>
-        <div className="strata-loading-skeleton" />
+        <StrataIcon name="loader-2" className="strata-spinner" label="Loading" />
       </div>
     </div>
   );

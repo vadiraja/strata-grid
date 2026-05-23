@@ -1,0 +1,41 @@
+.strata-grid[data-theme='high-contrast-dark'] {
+  --strata-bg: #0a0a0a;
+  --strata-bg-header: #1a1a1a;
+  --strata-bg-header-hover: #2a2a2a;
+  --strata-bg-footer: #1a1a1a;
+  --strata-bg-row-selected: #1a3050;
+  --strata-row-stripe-bg: #141414;
+  --strata-bg-group-row: #0f1f33;
+  --strata-bg-group-row-hover: #152a44;
+  --strata-bg-popover: #1a1a1a;
+  --strata-bg-filter-button-hover: #2a2a2a;
+  --strata-bg-scrollbar-track: #2a2a2a;
+  --strata-bg-scrollbar-thumb: #cccccc;
+  --strata-bg-scrollbar-thumb-hover: #ffffff;
+
+  /* Scrollbar */
+  --strata-scrollbar-size: 12px;
+  --strata-scrollbar-track-bg: var(--strata-bg-scrollbar-track);
+  --strata-scrollbar-thumb-bg: var(--strata-bg-scrollbar-thumb);
+  --strata-scrollbar-thumb-hover-bg: var(--strata-bg-scrollbar-thumb-hover);
+  --strata-scrollbar-radius: 6px;
+  --strata-scrollbar-width: auto;
+
+  --strata-text: #ffffff;
+  --strata-text-secondary: #ffffff;
+  --strata-text-muted: #cccccc;
+
+  --strata-border: #ffffff;
+  --strata-border-cell: #ffffff;
+  --strata-accent: #62b0ff;
+  --strata-accent-shadow: rgba(98, 176, 255, 0.35);
+  --strata-focus-ring: rgba(98, 176, 255, 0.6);
+  --strata-shadow-popover: rgba(0, 0, 0, 0.5);
+
+  --strata-border-width: 2px;
+  --strata-border-pinned-width: 3px;
+
+  --strata-icon-color: #ffffff;
+  --strata-icon-color-hover: #62b0ff;
+  --strata-icon-color-disabled: #aaaaaa;
+}

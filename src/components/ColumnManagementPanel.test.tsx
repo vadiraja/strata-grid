@@ -9,7 +9,7 @@ const columns = [
 ];
 
 describe('ColumnManagementPanel', () => {
-  it('renders all columns with checkboxes', () => {
+  it('renders all columns with toggle buttons', () => {
     render(
       <ColumnManagementPanel
         columns={columns}
@@ -20,10 +20,10 @@ describe('ColumnManagementPanel', () => {
         onClose={vi.fn()}
       />,
     );
-    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /^Toggle / })).toHaveLength(3);
   });
 
-  it('shows hidden columns as unchecked', () => {
+  it('shows hidden columns as not pressed', () => {
     render(
       <ColumnManagementPanel
         columns={columns}
@@ -34,8 +34,8 @@ describe('ColumnManagementPanel', () => {
         onClose={vi.fn()}
       />,
     );
-    const ageCheckbox = screen.getByLabelText('Toggle Age');
-    expect(ageCheckbox).not.toBeChecked();
+    const ageToggle = screen.getByLabelText('Toggle Age');
+    expect(ageToggle).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('calls onToggleColumn when checkbox clicked', () => {
@@ -83,7 +83,7 @@ describe('ColumnManagementPanel', () => {
     fireEvent.change(screen.getByLabelText('Search columns'), {
       target: { value: 'ag' },
     });
-    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Toggle / })).toHaveLength(1);
   });
 
   it('calls onReset when reset button clicked', () => {

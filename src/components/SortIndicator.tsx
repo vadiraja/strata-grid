@@ -1,3 +1,5 @@
+import { StrataIcon } from '../icons';
+
 export interface SortIndicatorProps {
   /** Current sort direction, or false if unsorted. */
   direction: 'asc' | 'desc' | false;
@@ -5,13 +7,15 @@ export interface SortIndicatorProps {
 
 /**
  * Renders a sort direction indicator in the column header.
- * Shows ▲ for ascending, ▼ for descending, nothing when unsorted.
+ * Shows an arrow-up icon for ascending, arrow-down for descending, nothing when unsorted.
+ * The icon is decorative (aria-hidden) since sort state is communicated via aria-sort
+ * on the column header element.
  */
 export function SortIndicator({ direction }: SortIndicatorProps) {
   if (!direction) return null;
   return (
     <span className="strata-sort-indicator" aria-hidden="true">
-      {direction === 'asc' ? '▲' : '▼'}
+      <StrataIcon name={direction === 'asc' ? 'arrow-up' : 'arrow-down'} />
     </span>
   );
 }

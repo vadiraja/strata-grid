@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Column } from '@tanstack/react-table';
 import type { FilterType } from '../model/types';
+import { StrataIcon } from '../icons';
 
 export interface FilterPopoverProps<TRow> {
   /** The TanStack column to filter. */
@@ -87,7 +88,7 @@ export function FilterPopover<TRow>({
           setOpen(!open);
         }}
       >
-        {filterValue ? '⏚' : '▽'}
+        {filterValue ? <StrataIcon name="filter-active" /> : <StrataIcon name="filter" />}
       </button>
       {open && (
         <div

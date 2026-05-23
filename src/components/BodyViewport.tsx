@@ -1,10 +1,11 @@
-import type { RefObject } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import type { Table, Row, Cell } from '@tanstack/react-table';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { GridRow } from './GridRow';
 import { GroupRow } from './GroupRow';
 import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
+import { usePrintMode } from '../virtual/use-print-mode';
 import type { ColumnLayout } from './column-layout';
 import { useEditContext } from '../model/edit-context';
 import type { ColumnDef } from '../model/types';
@@ -62,9 +63,31 @@ export function BodyViewport<TRow>({
   lazyTree,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
-  const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
+  const printing = usePrintMode();
+  const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length, printing });
   const editCtx = useEditContext();
   const showRowEditControls = editCtx?.config.mode === 'row';
+
+  // Warn when print mode activates with unloaded lazy tree children
+  const prevPrintingRef = useRef(printing);
+  useEffect(() => {
+    const wasPrinting = prevPrintingRef.current;
+    prevPrintingRef.current = printing;
+
+    if (!printing || wasPrinting) return;
+    if (!lazyTree) return;
+
+    // Check if any expandable row has unloaded children
+    const hasUnloaded = rows.some(
+      (row) => row.getCanExpand() && !lazyTree.isLoaded(row.id),
+    );
+
+    if (hasUnloaded) {
+      console.warn(
+        '[Strata] Print mode activated with unloaded lazy tree children. Call lazyTree.loadAll() before printing for complete output.',
+      );
+    }
+  }, [printing, lazyTree, rows]);
 
   if (rows.length === 0) {
     return (

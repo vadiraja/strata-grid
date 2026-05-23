@@ -1,6 +1,6 @@
 {
   "name": "strata-grid",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.0",
   "description": "Open-source React tree data grid for PLM bills of materials and enterprise data.",
   "license": "Apache-2.0",
   "type": "module",
@@ -21,10 +21,13 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./styles.css": "./dist/strata.css"
+    "./styles.css": "./dist/strata.css",
+    "./theme/tokens.css": "./dist/theme/tokens.css",
+    "./theme/dark.css": "./dist/theme/dark.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "NOTICE"
   ],
   "scripts": {
     "dev": "vite",
@@ -35,7 +38,8 @@
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",
-    "@tanstack/react-virtual": "^3.13.25"
+    "@tanstack/react-virtual": "^3.13.25",
+    "lucide-react": "1.16.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -44,9 +48,11 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "fast-check": "^4.8.0",
     "jsdom": "^26.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
