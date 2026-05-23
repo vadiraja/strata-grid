@@ -1,0 +1,33 @@
+---
+title: Export
+description: CSV and XLSX writers plus a React hook.
+sidebar:
+  order: 9
+---
+
+import ExportExample from '../../../components/examples/export/ExportExample.tsx';
+
+Strata ships CSV and XLSX writers plus a `useExport` hook and an `ExportMenu`
+component for wiring them into an interface.
+
+```tsx
+const exportApi = useExport({
+  getVisibleRows: () => rows,
+  getAllRows: () => rows,
+  getSelectedRows: () => selectedRows,
+  columns: exportColumns,
+  getRowValue: (row, columnId) => String(row[columnId] ?? ''),
+});
+
+<ExportMenu
+  formats={['csv', 'xlsx']}
+  onExport={(format) =>
+    exportApi.exportData({ format, scope: 'visible', filename: 'orders' })
+  }
+/>;
+```
+
+Direct use of the writers is also supported through `CsvWriter` and
+`XlsxWriter`.
+
+<ExportExample client:load />

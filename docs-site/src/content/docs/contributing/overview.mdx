@@ -1,0 +1,39 @@
+---
+title: Project overview
+description: Architecture and directory map for strata-grid.
+sidebar:
+  order: 1
+---
+
+Strata is a React data-grid library built around a single `<DataGrid>`
+component. The tree-grid row model is the center of gravity, with editing,
+enterprise data helpers, export, and theming layered around it.
+
+## Directory map
+
+| Directory | Purpose |
+| --- | --- |
+| `src/components/` | React components: `DataGrid`, panels, dialogs, overlays. |
+| `src/model/` | Type definitions, column math, view-state, grid API. |
+| `src/data/` | `DataSource` seam, in-memory source, pagination, live updates. |
+| `src/filter/` | Filter expression evaluation, quick search, builder state. |
+| `src/tree-editor/` | Hierarchy editor: commands, history, clipboard, drag/drop. |
+| `src/virtual/` | Row virtualization and print mode. |
+| `src/export/` | CSV/XLSX writers and `useExport`. |
+| `src/icons/` | Icon registry, provider, and `StrataIcon`. |
+| `src/theme/` | CSS token files and theme stylesheets. |
+| `src/themes/` | Runtime theme composition and color-scheme hooks. |
+| `src/adapters/` | External adapters, including OData. |
+
+## Public API
+
+The public surface is what `src/index.ts` exports. Anything not exported there
+is internal and can change without notice.
+
+## Stack
+
+- React, TypeScript, and TanStack Table.
+- TanStack Virtual for viewport rendering.
+- `tsup` for ESM, CJS, and type bundles.
+- Vitest and jsdom for tests.
+- Astro Starlight for documentation.

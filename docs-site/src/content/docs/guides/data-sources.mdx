@@ -1,0 +1,55 @@
+---
+title: Data sources
+description: Pluggable DataSource seam, in-memory implementation, server-scale helpers.
+sidebar:
+  order: 8
+---
+
+import InMemoryExample from '../../../components/examples/data-sources/InMemoryExample.tsx';
+
+A `DataSource` is the seam between the grid and your data. The built-in
+`InMemoryDataSource` covers the common case; for server-backed data, implement
+the interface or use one of the included helpers.
+
+## In-memory
+
+```tsx
+import { InMemoryDataSource, useDataSource } from 'strata-grid';
+
+const source = new InMemoryDataSource(seed);
+const dataSource = useDataSource(source);
+
+<DataGrid data={dataSource.data} columns={columns} />;
+```
+
+<InMemoryExample client:load />
+
+## Server-scale helpers
+
+| Hook | Purpose |
+| --- | --- |
+| `useServerDataSource` | Fetch rows from a server-capable data source. |
+| `useLazyTree` | Lazy-load tree children on first expand. |
+| `usePagination` | Page state and `PaginationBar` wiring. |
+| `useLiveUpdates` | Apply incremental add/update/delete/refresh events. |
+| `useWhereUsed` | Walk parent chains for where-used lookups. |
+| `useQuickSearch` | Debounced search input and filter expression state. |
+| `useFilterBuilder` | Compose nested filter expressions. |
+
+## OData adapter
+
+```tsx
+import { ODataDataSource } from 'strata-grid';
+
+const source = new ODataDataSource({
+  serviceUrl: '/odata',
+  entitySet: 'BillOfMaterialItems',
+  idProperty: 'id',
+  fieldMapping: {
+    ID: 'id',
+    Material: 'material',
+  },
+});
+```
+
+See the API reference for the full interface.

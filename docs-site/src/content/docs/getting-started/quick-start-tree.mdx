@@ -1,0 +1,48 @@
+---
+title: Quick start - tree grid
+description: Render a multi-level tree from nested or flat parent-pointer data.
+sidebar:
+  order: 4
+---
+
+import TreeGrid from '../../../components/examples/quick-start/TreeGrid.tsx';
+import FlatTreeGrid from '../../../components/examples/quick-start/FlatTreeGrid.tsx';
+
+Strata renders parent/child hierarchies. Use the `treeData` prop and mark one
+column as the tree column with `isTreeColumn`.
+
+## Nested data (`getChildren`)
+
+When rows already contain a `children` array, supply `getChildren`:
+
+```tsx
+<DataGrid
+  data={files}
+  columns={columns}
+  treeData={{
+    getRowId: (row) => row.id,
+    getChildren: (row) => row.children,
+  }}
+  defaultExpanded
+/>;
+```
+
+<TreeGrid client:load />
+
+## Flat parent-pointer data (`getParentId`)
+
+For flat rows that reference a parent by id, supply `getParentId` instead:
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  treeData={{
+    getRowId: (row) => row.id,
+    getParentId: (row) => row.parentId,
+  }}
+  defaultExpanded
+/>;
+```
+
+<FlatTreeGrid client:load />

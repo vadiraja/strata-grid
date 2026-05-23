@@ -4,7 +4,7 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   site: 'https://vadiraja.github.io',
-  base: '/strata-grid',
+  base: '/strata-grid/',
   integrations: [
     react(),
     starlight({

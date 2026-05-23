@@ -1,0 +1,37 @@
+---
+title: Development setup
+description: Clone, install, and run the library plus docs site.
+sidebar:
+  order: 2
+---
+
+## Clone and install
+
+```bash
+git clone https://github.com/vadiraja/strata-grid.git
+cd strata-grid
+npm install
+```
+
+The repository is an npm workspace. The library lives at the root; the docs
+site lives in `docs-site/`.
+
+## Library scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the Vite playground. |
+| `npm test` | Run the Vitest suite once. |
+| `npm run test:watch` | Run tests in watch mode. |
+| `npm run typecheck` | Type-check with `tsc --noEmit`. |
+| `npm run build` | Build the library bundle with `tsup`. |
+| `npm run docs:api` | Regenerate API docs under `docs-site/`. |
+
+## Docs site
+
+```bash
+npm run dev -w @strata-grid/docs-site
+npm run build -w @strata-grid/docs-site
+```
+
+The docs site regenerates the API reference before `dev` and `build`.

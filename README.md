@@ -212,6 +212,14 @@ npm install
 | `npm run typecheck` | Type-check with `tsc --noEmit`. |
 | `npm run build` | Build the library bundle with `tsup`. |
 
+## Documentation
+
+Full documentation lives at <https://vadiraja.github.io/strata-grid/>:
+
+- [Getting started](https://vadiraja.github.io/strata-grid/getting-started/introduction/)
+- [Guides](https://vadiraja.github.io/strata-grid/guides/tree-data/) - one page per shipped capability
+- [API reference](https://vadiraja.github.io/strata-grid/api/) - auto-generated from TSDoc
+
 ## Roadmap
 
 Strata is built milestone by milestone. See [`docs/roadmap.md`](./docs/roadmap.md)
@@ -219,10 +227,10 @@ for the full plan and current release track.
 
 ## Contributing
 
-Contributions are welcome. The project follows a spec → plan → test-first build
-cycle; design specs live in `docs/superpowers/specs/` and implementation plans
-in `docs/superpowers/plans/`. Please open an issue to discuss substantial
-changes before submitting a pull request.
+Contributions are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) and the
+[contributing guide in the docs](https://vadiraja.github.io/strata-grid/contributing/overview/).
+The project follows a spec to plan to test-first cycle; design specs live in
+`docs/superpowers/specs/` and implementation plans in `docs/superpowers/plans/`.
 
 ## License
 

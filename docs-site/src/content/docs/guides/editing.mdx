@@ -1,0 +1,51 @@
+---
+title: Editing
+description: Built-in editors, custom editors, validation, and row-edit workflow.
+sidebar:
+  order: 5
+---
+
+import EditableGrid from '../../../components/examples/editing/EditableGrid.tsx';
+
+Strata supports in-cell editing with built-in `text`, `number`, `date`,
+`checkbox`, and `select` editors, plus custom editor components on columns.
+
+## Enable editing
+
+Editing is opt-in at both the grid and column level:
+
+```tsx
+const columns: ColumnDef<Task>[] = [
+  { id: 'title', header: 'Title', accessor: 'title', editable: true, editorType: 'text' },
+];
+
+<DataGrid data={rows} columns={columns} editable={{ mode: 'cell' }} />;
+```
+
+## Commit changes
+
+The grid manages in-edit state and emits `onCellEditEnd` with `rowId`,
+`columnId`, `value`, `newValue`, and `committed`. Update your application data
+when `committed` is true.
+
+## Validation
+
+Pass `validate` on the column definition to reject invalid input:
+
+```tsx
+{
+  id: 'hours',
+  header: 'Hours',
+  accessor: 'hours',
+  editable: true,
+  editorType: 'number',
+  validate: (value) => Number(value) >= 0 ? true : 'Non-negative only',
+}
+```
+
+## Row-edit workflow
+
+For multi-cell edits with Save and Cancel actions, set
+`editable={{ mode: 'row' }}` and handle `onRowEditEnd`.
+
+<EditableGrid client:load />
