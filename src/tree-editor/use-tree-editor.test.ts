@@ -146,6 +146,63 @@ describe('useTreeEditor — high-level operations', () => {
     expect(result.current.isDirty).toBe(false);
   });
 
+  it('deleteNodes removes selected subtrees as one undo unit', () => {
+    const { result } = setup();
+    // Add a few extras so we have more to delete.
+    act(() => {
+      result.current.addNode('b', {
+        data: { id: 'b1', parentId: 'b', name: 'B1' },
+        id: 'b1',
+      });
+    });
+    act(() => {
+      // a (with a1 child) and b1 — ancestor filter shouldn't matter here.
+      const n = result.current.deleteNodes(['a', 'b1']);
+      expect(n).toBe(2);
+    });
+    expect(result.current.state.nodes.has('a')).toBe(false);
+    expect(result.current.state.nodes.has('a1')).toBe(false);
+    expect(result.current.state.nodes.has('b1')).toBe(false);
+    // One undo restores both.
+    act(() => result.current.undo());
+    expect(result.current.state.nodes.has('a')).toBe(true);
+    expect(result.current.state.nodes.has('b1')).toBe(true);
+  });
+
+  it('deleteNodes filters descendants when an ancestor is also selected', () => {
+    const { result } = setup();
+    // Pass [a, a1] — a1 is a descendant of a, so the batch should only
+    // execute one delete.
+    let count = 0;
+    act(() => {
+      count = result.current.deleteNodes(['a', 'a1']);
+    });
+    expect(count).toBe(1);
+    expect(result.current.state.nodes.has('a')).toBe(false);
+  });
+
+  it('moveNodes reparents several nodes as one undo unit', () => {
+    const { result } = setup();
+    act(() => {
+      result.current.addNode('a', {
+        data: { id: 'a2', parentId: 'a', name: 'A2' },
+        id: 'a2',
+      });
+    });
+    act(() => {
+      const n = result.current.moveNodes(['a1', 'a2'], 'b');
+      expect(n).toBe(2);
+    });
+    const b = result.current.state.nodes.get('b')!;
+    expect(b.childIds).toEqual(expect.arrayContaining(['a1', 'a2']));
+    // One undo restores both.
+    act(() => result.current.undo());
+    expect(result.current.state.nodes.get('a')?.childIds).toEqual([
+      'a1',
+      'a2',
+    ]);
+  });
+
   it('onTreeChange fires on every mutation, with the latest state', () => {
     const onTreeChange = vi.fn();
     let n = 0;

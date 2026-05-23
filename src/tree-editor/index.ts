@@ -53,6 +53,7 @@ export type {
   ClipboardEntry,
 } from './use-clipboard';
 export { isDescendant, validateCycleAndSelf } from './validators';
+export { filterToTopLevelNodes } from './ancestor-filter';
 export { calculateDropPosition } from './drop-position';
 export type { DropPosition } from './drop-position';
 export { useDragDrop } from './use-drag-drop';

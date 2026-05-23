@@ -14,6 +14,8 @@ import { MoveNodeCommand } from './commands/move-node';
 import { ReorderNodeCommand } from './commands/reorder-node';
 import { IndentNodeCommand } from './commands/indent-node';
 import { OutdentNodeCommand } from './commands/outdent-node';
+import { BatchCommand } from './commands/batch';
+import { filterToTopLevelNodes } from './ancestor-filter';
 
 export interface UseTreeEditorOptions<TRow> {
   /** Initial tree state. */
@@ -56,6 +58,22 @@ export interface UseTreeEditorReturn<TRow> {
     options?: { data?: TRow; index?: number; id?: string },
   ) => string;
   deleteNode: (id: string) => void;
+  /**
+   * Delete several nodes as a single undoable batch. Ids whose ancestor is
+   * also selected are filtered out (the parent already removes them).
+   * Returns the count of commands actually executed.
+   */
+  deleteNodes: (ids: string[]) => number;
+  /**
+   * Move several nodes under a new parent as a single undoable batch.
+   * Ids whose ancestor is also selected are filtered out. Returns the
+   * count of commands actually executed.
+   */
+  moveNodes: (
+    ids: string[],
+    newParentId: string | null,
+    options?: { position?: 'child' | 'before' | 'after' },
+  ) => number;
   moveNode: (
     id: string,
     newParentId: string | null,
@@ -165,6 +183,63 @@ export function useTreeEditor<TRow>(
     [history],
   );
 
+  const deleteNodes = useCallback(
+    (ids: string[]): number => {
+      const top = filterToTopLevelNodes(history.state, ids);
+      if (top.length === 0) return 0;
+      if (top.length === 1) {
+        history.execute(new DeleteNodeCommand<TRow>({ id: top[0] }));
+        return 1;
+      }
+      history.execute(
+        new BatchCommand<TRow>(
+          top.map((id) => new DeleteNodeCommand<TRow>({ id })),
+          `Delete ${top.length} nodes`,
+        ),
+      );
+      return top.length;
+    },
+    [history],
+  );
+
+  const moveNodes = useCallback(
+    (
+      ids: string[],
+      newParentId: string | null,
+      opts?: { position?: 'child' | 'before' | 'after' },
+    ): number => {
+      const top = filterToTopLevelNodes(history.state, ids);
+      if (top.length === 0) return 0;
+      if (top.length === 1) {
+        history.execute(
+          new MoveNodeCommand<TRow>({
+            id: top[0],
+            newParentId,
+            position: opts?.position,
+            validators,
+          }),
+        );
+        return 1;
+      }
+      history.execute(
+        new BatchCommand<TRow>(
+          top.map(
+            (id) =>
+              new MoveNodeCommand<TRow>({
+                id,
+                newParentId,
+                position: opts?.position,
+                validators,
+              }),
+          ),
+          `Move ${top.length} nodes`,
+        ),
+      );
+      return top.length;
+    },
+    [history, validators],
+  );
+
   const moveNode = useCallback<UseTreeEditorReturn<TRow>['moveNode']>(
     (id, newParentId, opts) => {
       history.execute(
@@ -216,7 +291,9 @@ export function useTreeEditor<TRow>(
 
     addNode,
     deleteNode,
+    deleteNodes,
     moveNode,
+    moveNodes,
     moveUp,
     moveDown,
     indentNode,
