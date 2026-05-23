@@ -64,8 +64,22 @@ function evaluateOperator(
       return Array.isArray(filterValue) && !filterValue.includes(cellValue);
     case 'between': {
       if (!Array.isArray(filterValue) || filterValue.length < 2) return false;
-      const num = Number(cellValue);
-      return num >= Number(filterValue[0]) && num <= Number(filterValue[1]);
+      const [lo, hi] = filterValue;
+      if (cellValue == null || lo == null || hi == null) return false;
+      // Prefer numeric comparison when all three parse as finite numbers
+      const cellNum = Number(cellValue);
+      const loNum = Number(lo);
+      const hiNum = Number(hi);
+      if (
+        Number.isFinite(cellNum) &&
+        Number.isFinite(loNum) &&
+        Number.isFinite(hiNum)
+      ) {
+        return cellNum >= loNum && cellNum <= hiNum;
+      }
+      // Lexicographic fallback (works for ISO date strings)
+      const cs = String(cellValue);
+      return cs >= String(lo) && cs <= String(hi);
     }
     case 'isEmpty':
       return cellValue == null || cellValue === '' || cellValue === undefined;

@@ -43,9 +43,39 @@ describe('evaluateFilter — leaf conditions', () => {
     expect(evaluateFilter(row, expr, getValue)).toBe(true);
   });
 
-  it('in', () => {
+  it('in — value in list passes', () => {
     const expr: FilterExpression = { columnId: 'city', operator: 'in', value: ['New York', 'LA'] };
     expect(evaluateFilter(row, expr, getValue)).toBe(true);
+  });
+
+  it('in — value not in list fails', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'in', value: ['Tokyo', 'Paris'] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('in — empty array fails', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'in', value: [] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('in — non-array filterValue fails', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'in', value: 'New York' };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('notIn — value not in list passes', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'notIn', value: ['Tokyo', 'Paris'] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(true);
+  });
+
+  it('notIn — value in list fails', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'notIn', value: ['New York', 'LA'] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('notIn — non-array filterValue fails (returns false rather than always-pass)', () => {
+    const expr: FilterExpression = { columnId: 'city', operator: 'notIn', value: 'New York' };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
   });
 
   it('isEmpty', () => {
@@ -55,9 +85,64 @@ describe('evaluateFilter — leaf conditions', () => {
     expect(evaluateFilter(row, expr, getValue)).toBe(false);
   });
 
-  it('between', () => {
+  it('isNotEmpty', () => {
+    const emptyRow = { ...row, city: '' };
+    const expr: FilterExpression = { columnId: 'city', operator: 'isNotEmpty' };
+    expect(evaluateFilter(emptyRow, expr, getValue)).toBe(false);
+    expect(evaluateFilter(row, expr, getValue)).toBe(true);
+  });
+
+  it('between — numeric in range', () => {
     const expr: FilterExpression = { columnId: 'age', operator: 'between', value: [25, 35] };
     expect(evaluateFilter(row, expr, getValue)).toBe(true);
+  });
+
+  it('between — numeric out of range (below)', () => {
+    const expr: FilterExpression = { columnId: 'age', operator: 'between', value: [40, 50] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('between — numeric out of range (above)', () => {
+    const expr: FilterExpression = { columnId: 'age', operator: 'between', value: [10, 20] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('between — numeric inclusive at boundaries', () => {
+    const exprLo: FilterExpression = { columnId: 'age', operator: 'between', value: [30, 50] };
+    const exprHi: FilterExpression = { columnId: 'age', operator: 'between', value: [10, 30] };
+    expect(evaluateFilter(row, exprLo, getValue)).toBe(true);
+    expect(evaluateFilter(row, exprHi, getValue)).toBe(true);
+  });
+
+  it('between — single-element array fails', () => {
+    const expr: FilterExpression = { columnId: 'age', operator: 'between', value: [25] };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('between — non-array filterValue fails', () => {
+    const expr: FilterExpression = { columnId: 'age', operator: 'between', value: 25 };
+    expect(evaluateFilter(row, expr, getValue)).toBe(false);
+  });
+
+  it('between — ISO date strings (lexicographic fallback)', () => {
+    interface DateRow { id: string; createdAt: string }
+    const dateRow: DateRow = { id: '1', createdAt: '2026-02-15' };
+    const dateGetValue = (r: DateRow, colId: string) =>
+      (r as unknown as Record<string, unknown>)[colId];
+
+    const inRange: FilterExpression = {
+      columnId: 'createdAt',
+      operator: 'between',
+      value: ['2026-01-01', '2026-03-31'],
+    };
+    expect(evaluateFilter(dateRow, inRange, dateGetValue)).toBe(true);
+
+    const outOfRange: FilterExpression = {
+      columnId: 'createdAt',
+      operator: 'between',
+      value: ['2025-01-01', '2025-12-31'],
+    };
+    expect(evaluateFilter(dateRow, outOfRange, dateGetValue)).toBe(false);
   });
 });
 
