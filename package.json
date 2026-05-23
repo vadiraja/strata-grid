@@ -1,9 +1,27 @@
 {
   "name": "strata-grid",
   "version": "0.1.0-alpha.0",
-  "description": "Open-source React tree data grid for PLM bills of materials and enterprise data.",
+  "description": "Open-source React tree data grid with virtualization, lazy hierarchies, and theming for enterprise applications.",
   "license": "Apache-2.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vadiraja/strata-grid.git"
+  },
+  "homepage": "https://github.com/vadiraja/strata-grid#readme",
+  "bugs": {
+    "url": "https://github.com/vadiraja/strata-grid/issues"
+  },
+  "keywords": [
+    "react",
+    "data-grid",
+    "tree-grid",
+    "table",
+    "virtualization",
+    "tanstack-table",
+    "hierarchy",
+    "datatable"
+  ],
   "sideEffects": [
     "*.css"
   ],
@@ -38,7 +56,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs"
+    "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",

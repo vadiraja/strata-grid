@@ -11,7 +11,7 @@
   "excludeProtected": true,
   "excludeInternal": true,
   "outputFileStrategy": "members",
-  "entryFileName": "index",
+  "entryFileName": "modules",
   "fileExtension": ".md",
   "hidePageHeader": true,
   "hideBreadcrumbs": true
