@@ -13,7 +13,7 @@ gets its own design spec → implementation plan → build cycle.
 | **M1** | BOM / Tree Data Grid (read-only core) | Specced — see [`docs/superpowers/specs/2026-05-21-strata-tree-data-grid-design.md`](superpowers/specs/2026-05-21-strata-tree-data-grid-design.md) |
 | M2 | Editing & aggregation | Specced — see [`docs/superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md`](superpowers/specs/2026-05-22-strata-m2-editing-aggregation-design.md) |
 | M3 | Hierarchy / BOM editor | Specced — see [`docs/superpowers/specs/2026-05-23-strata-m3-hierarchy-editor-design.md`](superpowers/specs/2026-05-23-strata-m3-hierarchy-editor-design.md) |
-| M4 | Scale & enterprise extras | Planned |
+| M4 | Scale & enterprise extras | Specced — see [`docs/superpowers/specs/2026-05-23-strata-m4-scale-enterprise-design.md`](superpowers/specs/2026-05-23-strata-m4-scale-enterprise-design.md) |
 | Later | Plugin system & cross-cutting | Backlog |
 
 ---
