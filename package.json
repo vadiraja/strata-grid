@@ -29,6 +29,9 @@
     "dist",
     "NOTICE"
   ],
+  "workspaces": [
+    "docs-site"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsup && cp src/strata.css dist/strata.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
