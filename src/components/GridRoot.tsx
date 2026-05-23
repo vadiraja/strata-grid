@@ -6,10 +6,11 @@ import {
   useState,
 } from 'react';
 import type { Table } from '@tanstack/react-table';
-import type { GridTheme } from '../model/types';
+import type { AggregationConfig, ColumnDef, GridTheme } from '../model/types';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useEditContext } from '../model/edit-context';
+import { useAggregation } from '../model/use-aggregation';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -35,6 +36,10 @@ export interface GridRootProps<TRow> {
   selection?: UseSelectionReturn;
   /** Visual theme. */
   theme?: GridTheme;
+  /** Public leaf columns. */
+  columns: ColumnDef<TRow>[];
+  /** Aggregate rendering configuration. */
+  aggregation?: AggregationConfig;
 }
 
 /** The grid layout shell. */
@@ -44,6 +49,8 @@ export function GridRoot<TRow>({
   treeColumnId,
   selection,
   theme,
+  columns,
+  aggregation: aggregationConfig,
 }: GridRootProps<TRow>) {
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
@@ -123,6 +130,11 @@ export function GridRoot<TRow>({
     columnWidths: centerWidths,
   });
   const showRowEditControls = editCtx?.config.mode === 'row';
+  const aggregation = useAggregation({
+    table,
+    columns,
+    showFooterAggregates: aggregationConfig?.showFooterAggregates,
+  });
 
   const columnLayout = useMemo<ColumnLayout<TRow>>(() => {
     const leftWidth = sumColumnWidths(leftColumns);
@@ -307,6 +319,7 @@ export function GridRoot<TRow>({
         selection={selection}
         activeCell={keyboard.activeCell}
         keyboardColumnIds={keyboardColumnIds}
+        aggregation={aggregation}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
@@ -356,7 +369,19 @@ export function GridRoot<TRow>({
           />
         )}
       </div>
-      <GridFooter rowCount={rows.length} />
+      <GridFooter
+        rowCount={rows.length}
+        aggregateColumns={
+          aggregationConfig?.showFooterAggregates
+            ? aggregation.aggregateColumns
+            : undefined
+        }
+        aggregates={
+          aggregationConfig?.showFooterAggregates
+            ? aggregation.footerAggregates
+            : undefined
+        }
+      />
     </div>
   );
 }

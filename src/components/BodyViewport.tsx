@@ -7,6 +7,8 @@ import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import type { ColumnLayout } from './column-layout';
 import { useEditContext } from '../model/edit-context';
+import type { ColumnDef } from '../model/types';
+import type { UseAggregationReturn } from '../model/use-aggregation';
 
 export interface BodyViewportProps<TRow> {
   /** The TanStack table instance. */
@@ -27,6 +29,8 @@ export interface BodyViewportProps<TRow> {
   activeCell?: [number, number];
   /** Visible column ids in keyboard order, including the synthetic selection column. */
   keyboardColumnIds?: string[];
+  /** Aggregate state for grouped rows. */
+  aggregation?: UseAggregationReturn<TRow>;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -40,6 +44,7 @@ export function BodyViewport<TRow>({
   selection,
   activeCell,
   keyboardColumnIds = [],
+  aggregation,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length });
@@ -101,6 +106,10 @@ export function BodyViewport<TRow>({
                 style={rowStyle}
                 isFocused={activeCell?.[0] === virtualRow.index}
                 focusId={focusId}
+                aggregateColumns={
+                  aggregation?.aggregateColumns as ColumnDef<TRow>[] | undefined
+                }
+                aggregates={aggregation?.getGroupAggregates(row)}
               />
             );
           }

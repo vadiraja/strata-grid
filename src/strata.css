@@ -340,6 +340,39 @@
   font-weight: 400;
 }
 
+.strata-group-aggregates,
+.strata-footer-aggregates {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.strata-group-aggregates {
+  margin-left: 8px;
+  overflow: hidden;
+}
+
+.strata-aggregate-cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.strata-aggregate-label {
+  color: var(--strata-text-secondary);
+  font-size: var(--strata-font-size-small);
+  font-weight: 500;
+}
+
+.strata-aggregate-value {
+  color: var(--strata-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 .strata-horizontal-scrollbar-row {
   display: flex;
   align-items: center;
@@ -505,11 +538,18 @@
 }
 
 .strata-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: var(--strata-footer-padding-y) var(--strata-footer-padding-x);
   background: var(--strata-bg-footer);
   border-top: var(--strata-border-width) solid var(--strata-border);
   color: var(--strata-text-secondary);
   font-size: var(--strata-font-size-small);
+}
+
+.strata-footer-aggregates {
+  margin-left: auto;
 }
 
 /* --- Editing --- */

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type {
   AnyColumn,
+  AggregationConfig,
   ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
@@ -69,6 +70,8 @@ export interface DataGridProps<TRow> {
   theme?: GridTheme;
   /** Enables cell editing. Omit to keep the grid read-only. */
   editable?: EditableConfig;
+  /** Configures aggregate rendering for grouped rows and the footer. */
+  aggregation?: AggregationConfig;
   /** Called when a cell edit starts. */
   onCellEditStart?: (event: { rowId: string; columnId: string; value: unknown }) => void;
   /** Called when a cell edit ends. */
@@ -156,6 +159,7 @@ export function DataGrid<TRow>({
   onSelectionChange,
   theme,
   editable,
+  aggregation,
   onCellEditStart,
   onCellEditEnd,
   onRowEditStart,
@@ -245,6 +249,8 @@ export function DataGrid<TRow>({
       treeColumnId={treeColumnId}
       selection={selection ? selectionState : undefined}
       theme={theme}
+      columns={leafColumns}
+      aggregation={aggregation}
     />
   );
 

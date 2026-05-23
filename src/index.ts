@@ -16,6 +16,7 @@ export type {
   SelectionConfig,
   SelectionState,
   GridTheme,
+  AggregationConfig,
   EditableConfig,
   EditorContext,
   EditorType,

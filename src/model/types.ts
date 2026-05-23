@@ -100,6 +100,8 @@ export interface ColumnDef<TRow> {
   validate?: Validator<TRow> | Validator<TRow>[];
   /** Aggregation function for group/parent rows. */
   aggregate?: AggregateType | ((values: unknown[]) => unknown);
+  /** Optional formatter for group/footer aggregate values. */
+  aggregateFormatter?: (value: unknown) => ReactNode;
 }
 
 /**
@@ -177,6 +179,12 @@ export interface EditableConfig {
   activateOn?: 'doubleClick' | 'singleClick' | 'enter';
   /** Whether to show a visual indicator on editable cells. Default: true. */
   showEditableIndicator?: boolean;
+}
+
+/** Configures aggregate rendering in grouped rows and the footer. */
+export interface AggregationConfig {
+  /** When true, the footer shows aggregate values for configured columns. */
+  showFooterAggregates?: boolean;
 }
 
 /**

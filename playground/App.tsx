@@ -218,15 +218,25 @@ const groupedProductColumns: AnyColumn<Product>[] = [
     columns: [
       { id: 'planner', header: 'Planner', accessor: 'planner', width: 120, filter: 'text' },
       { id: 'status', header: 'Status', accessor: 'status', width: 130, filter: 'text' },
-      { id: 'stock', header: 'Stock', accessor: 'stock', width: 100, sortable: true, filter: 'number' },
-      { id: 'demand', header: 'Demand', accessor: 'demand', width: 110, sortable: true, filter: 'number' },
+      { id: 'stock', header: 'Stock', accessor: 'stock', width: 100, sortable: true, filter: 'number', aggregate: 'sum' },
+      { id: 'demand', header: 'Demand', accessor: 'demand', width: 110, sortable: true, filter: 'number', aggregate: 'sum' },
     ],
   },
   {
     groupId: 'commercial',
     header: 'Commercial',
     columns: [
-      { id: 'price', header: 'Price', accessor: 'price', width: 100, sortable: true, filter: 'number' },
+      {
+        id: 'price',
+        header: 'Price',
+        accessor: 'price',
+        width: 100,
+        sortable: true,
+        filter: 'number',
+        aggregate: 'avg',
+        aggregateFormatter: (value) =>
+          typeof value === 'number' ? `$${value.toFixed(0)}` : '',
+      },
     ],
   },
   { id: 'uom', header: 'UoM', accessor: 'uom', width: 80, pin: 'right' },
@@ -427,6 +437,7 @@ function exampleGrid(
           data={products}
           columns={groupedProductColumns}
           groupBy={['category', 'subcategory']}
+          aggregation={{ showFooterAggregates: true }}
           defaultExpanded
           defaultSort={[{ columnId: 'price', direction: 'desc' }]}
           height={500}

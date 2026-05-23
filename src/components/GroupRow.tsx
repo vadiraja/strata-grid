@@ -1,5 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { Row } from '@tanstack/react-table';
+import type { ColumnDef } from '../model/types';
+import type { AggregateMap } from '../model/use-aggregation';
+import { AggregateCell } from './AggregateCell';
 
 export interface GroupRowProps<TRow> {
   /** The TanStack group row. */
@@ -10,6 +13,10 @@ export interface GroupRowProps<TRow> {
   isFocused?: boolean;
   /** Stable active-descendant id when this group row is focused. */
   focusId?: string;
+  /** Columns with aggregate values to render for this group. */
+  aggregateColumns?: ColumnDef<TRow>[];
+  /** Aggregate values keyed by column id. */
+  aggregates?: AggregateMap;
 }
 
 function countDataRows<TRow>(rows: Row<TRow>[]): number {
@@ -28,6 +35,8 @@ export function GroupRow<TRow>({
   style,
   isFocused,
   focusId,
+  aggregateColumns = [],
+  aggregates,
 }: GroupRowProps<TRow>) {
   const isExpanded = row.getIsExpanded();
   const groupingColumnId = row.groupingColumnId;
@@ -62,6 +71,17 @@ export function GroupRow<TRow>({
         </button>
         <span className="strata-group-label">{label}</span>
         <span className="strata-group-count">({leafCount})</span>
+        {aggregateColumns.length > 0 && aggregates && (
+          <span className="strata-group-aggregates">
+            {aggregateColumns.map((column) => (
+              <AggregateCell
+                key={column.id}
+                column={column}
+                value={aggregates.get(column.id)}
+              />
+            ))}
+          </span>
+        )}
       </div>
     </div>
   );
