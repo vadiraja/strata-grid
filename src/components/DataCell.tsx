@@ -16,6 +16,16 @@ export interface DataCellProps<TRow> {
   extendedQuantities?: Map<string, number>;
   /** Called when this cell is selected/focused by pointer. */
   onFocusCell?: () => void;
+  /** Whether this cell is inside the active selection range. */
+  isInRange?: boolean;
+  /** Whether this cell is the focus (anchor end) of the active range. */
+  isRangeFocus?: boolean;
+  /** Called on pointer down (left button, no Shift). Starts a new range. */
+  onRangePointerDown?: (event: React.PointerEvent) => void;
+  /** Called on pointer enter while the pointer is down. Extends the range. */
+  onRangePointerEnter?: (event: React.PointerEvent) => void;
+  /** Called on right-click. */
+  onCellContextMenu?: (event: React.MouseEvent) => void;
 }
 
 /** Renders a single ordinary body cell, delegating content rendering. */
@@ -26,6 +36,11 @@ export function DataCell<TRow>({
   rollupTargetColumnId,
   extendedQuantities,
   onFocusCell,
+  isInRange,
+  isRangeFocus,
+  onRangePointerDown,
+  onRangePointerEnter,
+  onCellContextMenu,
 }: DataCellProps<TRow>) {
   const width = cell.column.getSize();
   const editCtx = useEditContext();
@@ -91,6 +106,8 @@ export function DataCell<TRow>({
     isEditable && 'strata-cell-editable',
     isEditing && 'strata-cell-editing',
     isRowEditing && 'strata-cell-row-editing',
+    isInRange && 'strata-cell-in-range',
+    isRangeFocus && 'strata-cell-range-focus',
   ]
     .filter(Boolean)
     .join(' ');
@@ -100,9 +117,14 @@ export function DataCell<TRow>({
       className={className}
       role="gridcell"
       id={isFocused ? focusId : undefined}
+      data-strata-cell-row={cell.row.id}
+      data-strata-cell-column={cell.column.id}
       style={{ width, flex: `0 0 ${width}px` }}
       onClick={handleClick}
       onDoubleClick={editCtx ? handleDoubleClick : undefined}
+      onPointerDown={onRangePointerDown}
+      onPointerEnter={onRangePointerEnter}
+      onContextMenu={onCellContextMenu}
     >
       {isEditing ? (
         <CellEditor cell={cell} />

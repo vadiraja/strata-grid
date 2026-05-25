@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Row, Table } from '@tanstack/react-table';
+import { measureColumnWidth } from './auto-size-column';
 import type { UseSelectionReturn } from './use-selection';
 import type { EditStateReturn } from './use-edit-state';
 import type {
@@ -53,6 +54,10 @@ export interface GridApi<TRow> {
   exportViewState(): ViewState;
   importViewState(state: ViewState): void;
   whereUsed(nodeId: string): Promise<WhereUsedResult<TRow>[]>;
+  /** Auto-size the column to fit the widest visible cell. */
+  autoSizeColumn(columnId: string): void;
+  /** Auto-size every visible leaf column to its widest visible cell. */
+  autoSizeAllColumns(): void;
 }
 
 export interface UseGridApiOptions<TRow> {
@@ -64,6 +69,8 @@ export interface UseGridApiOptions<TRow> {
   exportViewState?: () => ViewState;
   importViewState?: (state: ViewState) => void;
   whereUsed?: (nodeId: string) => Promise<WhereUsedResult<TRow>[]>;
+  /** Returns the grid root DOM element used for measuring column widths. */
+  getGridRootEl?: () => HTMLElement | null;
 }
 
 function flattenRows<TRow>(rows: Row<TRow>[]): Row<TRow>[] {
@@ -102,6 +109,7 @@ export function useGridApi<TRow>({
   exportViewState,
   importViewState,
   whereUsed,
+  getGridRootEl,
 }: UseGridApiOptions<TRow>): GridApi<TRow> {
   return useMemo(
     () => ({
@@ -252,6 +260,21 @@ export function useGridApi<TRow>({
       whereUsed(nodeId) {
         return whereUsed?.(nodeId) ?? Promise.resolve([]);
       },
+      autoSizeColumn(columnId) {
+        const root = getGridRootEl?.();
+        if (!root) return;
+        const width = measureColumnWidth(root, columnId);
+        table.setColumnSizing((prev) => ({ ...prev, [columnId]: width }));
+      },
+      autoSizeAllColumns() {
+        const root = getGridRootEl?.();
+        if (!root) return;
+        const next: Record<string, number> = {};
+        for (const column of table.getVisibleLeafColumns()) {
+          next[column.id] = measureColumnWidth(root, column.id);
+        }
+        table.setColumnSizing((prev) => ({ ...prev, ...next }));
+      },
     }),
     [
       editState,
@@ -262,6 +285,7 @@ export function useGridApi<TRow>({
       exportViewState,
       importViewState,
       whereUsed,
+      getGridRootEl,
     ],
   );
 }

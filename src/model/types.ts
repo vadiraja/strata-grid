@@ -387,3 +387,71 @@ declare module '@tanstack/react-table' {
     strataColumn: ColumnDef<TData>;
   }
 }
+
+// ===== 0.3.0: interactive cell UX =====
+
+export interface CellPositionRef {
+  rowId: string;
+  columnId: string;
+}
+
+export interface CellRangeRef {
+  topRowId: string;
+  bottomRowId: string;
+  columnIds: string[];
+}
+
+export interface FillRangeEvent {
+  /** Source cell whose value is being repeated. */
+  source: CellPositionRef;
+  /** Target cells (excludes the source). */
+  targets: CellPositionRef[];
+  /** The value being copied (post-read). */
+  value: unknown;
+}
+
+export interface ContextMenuTarget {
+  kind: 'cell' | 'row' | 'header';
+  rowId?: string;
+  columnId?: string;
+}
+
+export interface ContextMenuContext<TRow> {
+  target: ContextMenuTarget;
+  /** All currently selected row ids. */
+  selectedRowIds: string[];
+  /** The current cell range, if any. */
+  range: import('./cell-range').CellRange | null;
+  /** The row data, if `kind === 'cell' | 'row'`. */
+  row?: TRow;
+}
+
+export interface ContextMenuConfig<TRow> {
+  /** Replace the default item list outright. */
+  items?: import('../components/ContextMenu').ContextMenuItem[];
+  /** Compute items dynamically from the target context. Replaces defaults. */
+  getItems?: (
+    ctx: ContextMenuContext<TRow>,
+  ) => import('../components/ContextMenu').ContextMenuItem[];
+  /** Merge consumer items with the default item list. Defaults to `'replace'`. */
+  mode?: 'replace' | 'append' | 'prepend';
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface StatusBarContext<TRow> {
+  totalRowCount: number;
+  selectedRowCount: number;
+  range: import('./cell-range').CellRange | null;
+  rangeStats: import('./cell-range').RangeStats;
+}
+
+export interface StatusBarConfig<TRow> {
+  /** Show built-in segments. Defaults to true. */
+  defaults?: boolean;
+  /** Extra consumer-defined segments appended after defaults. */
+  segments?: import('../components/StatusBar').StatusBarSegment[];
+  /** Compute segments dynamically each render. Replaces `segments`/`defaults`. */
+  getSegments?: (
+    ctx: StatusBarContext<TRow>,
+  ) => import('../components/StatusBar').StatusBarSegment[];
+}

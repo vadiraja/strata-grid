@@ -964,6 +964,12 @@ function exampleGrid(
           defaultSort={[{ columnId: 'name', direction: 'asc' }]}
           height={500}
           theme={theme}
+          statusBar
+          contextMenu
+          onFillRange={(event) => {
+            // eslint-disable-next-line no-console
+            console.log('fill', event);
+          }}
         />
       );
     case 'tree':

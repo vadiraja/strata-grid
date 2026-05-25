@@ -3,6 +3,7 @@ import type { Table, Row, Cell } from '@tanstack/react-table';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { GridRow } from './GridRow';
 import { GroupRow } from './GroupRow';
+import { FillHandle } from './FillHandle';
 import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import { usePrintMode } from '../virtual/use-print-mode';
@@ -43,6 +44,20 @@ export interface BodyViewportProps<TRow> {
   dragDrop?: UseDragDropReturn;
   /** Lazy tree loading state. */
   lazyTree?: UseLazyTreeReturn<TRow>;
+  /** Returns true when a cell is part of the active range selection. */
+  isInRange?: (rowId: string, columnId: string) => boolean;
+  /** Returns true when a cell is the active range focus (the end of the range). */
+  isRangeFocus?: (rowId: string, columnId: string) => boolean;
+  /** Called on cell pointerdown to begin a range selection. */
+  onCellPointerDown?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
+  /** Called on cell pointerenter to extend an in-progress range selection. */
+  onCellPointerEnter?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
+  /** Called on cell contextmenu to open the cell context menu. */
+  onCellContextMenu?: (rowId: string, columnId: string, event: React.MouseEvent) => void;
+  /** Bounding rect of the focus cell relative to the body viewport, or null. */
+  focusCellRect?: { left: number; top: number; width: number; height: number } | null;
+  /** Called when the fill handle begins a drag-fill. */
+  onFillStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -61,6 +76,13 @@ export function BodyViewport<TRow>({
   bomRollup,
   dragDrop,
   lazyTree,
+  isInRange,
+  isRangeFocus,
+  onCellPointerDown,
+  onCellPointerEnter,
+  onCellContextMenu,
+  focusCellRect,
+  onFillStart,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const printing = usePrintMode();
@@ -210,6 +232,11 @@ export function BodyViewport<TRow>({
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
+                    isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
+                    isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    onCellPointerDown={onCellPointerDown}
+                    onCellPointerEnter={onCellPointerEnter}
+                    onCellContextMenu={onCellContextMenu}
                   />
                 </div>
               )}
@@ -242,6 +269,11 @@ export function BodyViewport<TRow>({
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
+                    isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
+                    isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    onCellPointerDown={onCellPointerDown}
+                    onCellPointerEnter={onCellPointerEnter}
+                    onCellContextMenu={onCellContextMenu}
                   />
                   {columnLayout.centerAfterWidth > 0 && (
                     <div
@@ -271,12 +303,21 @@ export function BodyViewport<TRow>({
                     dragDrop={dragDrop}
                     onCellFocus={focusColumn}
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
+                    isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
+                    isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    onCellPointerDown={onCellPointerDown}
+                    onCellPointerEnter={onCellPointerEnter}
+                    onCellContextMenu={onCellContextMenu}
                   />
                 </div>
               )}
             </div>
           );
         })}
+        <FillHandle
+          anchorRect={focusCellRect ?? null}
+          onFillStart={onFillStart ?? (() => {})}
+        />
       </div>
     </div>
   );

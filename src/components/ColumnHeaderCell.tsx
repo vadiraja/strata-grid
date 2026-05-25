@@ -11,12 +11,21 @@ export interface ColumnHeaderCellProps<TRow> {
   header: Header<TRow, unknown>;
   /** Callback when a column is dragged and dropped onto another. */
   onColumnReorder?: (draggedId: string, targetId: string) => void;
+  /** Grid root element used to query rendered cells for autosize. */
+  gridRootEl?: HTMLElement | null;
+  /** Called after autosize measurement to commit the new column width. */
+  onAutoSize?: (columnId: string, width: number) => void;
+  /** Called on right-click of the header cell. */
+  onHeaderContextMenu?: (columnId: string, event: React.MouseEvent) => void;
 }
 
 /** Renders a column header cell with sort, filter, resize, and reorder. */
 export function ColumnHeaderCell<TRow>({
   header,
   onColumnReorder,
+  gridRootEl,
+  onAutoSize,
+  onHeaderContextMenu,
 }: ColumnHeaderCellProps<TRow>) {
   const strataColumn = header.column.columnDef.meta!.strataColumn;
   const width = header.getSize();
@@ -90,6 +99,7 @@ export function ColumnHeaderCell<TRow>({
       role="columnheader"
       style={{ width, flex: `0 0 ${width}px` }}
       onClick={handleClick}
+      onContextMenu={(e) => onHeaderContextMenu?.(header.column.id, e)}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -108,7 +118,7 @@ export function ColumnHeaderCell<TRow>({
       {resolvedFilter && (
         <FilterPopover column={header.column} resolved={resolvedFilter} />
       )}
-      <ResizeHandle header={header} />
+      <ResizeHandle header={header} gridRootEl={gridRootEl} onAutoSize={onAutoSize} />
     </div>
   );
 }

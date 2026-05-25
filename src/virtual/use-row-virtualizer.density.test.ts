@@ -91,7 +91,8 @@ describe('useRowVirtualizer — density changes', () => {
       renderHook(() =>
         useRowVirtualizer({ scrollRef, count: 10, density }),
       );
-      expect(capturedOptions.estimateSize?.(0)).toBe(expected);
+      expect(capturedOptions.estimateSize).toBeDefined();
+      expect(capturedOptions.estimateSize!(0)).toBe(expected);
     }
   });
 

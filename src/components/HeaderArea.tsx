@@ -17,6 +17,12 @@ export interface HeaderAreaProps<TRow> {
   selection?: UseSelectionReturn;
   /** Whether row-edit actions reserve a right-side action pane in body rows. */
   showRowEditControls?: boolean;
+  /** Grid root element used to query rendered cells for autosize. */
+  gridRootEl?: HTMLElement | null;
+  /** Called after autosize measurement to commit the new column width. */
+  onAutoSize?: (columnId: string, width: number) => void;
+  /** Called on right-click of a column header. */
+  onHeaderContextMenu?: (columnId: string, event: React.MouseEvent) => void;
 }
 
 /** Renders the grid header with pinned-left, center, and pinned-right panes matching the body layout. */
@@ -26,6 +32,9 @@ export function HeaderArea<TRow>({
   scrollLeft,
   selection,
   showRowEditControls,
+  gridRootEl,
+  onAutoSize,
+  onHeaderContextMenu,
 }: HeaderAreaProps<TRow>) {
   const handleColumnReorder = useCallback(
     (draggedId: string, targetId: string) => {
@@ -84,7 +93,7 @@ export function HeaderArea<TRow>({
               className="strata-pane-left"
               style={{ width: columnLayout.leftWidth, flexShrink: 0 }}
             >
-              {renderHeaderRow(leftGroups[rowIndex]?.headers ?? [], handleColumnReorder)}
+              {renderHeaderRow(leftGroups[rowIndex]?.headers ?? [], handleColumnReorder, gridRootEl, onAutoSize, onHeaderContextMenu)}
             </div>
           )}
           <div
@@ -98,7 +107,7 @@ export function HeaderArea<TRow>({
                 transform: `translateX(${-scrollLeft}px)`,
               }}
             >
-              {renderHeaderRow(centerGroups[rowIndex]?.headers ?? [], handleColumnReorder)}
+              {renderHeaderRow(centerGroups[rowIndex]?.headers ?? [], handleColumnReorder, gridRootEl, onAutoSize, onHeaderContextMenu)}
             </div>
           </div>
           {showRowEditControls && (
@@ -113,7 +122,7 @@ export function HeaderArea<TRow>({
               className="strata-pane-right"
               style={{ width: columnLayout.rightWidth, flexShrink: 0 }}
             >
-              {renderHeaderRow(rightGroups[rowIndex]?.headers ?? [], handleColumnReorder)}
+              {renderHeaderRow(rightGroups[rowIndex]?.headers ?? [], handleColumnReorder, gridRootEl, onAutoSize, onHeaderContextMenu)}
             </div>
           )}
         </div>
@@ -125,6 +134,9 @@ export function HeaderArea<TRow>({
 function renderHeaderRow<TRow>(
   headers: import('@tanstack/react-table').Header<TRow, unknown>[],
   onColumnReorder: (draggedId: string, targetId: string) => void,
+  gridRootEl?: HTMLElement | null,
+  onAutoSize?: (columnId: string, width: number) => void,
+  onHeaderContextMenu?: (columnId: string, event: React.MouseEvent) => void,
 ) {
   return headers.map((header) => {
     if (header.subHeaders.length > 0 || header.isPlaceholder) {
@@ -136,6 +148,9 @@ function renderHeaderRow<TRow>(
         key={header.id}
         header={header}
         onColumnReorder={onColumnReorder}
+        gridRootEl={gridRootEl}
+        onAutoSize={onAutoSize}
+        onHeaderContextMenu={onHeaderContextMenu}
       />
     );
   });
