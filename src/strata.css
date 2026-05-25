@@ -1553,3 +1553,28 @@
   cursor: crosshair;
   z-index: 5;
 }
+
+.strata-context-menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 180px;
+  padding: 4px;
+  background: var(--strata-bg-popover);
+  border: var(--strata-border-width) solid var(--strata-border);
+  border-radius: var(--strata-radius);
+  box-shadow: var(--strata-shadow-popover);
+}
+.strata-context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.strata-context-menu-item:hover:not(:disabled) { background: var(--strata-bg-hover); }
+.strata-context-menu-item:disabled { color: var(--strata-text-muted); cursor: not-allowed; }
+.strata-context-menu-divider { height: 1px; background: var(--strata-border); margin: 4px 0; }
