@@ -1529,3 +1529,27 @@
     scrollbar-width: none;
   }
 }
+
+.strata-cell-in-range {
+  background: var(--strata-range-bg, color-mix(in srgb, var(--strata-accent) 12%, transparent));
+}
+
+.strata-cell-range-edge-top { box-shadow: inset 0 1px 0 0 var(--strata-accent); }
+.strata-cell-range-edge-bottom { box-shadow: inset 0 -1px 0 0 var(--strata-accent); }
+.strata-cell-range-edge-left { box-shadow: inset 1px 0 0 0 var(--strata-accent); }
+.strata-cell-range-edge-right { box-shadow: inset -1px 0 0 0 var(--strata-accent); }
+
+.strata-cell-range-focus {
+  outline: 2px solid var(--strata-accent);
+  outline-offset: -2px;
+}
+
+.strata-fill-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--strata-accent);
+  border: 1px solid var(--strata-bg);
+  cursor: crosshair;
+  z-index: 5;
+}
