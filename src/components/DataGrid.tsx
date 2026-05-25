@@ -23,9 +23,13 @@ import type {
   RowActionsConfig,
   SelectionConfig,
   SelectionState,
+  StatusBarConfig,
+  StatusBarContext,
   TreeDataConfig,
   ViewState,
 } from '../model/types';
+import type { CellRange, RangeStats } from '../model/cell-range';
+import { StatusBar, type StatusBarSegment } from './StatusBar';
 import { RowActionsCell } from './RowActionsCell';
 import { useColorScheme } from '../themes/use-color-scheme';
 import { resolveTheme } from '../themes/resolve-theme';
@@ -194,6 +198,8 @@ export interface DataGridProps<TRow> {
   onFillRange?: (event: FillRangeEvent) => void;
   /** Enables the right-click context menu. `true` = defaults; pass a config to override. */
   contextMenu?: ContextMenuConfig<TRow> | true;
+  /** Renders an opt-in status bar below the grid body. */
+  statusBar?: StatusBarConfig<TRow> | true;
 }
 
 function collectAllRowIds<TRow>(
@@ -337,6 +343,7 @@ export function DataGrid<TRow>({
   rowActions,
   onFillRange,
   contextMenu,
+  statusBar,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -344,6 +351,15 @@ export function DataGrid<TRow>({
   const resolved = resolveTheme(theme, osScheme);
 
   const gridRootRef = useRef<HTMLDivElement | null>(null);
+  const [statusRange, setStatusRange] = useState<CellRange | null>(null);
+  const [statusRangeStats, setStatusRangeStats] = useState<RangeStats>({
+    count: 0,
+    numericCount: 0,
+    sum: null,
+    avg: null,
+    min: null,
+    max: null,
+  });
   const internalDataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const dataSource: DataSource<TRow> = externalDataSource ?? internalDataSource;
 
@@ -742,6 +758,10 @@ export function DataGrid<TRow>({
       onFillRange={onFillRange}
       contextMenu={contextMenu}
       rootRef={gridRootRef}
+      onStatusContextChange={(ctx) => {
+        setStatusRange(ctx.range);
+        setStatusRangeStats(ctx.rangeStats);
+      }}
     />
   );
 
@@ -779,14 +799,61 @@ export function DataGrid<TRow>({
     gridContent
   );
 
+  const totalRowCount = effectiveRows.length;
+  const selectedRowCount = selection ? selectionState.selectedIds.size : 0;
+  const statusContext: StatusBarContext<TRow> = {
+    totalRowCount,
+    selectedRowCount,
+    range: statusRange,
+    rangeStats: statusRangeStats,
+  };
+  const defaultStatusSegments = (ctx: StatusBarContext<TRow>): StatusBarSegment[] => {
+    const out: StatusBarSegment[] = [
+      { id: 'rows', label: `Rows: ${ctx.totalRowCount}` },
+    ];
+    if (ctx.selectedRowCount > 0) {
+      out.push({ id: 'sel', label: `Selected: ${ctx.selectedRowCount}` });
+    }
+    if (ctx.range && ctx.rangeStats.numericCount > 0) {
+      out.push({ id: 'sum', label: `Sum: ${ctx.rangeStats.sum}` });
+      out.push({ id: 'avg', label: `Avg: ${ctx.rangeStats.avg!.toFixed(2)}` });
+      out.push({ id: 'min', label: `Min: ${ctx.rangeStats.min}` });
+      out.push({ id: 'max', label: `Max: ${ctx.rangeStats.max}` });
+    }
+    if (ctx.range) {
+      out.push({ id: 'count', label: `Count: ${ctx.rangeStats.count}` });
+    }
+    return out;
+  };
+  const statusBarConfig =
+    statusBar === true ? ({} as StatusBarConfig<TRow>) : statusBar ?? null;
+  const statusBarSegments: StatusBarSegment[] | null =
+    statusBarConfig === null
+      ? null
+      : statusBarConfig.getSegments
+        ? statusBarConfig.getSegments(statusContext)
+        : [
+            ...(statusBarConfig.defaults === false
+              ? []
+              : defaultStatusSegments(statusContext)),
+            ...(statusBarConfig.segments ?? []),
+          ];
+
+  const finalContent = (
+    <>
+      {wrappedContent}
+      {statusBarSegments && <StatusBar segments={statusBarSegments} />}
+    </>
+  );
+
   return (
     <IconProvider overrides={icons ?? {}}>
       {editable ? (
         <EditContext.Provider value={{ editState, config: editable }}>
-          {wrappedContent}
+          {finalContent}
         </EditContext.Provider>
       ) : (
-        wrappedContent
+        finalContent
       )}
     </IconProvider>
   );

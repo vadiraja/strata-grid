@@ -436,3 +436,23 @@ export interface ContextMenuConfig<TRow> {
   /** Merge consumer items with the default item list. Defaults to `'replace'`. */
   mode?: 'replace' | 'append' | 'prepend';
 }
+
+export interface StatusBarContext<TRow> {
+  totalRowCount: number;
+  selectedRowCount: number;
+  range: import('./cell-range').CellRange | null;
+  rangeStats: import('./cell-range').RangeStats;
+  /** Marker to retain TRow generic for future row-aware extensions. */
+  __row?: TRow;
+}
+
+export interface StatusBarConfig<TRow> {
+  /** Show built-in segments. Defaults to true. */
+  defaults?: boolean;
+  /** Extra consumer-defined segments appended after defaults. */
+  segments?: import('../components/StatusBar').StatusBarSegment[];
+  /** Compute segments dynamically each render. Replaces `segments`/`defaults`. */
+  getSegments?: (
+    ctx: StatusBarContext<TRow>,
+  ) => import('../components/StatusBar').StatusBarSegment[];
+}

@@ -81,6 +81,11 @@ export interface GridRootProps<TRow> {
   contextMenu?: ContextMenuConfig<TRow> | true;
   /** External ref forwarded to the grid root element. */
   rootRef?: React.Ref<HTMLDivElement | null>;
+  /** Reports the current cell range and aggregate stats to the parent. */
+  onStatusContextChange?: (ctx: {
+    range: import('../model/cell-range').CellRange | null;
+    rangeStats: import('../model/cell-range').RangeStats;
+  }) => void;
 }
 
 /** The grid layout shell. */
@@ -103,6 +108,7 @@ export function GridRoot<TRow>({
   onFillRange,
   contextMenu,
   rootRef,
+  onStatusContextChange,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -176,6 +182,9 @@ export function GridRoot<TRow>({
     [rows],
   );
   const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
+  useEffect(() => {
+    onStatusContextChange?.({ range: cellRange.range, rangeStats: cellRange.stats });
+  }, [cellRange.range, cellRange.stats, onStatusContextChange]);
   const contextMenuState = useContextMenu();
   const [isDraggingRange, setIsDraggingRange] = useState(false);
   const [focusCellRect, setFocusCellRect] = useState<{
