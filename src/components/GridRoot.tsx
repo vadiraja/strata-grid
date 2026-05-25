@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -9,6 +10,7 @@ import type { Table } from '@tanstack/react-table';
 import type { AggregationConfig, ColumnDef, Density, GridTheme } from '../model/types';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
+import { useCellRange } from '../model/use-cell-range';
 import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
@@ -197,6 +199,57 @@ export function GridRoot<TRow>({
           }
         : undefined,
   });
+
+  const rangeColumnIds = useMemo(
+    () =>
+      table
+        .getVisibleLeafColumns()
+        .map((column) => column.id)
+        .filter((id) => id !== treeColumnId && id !== '__selection__'),
+    [table, treeColumnId],
+  );
+  const valuesAt = useCallback(
+    (rowIndex: number, columnId: string): unknown => {
+      const row = rows[rowIndex];
+      if (!row) return null;
+      const c = row.getVisibleCells().find((cell) => cell.column.id === columnId);
+      return c?.getValue();
+    },
+    [rows],
+  );
+  const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
+  const [isDraggingRange, setIsDraggingRange] = useState(false);
+
+  const handleCellPointerDown = useCallback(
+    (rowId: string, columnId: string, event: React.PointerEvent) => {
+      // event.button is 0 for left-click in browsers; undefined in some jsdom paths.
+      if (event.button !== undefined && event.button !== 0) return;
+      if (!rangeColumnIds.includes(columnId)) return;
+      const rowIndex = rows.findIndex((r) => r.id === rowId);
+      if (rowIndex === -1) return;
+      cellRange.beginRange({ rowIndex, columnId });
+      setIsDraggingRange(true);
+      (event.target as Element).setPointerCapture?.(event.pointerId);
+    },
+    [cellRange, rangeColumnIds, rows],
+  );
+  const handleCellPointerEnter = useCallback(
+    (rowId: string, columnId: string) => {
+      if (!isDraggingRange) return;
+      if (!rangeColumnIds.includes(columnId)) return;
+      const rowIndex = rows.findIndex((r) => r.id === rowId);
+      if (rowIndex === -1) return;
+      cellRange.extendTo({ rowIndex, columnId });
+    },
+    [cellRange, isDraggingRange, rangeColumnIds, rows],
+  );
+
+  useEffect(() => {
+    if (!isDraggingRange) return undefined;
+    const handleUp = () => setIsDraggingRange(false);
+    window.addEventListener('pointerup', handleUp);
+    return () => window.removeEventListener('pointerup', handleUp);
+  }, [isDraggingRange]);
 
   useFlexColumnSizing({
     table,
@@ -419,6 +472,17 @@ export function GridRoot<TRow>({
         bomRollup={bomRollup}
         dragDrop={dragDrop}
         lazyTree={lazyTree}
+        isInRange={(rowId, columnId) => {
+          const idx = rows.findIndex((r) => r.id === rowId);
+          return idx === -1 ? false : cellRange.isInRange(idx, columnId);
+        }}
+        isRangeFocus={(rowId, columnId) => {
+          const f = cellRange.focus;
+          if (!f) return false;
+          return rows[f.rowIndex]?.id === rowId && f.columnId === columnId;
+        }}
+        onCellPointerDown={handleCellPointerDown}
+        onCellPointerEnter={handleCellPointerEnter}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
