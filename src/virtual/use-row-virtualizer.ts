@@ -7,6 +7,16 @@ import {
 import { ROW_HEIGHT, ROW_OVERSCAN } from '../model/constants';
 import type { Density } from '../model/types';
 
+const DENSITY_ROW_HEIGHT: Record<Density, number> = {
+  compact: 24,
+  standard: 32,
+  comfortable: 44,
+};
+
+function resolveRowHeight(density: Density | undefined): number {
+  return density ? DENSITY_ROW_HEIGHT[density] : ROW_HEIGHT;
+}
+
 export interface UseRowVirtualizerOptions {
   /** Ref to the scrollable body element. */
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -43,11 +53,12 @@ export function useRowVirtualizer(
   options: UseRowVirtualizerOptions,
 ): RowVirtualizerResult {
   const { scrollRef, count, density, printing = false } = options;
+  const rowHeight = resolveRowHeight(density);
 
   const virtualizer = useVirtualizer({
     count,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => ROW_HEIGHT,
+    estimateSize: () => rowHeight,
     overscan: ROW_OVERSCAN,
   });
 
@@ -74,13 +85,13 @@ export function useRowVirtualizer(
     if (!printing) return [];
     return Array.from({ length: count }, (_, index) => ({
       index,
-      start: index * ROW_HEIGHT,
-      size: ROW_HEIGHT,
-      end: (index + 1) * ROW_HEIGHT,
+      start: index * rowHeight,
+      size: rowHeight,
+      end: (index + 1) * rowHeight,
       key: index,
       lane: 0,
     }));
-  }, [printing, count]);
+  }, [printing, count, rowHeight]);
 
   return {
     getVirtualItems: () => {
@@ -91,7 +102,7 @@ export function useRowVirtualizer(
     },
     getTotalSize: () => {
       if (printing) {
-        return count * ROW_HEIGHT;
+        return count * rowHeight;
       }
       return virtualizer.getTotalSize();
     },

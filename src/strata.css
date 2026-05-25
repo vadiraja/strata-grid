@@ -14,6 +14,7 @@
   border: var(--strata-border-width) solid var(--strata-border);
   font-family: var(--strata-font-family);
   font-size: var(--strata-font-size);
+  position: relative;
   overflow: hidden;
   background: var(--strata-bg);
   color: var(--strata-text);
@@ -122,13 +123,10 @@
 
 .strata-filter-popover {
   position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 2px;
   padding: var(--strata-popover-padding);
   background: var(--strata-bg-popover);
   border: var(--strata-border-width) solid var(--strata-border);

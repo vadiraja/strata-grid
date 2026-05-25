@@ -15,7 +15,7 @@ export function SortIndicator({ direction }: SortIndicatorProps) {
   if (!direction) return null;
   return (
     <span className="strata-sort-indicator" aria-hidden="true">
-      <StrataIcon name={direction === 'asc' ? 'arrow-up' : 'arrow-down'} />
+      <StrataIcon name={direction === 'asc' ? 'arrow-up' : 'arrow-down'} size={12} />
     </span>
   );
 }

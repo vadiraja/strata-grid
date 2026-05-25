@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Column } from '@tanstack/react-table';
 import type { FilterOperator, ResolvedColumnFilter } from '../data/types';
 import { StrataIcon } from '../icons';
@@ -133,7 +134,14 @@ export function FilterPopover<TRow>({
     resolved.type === 'number' ? 'number' : 'text';
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const rawValue = column.getFilterValue();
   const filterValue = readTextValue(rawValue);
   const hasValue = filterValue !== '' || readStructured(rawValue) !== null;
@@ -144,16 +152,42 @@ export function FilterPopover<TRow>({
     }
   }, [open]);
 
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      setPortalTarget(null);
+      return undefined;
+    }
+    const grid =
+      (buttonRef.current?.closest('.strata-grid') as HTMLElement | null) ??
+      document.body;
+    setPortalTarget(grid);
+    const updatePosition = () => {
+      const btn = buttonRef.current?.getBoundingClientRect();
+      const base = grid.getBoundingClientRect();
+      if (!btn) return;
+      setPopoverPos({
+        top: btn.bottom - base.top + 4,
+        left: btn.left - base.left,
+      });
+    };
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return undefined;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
-      if (
-        target instanceof Node &&
-        wrapperRef.current?.contains(target)
-      ) {
-        return;
+      if (target instanceof Node) {
+        if (wrapperRef.current?.contains(target)) return;
+        if (popoverRef.current?.contains(target)) return;
       }
       setOpen(false);
     };
@@ -184,16 +218,15 @@ export function FilterPopover<TRow>({
       ref={wrapperRef}
       onBlurCapture={(event) => {
         const nextFocus = event.relatedTarget;
-        if (
-          nextFocus instanceof Node &&
-          wrapperRef.current?.contains(nextFocus)
-        ) {
-          return;
+        if (nextFocus instanceof Node) {
+          if (wrapperRef.current?.contains(nextFocus)) return;
+          if (popoverRef.current?.contains(nextFocus)) return;
         }
         setOpen(false);
       }}
     >
       <button
+        ref={buttonRef}
         type="button"
         className="strata-filter-button"
         aria-label={`Filter ${column.id}`}
@@ -205,11 +238,13 @@ export function FilterPopover<TRow>({
       >
         {hasValue ? <StrataIcon name="filter-active" /> : <StrataIcon name="filter" />}
       </button>
-      {open && (
+      {open && popoverPos && portalTarget && createPortal(
         <div
+          ref={popoverRef}
           className="strata-filter-popover"
           role="dialog"
           aria-label="Column filter"
+          style={{ top: popoverPos.top, left: popoverPos.left }}
           onClick={(event) => event.stopPropagation()}
         >
           {resolved.type === 'select' ? (
@@ -237,7 +272,8 @@ export function FilterPopover<TRow>({
               onClear={clearFilter}
             />
           )}
-        </div>
+        </div>,
+        portalTarget,
       )}
     </span>
   );

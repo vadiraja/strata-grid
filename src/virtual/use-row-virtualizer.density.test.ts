@@ -10,14 +10,18 @@ const mockGetVirtualItems = vi.fn(() => [
   { index: 5, start: 160, size: 32, end: 192, key: 5, lane: 0 },
 ]);
 const mockGetTotalSize = vi.fn(() => 3200);
+const capturedOptions: { estimateSize?: (index: number) => number } = {};
 
 vi.mock('@tanstack/react-virtual', () => ({
-  useVirtualizer: () => ({
-    getVirtualItems: mockGetVirtualItems,
-    getTotalSize: mockGetTotalSize,
-    measure: mockMeasure,
-    scrollToIndex: mockScrollToIndex,
-  }),
+  useVirtualizer: (opts: { estimateSize: (index: number) => number }) => {
+    capturedOptions.estimateSize = opts.estimateSize;
+    return {
+      getVirtualItems: mockGetVirtualItems,
+      getTotalSize: mockGetTotalSize,
+      measure: mockMeasure,
+      scrollToIndex: mockScrollToIndex,
+    };
+  },
 }));
 
 describe('useRowVirtualizer — density changes', () => {
@@ -74,6 +78,21 @@ describe('useRowVirtualizer — density changes', () => {
     );
 
     expect(mockMeasure).not.toHaveBeenCalled();
+  });
+
+  it('estimateSize matches density: compact=24, standard=32, comfortable=44 (regression for #9)', () => {
+    const cases: Array<[Density, number]> = [
+      ['compact', 24],
+      ['standard', 32],
+      ['comfortable', 44],
+    ];
+    for (const [density, expected] of cases) {
+      capturedOptions.estimateSize = undefined;
+      renderHook(() =>
+        useRowVirtualizer({ scrollRef, count: 10, density }),
+      );
+      expect(capturedOptions.estimateSize?.(0)).toBe(expected);
+    }
   });
 
   it('does NOT trigger remeasure when re-rendered with the same density', () => {

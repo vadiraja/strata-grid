@@ -4,6 +4,22 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- `density="comfortable"` (and `"compact"`) caused row overlap in tree and flat grids:
+  the virtualizer's `estimateSize` was hardcoded to 32px while cell heights followed
+  `--strata-row-height` (24 / 32 / 44 by density). The virtualizer now resolves the
+  row height from the `density` prop so cell layout and virtual row slots stay in
+  sync. ([#9](https://github.com/vadiraja/strata-grid/issues/9))
+- Column filter popover was clipped by the header row's `overflow: hidden` and
+  could appear behind adjacent cells. The popover is now rendered through a portal
+  anchored to the grid root with computed top/left, repositions on scroll/resize,
+  and sits above sibling cells (`z-index: 1000`).
+- Sort indicator arrow rendered at the default icon size (16px) and visually
+  dominated header text. It now renders at 12px to match the header type scale.
+
 ## [0.2.0-alpha.0] — 2026-05-23
 
 ### Added
