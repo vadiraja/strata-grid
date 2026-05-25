@@ -75,7 +75,7 @@ export function serializeRangeAsTsv(grid: string[][]): string {
     .map((row) =>
       row
         .map((cell) =>
-          /[\t\n"]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell,
+          /[\t\n\r"]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell,
         )
         .join('\t'),
     )

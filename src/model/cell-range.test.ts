@@ -25,6 +25,11 @@ describe('normalizeRange', () => {
     const r = normalizeRange(cell(0, 'd'), cell(0, 'b'), ['a', 'b', 'c', 'd', 'e']);
     expect(r?.columnIds).toEqual(['b', 'c', 'd']);
   });
+
+  it('returns null when a columnId is not in visibleColumnIds', () => {
+    expect(normalizeRange(cell(0, 'z'), cell(1, 'a'), ['a', 'b'])).toBeNull();
+    expect(normalizeRange(cell(0, 'a'), cell(1, 'z'), ['a', 'b'])).toBeNull();
+  });
 });
 
 describe('rangeContainsCell', () => {
@@ -71,5 +76,8 @@ describe('serializeRangeAsTsv', () => {
   it('escapes tab and newline characters by quoting the cell', () => {
     expect(serializeRangeAsTsv([['has\ttab', 'plain']])).toBe('"has\ttab"\tplain');
     expect(serializeRangeAsTsv([['has\nnewline']])).toBe('"has\nnewline"');
+  });
+  it('escapes carriage returns by quoting the cell', () => {
+    expect(serializeRangeAsTsv([['has\rcr']])).toBe('"has\rcr"');
   });
 });
