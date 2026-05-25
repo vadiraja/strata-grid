@@ -209,3 +209,24 @@ export type { ThemeOverrides, ComposedTheme } from './themes/create-theme';
 
 // Print mode
 export { usePrintMode } from './virtual/use-print-mode';
+
+// ===== 0.3.0: interactive cell UX =====
+export { StatusBar } from './components/StatusBar';
+export type { StatusBarProps, StatusBarSegment } from './components/StatusBar';
+export { ContextMenu } from './components/ContextMenu';
+export type { ContextMenuProps, ContextMenuItem } from './components/ContextMenu';
+export type {
+  CellRange,
+  CellPosition,
+  RangeStats,
+} from './model/cell-range';
+export type {
+  CellPositionRef,
+  CellRangeRef,
+  FillRangeEvent,
+  ContextMenuTarget,
+  ContextMenuContext,
+  ContextMenuConfig,
+  StatusBarConfig,
+  StatusBarContext,
+} from './model/types';
