@@ -387,6 +387,13 @@ export function GridRoot<TRow>({
     return () => window.removeEventListener('pointerup', handleUp);
   }, [isDraggingRange]);
 
+  const handleAutoSize = useCallback(
+    (columnId: string, width: number) => {
+      table.setColumnSizing((prev) => ({ ...prev, [columnId]: width }));
+    },
+    [table],
+  );
+
   useFlexColumnSizing({
     table,
     columns,
@@ -592,6 +599,8 @@ export function GridRoot<TRow>({
         scrollLeft={effectiveScrollLeft}
         selection={selection}
         showRowEditControls={showRowEditControls}
+        gridRootEl={gridRootRef.current}
+        onAutoSize={handleAutoSize}
       />
       <BodyViewport
         table={table}
