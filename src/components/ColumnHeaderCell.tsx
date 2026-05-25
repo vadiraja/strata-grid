@@ -15,6 +15,8 @@ export interface ColumnHeaderCellProps<TRow> {
   gridRootEl?: HTMLElement | null;
   /** Called after autosize measurement to commit the new column width. */
   onAutoSize?: (columnId: string, width: number) => void;
+  /** Called on right-click of the header cell. */
+  onHeaderContextMenu?: (columnId: string, event: React.MouseEvent) => void;
 }
 
 /** Renders a column header cell with sort, filter, resize, and reorder. */
@@ -23,6 +25,7 @@ export function ColumnHeaderCell<TRow>({
   onColumnReorder,
   gridRootEl,
   onAutoSize,
+  onHeaderContextMenu,
 }: ColumnHeaderCellProps<TRow>) {
   const strataColumn = header.column.columnDef.meta!.strataColumn;
   const width = header.getSize();
@@ -96,6 +99,7 @@ export function ColumnHeaderCell<TRow>({
       role="columnheader"
       style={{ width, flex: `0 0 ${width}px` }}
       onClick={handleClick}
+      onContextMenu={(e) => onHeaderContextMenu?.(header.column.id, e)}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}

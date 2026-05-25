@@ -9,6 +9,7 @@ import type {
   AggregationConfig,
   ColumnDef,
   ColumnManagementConfig,
+  ContextMenuConfig,
   FillRangeEvent,
   ColumnOrderState,
   ColumnPinningState,
@@ -191,6 +192,8 @@ export interface DataGridProps<TRow> {
   rowActions?: RowActionsConfig<TRow>;
   /** Called when the user completes a fill-handle drag. */
   onFillRange?: (event: FillRangeEvent) => void;
+  /** Enables the right-click context menu. `true` = defaults; pass a config to override. */
+  contextMenu?: ContextMenuConfig<TRow> | true;
 }
 
 function collectAllRowIds<TRow>(
@@ -333,6 +336,7 @@ export function DataGrid<TRow>({
   onPaginationChange,
   rowActions,
   onFillRange,
+  contextMenu,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -736,6 +740,7 @@ export function DataGrid<TRow>({
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
       onFillRange={onFillRange}
+      contextMenu={contextMenu}
       rootRef={gridRootRef}
     />
   );

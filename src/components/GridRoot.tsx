@@ -7,7 +7,19 @@ import {
   useState,
 } from 'react';
 import type { Table } from '@tanstack/react-table';
-import type { AggregationConfig, ColumnDef, Density, FillRangeEvent, GridTheme } from '../model/types';
+import type {
+  AggregationConfig,
+  ColumnDef,
+  ContextMenuConfig,
+  ContextMenuContext,
+  ContextMenuTarget,
+  Density,
+  FillRangeEvent,
+  GridTheme,
+} from '../model/types';
+import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { useContextMenu } from '../model/use-context-menu';
+import { measureColumnWidth } from '../model/auto-size-column';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useCellRange } from '../model/use-cell-range';
@@ -65,6 +77,8 @@ export interface GridRootProps<TRow> {
   lazyTree?: UseLazyTreeReturn<TRow>;
   /** Called when the user completes a fill-handle drag. */
   onFillRange?: (event: FillRangeEvent) => void;
+  /** Enables the right-click context menu. `true` = defaults; pass a config to override. */
+  contextMenu?: ContextMenuConfig<TRow> | true;
   /** External ref forwarded to the grid root element. */
   rootRef?: React.Ref<HTMLDivElement | null>;
 }
@@ -87,6 +101,7 @@ export function GridRoot<TRow>({
   enableTreeKeyboard,
   lazyTree,
   onFillRange,
+  contextMenu,
   rootRef,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
@@ -161,6 +176,7 @@ export function GridRoot<TRow>({
     [rows],
   );
   const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
+  const contextMenuState = useContextMenu();
   const [isDraggingRange, setIsDraggingRange] = useState(false);
   const [focusCellRect, setFocusCellRect] = useState<{
     left: number;
@@ -397,6 +413,103 @@ export function GridRoot<TRow>({
     [table],
   );
 
+  const onRangeCopyForMenu = useCallback(() => {
+    const range = cellRange.range;
+    if (!range) return;
+    const grid: string[][] = [];
+    for (let r = range.top; r <= range.bottom; r++) {
+      const row = rows[r];
+      if (!row) continue;
+      grid.push(
+        range.columnIds.map((id) => {
+          const c = row.getVisibleCells().find((cell) => cell.column.id === id);
+          const v = c?.getValue();
+          return v == null ? '' : String(v);
+        }),
+      );
+    }
+    navigator.clipboard?.writeText?.(serializeRangeAsTsv(grid));
+  }, [cellRange.range, rows]);
+
+  const buildDefaultItems = useCallback(
+    (target: ContextMenuTarget): ContextMenuItem[] => {
+      const out: ContextMenuItem[] = [];
+      if (target.kind === 'cell' || target.kind === 'row') {
+        out.push({ id: 'copy', label: 'Copy', onSelect: () => onRangeCopyForMenu() });
+      }
+      if (target.kind === 'header' && target.columnId) {
+        const colId = target.columnId;
+        out.push({
+          id: 'autosize',
+          label: 'Auto-size column',
+          onSelect: () => {
+            const root = gridRootRef.current;
+            if (root) handleAutoSize(colId, measureColumnWidth(root, colId));
+          },
+        });
+        out.push({
+          id: 'autosize-all',
+          label: 'Auto-size all columns',
+          onSelect: () => {
+            const root = gridRootRef.current;
+            if (!root) return;
+            for (const col of table.getVisibleLeafColumns()) {
+              handleAutoSize(col.id, measureColumnWidth(root, col.id));
+            }
+          },
+        });
+        out.push({ id: 'divider-1', label: '', divider: true, onSelect: () => {} });
+        out.push({ id: 'pin-left', label: 'Pin left', onSelect: () => table.getColumn(colId)?.pin('left') });
+        out.push({ id: 'pin-right', label: 'Pin right', onSelect: () => table.getColumn(colId)?.pin('right') });
+        out.push({ id: 'unpin', label: 'Unpin', onSelect: () => table.getColumn(colId)?.pin(false) });
+      }
+      if (treeColumnId && (target.kind === 'cell' || target.kind === 'row')) {
+        out.push({ id: 'divider-2', label: '', divider: true, onSelect: () => {} });
+        out.push({ id: 'expand-all', label: 'Expand all', onSelect: () => table.toggleAllRowsExpanded(true) });
+        out.push({ id: 'collapse-all', label: 'Collapse all', onSelect: () => table.toggleAllRowsExpanded(false) });
+      }
+      return out;
+    },
+    [handleAutoSize, onRangeCopyForMenu, table, treeColumnId],
+  );
+
+  const resolveItems = useCallback(
+    (
+      config: ContextMenuConfig<TRow> | true | undefined,
+      _target: ContextMenuTarget,
+      defaults: ContextMenuItem[],
+      ctx: ContextMenuContext<TRow>,
+    ): ContextMenuItem[] => {
+      if (config === undefined) return [];
+      if (config === true) return defaults;
+      const fromConsumer = config.getItems ? config.getItems(ctx) : config.items;
+      if (fromConsumer === undefined) return defaults;
+      const mode = config.mode ?? 'replace';
+      if (mode === 'append') return [...defaults, ...fromConsumer];
+      if (mode === 'prepend') return [...fromConsumer, ...defaults];
+      return fromConsumer;
+    },
+    [],
+  );
+
+  const handleCellContextMenu = useCallback(
+    (rowId: string, columnId: string, event: React.MouseEvent) => {
+      if (!contextMenu) return;
+      event.preventDefault();
+      contextMenuState.openAt({ kind: 'cell', rowId, columnId }, { x: event.clientX, y: event.clientY });
+    },
+    [contextMenu, contextMenuState],
+  );
+
+  const handleHeaderContextMenu = useCallback(
+    (columnId: string, event: React.MouseEvent) => {
+      if (!contextMenu) return;
+      event.preventDefault();
+      contextMenuState.openAt({ kind: 'header', columnId }, { x: event.clientX, y: event.clientY });
+    },
+    [contextMenu, contextMenuState],
+  );
+
   useFlexColumnSizing({
     table,
     columns,
@@ -609,6 +722,7 @@ export function GridRoot<TRow>({
         showRowEditControls={showRowEditControls}
         gridRootEl={gridRootRef.current}
         onAutoSize={handleAutoSize}
+        onHeaderContextMenu={handleHeaderContextMenu}
       />
       <BodyViewport
         table={table}
@@ -638,6 +752,7 @@ export function GridRoot<TRow>({
         onCellPointerEnter={handleCellPointerEnter}
         focusCellRect={focusCellRect}
         onFillStart={handleFillStart}
+        onCellContextMenu={handleCellContextMenu}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
@@ -699,6 +814,28 @@ export function GridRoot<TRow>({
             ? aggregation.footerAggregates
             : undefined
         }
+      />
+      <ContextMenu
+        open={contextMenuState.open}
+        position={contextMenuState.position}
+        items={
+          contextMenuState.target
+            ? resolveItems(
+                contextMenu,
+                contextMenuState.target,
+                buildDefaultItems(contextMenuState.target),
+                {
+                  target: contextMenuState.target,
+                  selectedRowIds: selection ? [...selection.selectedIds] : [],
+                  range: cellRange.range,
+                  row: contextMenuState.target.rowId
+                    ? rows.find((r) => r.id === contextMenuState.target!.rowId)?.original
+                    : undefined,
+                },
+              )
+            : []
+        }
+        onClose={contextMenuState.close}
       />
     </div>
   );
