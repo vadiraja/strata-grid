@@ -1578,3 +1578,15 @@
 .strata-context-menu-item:hover:not(:disabled) { background: var(--strata-bg-hover); }
 .strata-context-menu-item:disabled { color: var(--strata-text-muted); cursor: not-allowed; }
 .strata-context-menu-divider { height: 1px; background: var(--strata-border); margin: 4px 0; }
+
+.strata-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 12px;
+  border-top: var(--strata-border-width) solid var(--strata-border);
+  background: var(--strata-bg-subtle);
+  font-size: var(--strata-font-size-small);
+  color: var(--strata-text-muted);
+}
+.strata-status-bar-segment-end { margin-left: auto; }
