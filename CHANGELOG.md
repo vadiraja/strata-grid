@@ -6,6 +6,22 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 
 ## Unreleased
 
+### Added
+
+- **Range selection** — pointer-drag, Shift+Arrow extension, and `Ctrl/Cmd+C` to copy
+  the rectangular range as TSV. Range is independent from row selection.
+- **Fill handle** — a small drag affordance at the bottom-right of the focus cell.
+  Drag to extend the range; release emits `onFillRange({ source, targets, value })`.
+- **Status bar** — opt-in `statusBar` prop. Default segments include row count,
+  selected count, and range Sum/Avg/Min/Max/Count. Consumers can append, prepend,
+  or replace segments via `StatusBarConfig`.
+- **Context menu** — opt-in `contextMenu` prop. Defaults include Copy, Auto-size,
+  Pin left/right, Unpin, Expand/Collapse all. Override per target via
+  `ContextMenuConfig.getItems(ctx)`.
+- **Auto-size column** — double-clicking a column's resize handle fits the column
+  to the widest visible cell. Programmatic via `GridApi.autoSizeColumn(id)` and
+  `autoSizeAllColumns()`.
+
 ### Fixed
 
 - `density="comfortable"` (and `"compact"`) caused row overlap in tree and flat grids:
