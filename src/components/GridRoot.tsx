@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 import type { Table } from '@tanstack/react-table';
-import type { AggregationConfig, ColumnDef, Density, GridTheme } from '../model/types';
+import type { AggregationConfig, ColumnDef, Density, FillRangeEvent, GridTheme } from '../model/types';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useCellRange } from '../model/use-cell-range';
@@ -63,6 +63,8 @@ export interface GridRootProps<TRow> {
   enableTreeKeyboard?: boolean;
   /** Lazy tree loading state. Present when the data source supports lazy children. */
   lazyTree?: UseLazyTreeReturn<TRow>;
+  /** Called when the user completes a fill-handle drag. */
+  onFillRange?: (event: FillRangeEvent) => void;
 }
 
 /** The grid layout shell. */
@@ -82,6 +84,7 @@ export function GridRoot<TRow>({
   dragDrop,
   enableTreeKeyboard,
   lazyTree,
+  onFillRange,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -156,6 +159,93 @@ export function GridRoot<TRow>({
   );
   const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
   const [isDraggingRange, setIsDraggingRange] = useState(false);
+  const [focusCellRect, setFocusCellRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    const f = cellRange.focus;
+    if (!f) {
+      setFocusCellRect(null);
+      return;
+    }
+    const rowId = rows[f.rowIndex]?.id;
+    if (!rowId) {
+      setFocusCellRect(null);
+      return;
+    }
+    const root = gridRootRef.current;
+    if (!root) return;
+    const cell = root.querySelector<HTMLElement>(
+      `[data-strata-cell-row="${CSS.escape(rowId)}"][data-strata-cell-column="${CSS.escape(f.columnId)}"]`,
+    );
+    if (!cell) {
+      setFocusCellRect(null);
+      return;
+    }
+    const cellRect = cell.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    setFocusCellRect({
+      left: cellRect.left - rootRect.left,
+      top: cellRect.top - rootRect.top,
+      width: cellRect.width,
+      height: cellRect.height,
+    });
+  }, [cellRange.focus, rows]);
+
+  const handleFillStart = useCallback(
+    (startEvent: React.PointerEvent) => {
+      startEvent.preventDefault();
+      const startFocus = cellRange.focus;
+      if (!startFocus) return;
+      let lastTarget: { rowIndex: number; columnId: string } | null = null;
+
+      const handleMove = (event: PointerEvent) => {
+        const el = document.elementFromPoint(event.clientX, event.clientY);
+        const cell = el?.closest('[data-strata-cell-row]') as HTMLElement | null;
+        if (!cell) return;
+        const rowId = cell.dataset.strataCellRow;
+        const columnId = cell.dataset.strataCellColumn;
+        if (!rowId || !columnId) return;
+        if (!rangeColumnIds.includes(columnId)) return;
+        const rowIndex = rows.findIndex((r) => r.id === rowId);
+        if (rowIndex === -1) return;
+        lastTarget = { rowIndex, columnId };
+        cellRange.extendTo({ rowIndex, columnId });
+      };
+      const handleUp = () => {
+        window.removeEventListener('pointermove', handleMove);
+        window.removeEventListener('pointerup', handleUp);
+        if (!lastTarget || !onFillRange) return;
+        const sourceRow = rows[startFocus.rowIndex];
+        const sourceCell = sourceRow
+          ?.getVisibleCells()
+          .find((c) => c.column.id === startFocus.columnId);
+        const newRange = cellRange.range;
+        if (!newRange || !sourceRow || !sourceCell) return;
+        const targets: { rowId: string; columnId: string }[] = [];
+        for (let r = newRange.top; r <= newRange.bottom; r++) {
+          const row = rows[r];
+          if (!row) continue;
+          for (const cid of newRange.columnIds) {
+            if (row.id === sourceRow.id && cid === startFocus.columnId) continue;
+            targets.push({ rowId: row.id, columnId: cid });
+          }
+        }
+        onFillRange({
+          source: { rowId: sourceRow.id, columnId: startFocus.columnId },
+          targets,
+          value: sourceCell.getValue(),
+        });
+      };
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
+    },
+    [cellRange, onFillRange, rangeColumnIds, rows],
+  );
 
   const keyboard = useGridKeyboard({
     rowCount: rows.length,
@@ -529,6 +619,8 @@ export function GridRoot<TRow>({
         }}
         onCellPointerDown={handleCellPointerDown}
         onCellPointerEnter={handleCellPointerEnter}
+        focusCellRect={focusCellRect}
+        onFillStart={handleFillStart}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}

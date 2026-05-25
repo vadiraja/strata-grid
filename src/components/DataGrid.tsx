@@ -9,6 +9,7 @@ import type {
   AggregationConfig,
   ColumnDef,
   ColumnManagementConfig,
+  FillRangeEvent,
   ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
@@ -188,6 +189,8 @@ export interface DataGridProps<TRow> {
    * to pin it to the left.
    */
   rowActions?: RowActionsConfig<TRow>;
+  /** Called when the user completes a fill-handle drag. */
+  onFillRange?: (event: FillRangeEvent) => void;
 }
 
 function collectAllRowIds<TRow>(
@@ -329,6 +332,7 @@ export function DataGrid<TRow>({
   onRowEditEnd,
   onPaginationChange,
   rowActions,
+  onFillRange,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -729,6 +733,7 @@ export function DataGrid<TRow>({
         treeEditingEnabled && treeEditor?.enableIndent !== false
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
+      onFillRange={onFillRange}
     />
   );
 

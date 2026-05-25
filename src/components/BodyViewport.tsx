@@ -3,6 +3,7 @@ import type { Table, Row, Cell } from '@tanstack/react-table';
 import type { UseSelectionReturn } from '../model/use-selection';
 import { GridRow } from './GridRow';
 import { GroupRow } from './GroupRow';
+import { FillHandle } from './FillHandle';
 import { RowEditControls } from './editors';
 import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import { usePrintMode } from '../virtual/use-print-mode';
@@ -53,6 +54,10 @@ export interface BodyViewportProps<TRow> {
   onCellPointerEnter?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
   /** Called on cell contextmenu to open the cell context menu. */
   onCellContextMenu?: (rowId: string, columnId: string, event: React.MouseEvent) => void;
+  /** Bounding rect of the focus cell relative to the body viewport, or null. */
+  focusCellRect?: { left: number; top: number; width: number; height: number } | null;
+  /** Called when the fill handle begins a drag-fill. */
+  onFillStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 /** Renders the grid body as a 3-pane virtualized scroll area. */
@@ -76,6 +81,8 @@ export function BodyViewport<TRow>({
   onCellPointerDown,
   onCellPointerEnter,
   onCellContextMenu,
+  focusCellRect,
+  onFillStart,
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const printing = usePrintMode();
@@ -307,6 +314,10 @@ export function BodyViewport<TRow>({
             </div>
           );
         })}
+        <FillHandle
+          anchorRect={focusCellRect ?? null}
+          onFillStart={onFillStart ?? (() => {})}
+        />
       </div>
     </div>
   );
