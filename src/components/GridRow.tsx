@@ -40,6 +40,11 @@ export interface GridRowProps<TRow> {
   dragDrop?: UseDragDropReturn;
   /** Called when a cell in this row is selected/focused by pointer. */
   onCellFocus?: (columnId: string) => void;
+  isInRange?: (columnId: string) => boolean;
+  isRangeFocus?: (columnId: string) => boolean;
+  onCellPointerDown?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
+  onCellPointerEnter?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
+  onCellContextMenu?: (rowId: string, columnId: string, event: React.MouseEvent) => void;
   /** Called before this row is expanded. */
   onRowExpand?: () => void;
 }
@@ -58,6 +63,11 @@ export function GridRow<TRow>({
   extendedQuantities,
   dragDrop,
   onCellFocus,
+  isInRange,
+  isRangeFocus,
+  onCellPointerDown,
+  onCellPointerEnter,
+  onCellContextMenu,
   onRowExpand,
 }: GridRowProps<TRow>) {
   const isTree = treeColumnId !== undefined;
@@ -171,6 +181,11 @@ export function GridRow<TRow>({
             rollupTargetColumnId={rollupTargetColumnId}
             extendedQuantities={extendedQuantities}
             onFocusCell={() => onCellFocus?.(cell.column.id)}
+            isInRange={isInRange?.(cell.column.id)}
+            isRangeFocus={isRangeFocus?.(cell.column.id)}
+            onRangePointerDown={(event) => onCellPointerDown?.(row.id, cell.column.id, event)}
+            onRangePointerEnter={(event) => onCellPointerEnter?.(row.id, cell.column.id, event)}
+            onCellContextMenu={(event) => onCellContextMenu?.(row.id, cell.column.id, event)}
           />
         );
       })}
