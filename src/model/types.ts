@@ -409,3 +409,30 @@ export interface FillRangeEvent {
   /** The value being copied (post-read). */
   value: unknown;
 }
+
+export interface ContextMenuTarget {
+  kind: 'cell' | 'row' | 'header';
+  rowId?: string;
+  columnId?: string;
+}
+
+export interface ContextMenuContext<TRow> {
+  target: ContextMenuTarget;
+  /** All currently selected row ids. */
+  selectedRowIds: string[];
+  /** The current cell range, if any. */
+  range: import('./cell-range').CellRange | null;
+  /** The row data, if `kind === 'cell' | 'row'`. */
+  row?: TRow;
+}
+
+export interface ContextMenuConfig<TRow> {
+  /** Replace the default item list outright. */
+  items?: import('../components/ContextMenu').ContextMenuItem[];
+  /** Compute items dynamically from the target context. Replaces defaults. */
+  getItems?: (
+    ctx: ContextMenuContext<TRow>,
+  ) => import('../components/ContextMenu').ContextMenuItem[];
+  /** Merge consumer items with the default item list. Defaults to `'replace'`. */
+  mode?: 'replace' | 'append' | 'prepend';
+}
