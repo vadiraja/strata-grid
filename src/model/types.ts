@@ -387,3 +387,25 @@ declare module '@tanstack/react-table' {
     strataColumn: ColumnDef<TData>;
   }
 }
+
+// ===== 0.3.0: interactive cell UX =====
+
+export interface CellPositionRef {
+  rowId: string;
+  columnId: string;
+}
+
+export interface CellRangeRef {
+  topRowId: string;
+  bottomRowId: string;
+  columnIds: string[];
+}
+
+export interface FillRangeEvent {
+  /** Source cell whose value is being repeated. */
+  source: CellPositionRef;
+  /** Target cells (excludes the source). */
+  targets: CellPositionRef[];
+  /** The value being copied (post-read). */
+  value: unknown;
+}
