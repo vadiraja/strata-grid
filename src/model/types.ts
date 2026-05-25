@@ -437,13 +437,12 @@ export interface ContextMenuConfig<TRow> {
   mode?: 'replace' | 'append' | 'prepend';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface StatusBarContext<TRow> {
   totalRowCount: number;
   selectedRowCount: number;
   range: import('./cell-range').CellRange | null;
   rangeStats: import('./cell-range').RangeStats;
-  /** Marker to retain TRow generic for future row-aware extensions. */
-  __row?: TRow;
 }
 
 export interface StatusBarConfig<TRow> {
