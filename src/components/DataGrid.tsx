@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ExpandedState,
   SortingState as TanstackSortingState,
@@ -339,6 +339,7 @@ export function DataGrid<TRow>({
   const osScheme = useColorScheme();
   const resolved = resolveTheme(theme, osScheme);
 
+  const gridRootRef = useRef<HTMLDivElement | null>(null);
   const internalDataSource = useMemo(() => new InMemoryDataSource(data), [data]);
   const dataSource: DataSource<TRow> = externalDataSource ?? internalDataSource;
 
@@ -679,6 +680,7 @@ export function DataGrid<TRow>({
     exportViewState,
     importViewState,
     whereUsed,
+    getGridRootEl: () => gridRootRef.current,
   });
 
   useEffect(() => {
@@ -734,6 +736,7 @@ export function DataGrid<TRow>({
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
       onFillRange={onFillRange}
+      rootRef={gridRootRef}
     />
   );
 

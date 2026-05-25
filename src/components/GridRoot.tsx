@@ -65,6 +65,8 @@ export interface GridRootProps<TRow> {
   lazyTree?: UseLazyTreeReturn<TRow>;
   /** Called when the user completes a fill-handle drag. */
   onFillRange?: (event: FillRangeEvent) => void;
+  /** External ref forwarded to the grid root element. */
+  rootRef?: React.Ref<HTMLDivElement | null>;
 }
 
 /** The grid layout shell. */
@@ -85,6 +87,7 @@ export function GridRoot<TRow>({
   enableTreeKeyboard,
   lazyTree,
   onFillRange,
+  rootRef,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -578,7 +581,12 @@ export function GridRoot<TRow>({
 
   return (
     <div
-      ref={gridRootRef}
+      ref={(node) => {
+        gridRootRef.current = node;
+        if (typeof rootRef === 'function') rootRef(node);
+        else if (rootRef && 'current' in rootRef)
+          (rootRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       className={rootClassName}
       role={treeColumnId === undefined ? 'grid' : 'treegrid'}
       data-theme={dataTheme}
