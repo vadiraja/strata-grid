@@ -11,6 +11,7 @@ import type { AggregationConfig, ColumnDef, Density, GridTheme } from '../model/
 import type { UseSelectionReturn } from '../model/use-selection';
 import { useGridKeyboard } from '../model/use-grid-keyboard';
 import { useCellRange } from '../model/use-cell-range';
+import { serializeRangeAsTsv } from '../model/cell-range';
 import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
@@ -136,6 +137,26 @@ export function GridRoot<TRow>({
     [editCtx, keyboardColumnIds, rows],
   );
 
+  const rangeColumnIds = useMemo(
+    () =>
+      table
+        .getVisibleLeafColumns()
+        .map((column) => column.id)
+        .filter((id) => id !== treeColumnId && id !== '__selection__'),
+    [table, treeColumnId],
+  );
+  const valuesAt = useCallback(
+    (rowIndex: number, columnId: string): unknown => {
+      const row = rows[rowIndex];
+      if (!row) return null;
+      const c = row.getVisibleCells().find((cell) => cell.column.id === columnId);
+      return c?.getValue();
+    },
+    [rows],
+  );
+  const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
+  const [isDraggingRange, setIsDraggingRange] = useState(false);
+
   const keyboard = useGridKeyboard({
     rowCount: rows.length,
     colCount: keyboardColumnIds.length,
@@ -198,27 +219,52 @@ export function GridRoot<TRow>({
             if (row) treeEditor.deleteNode(row.id);
           }
         : undefined,
-  });
-
-  const rangeColumnIds = useMemo(
-    () =>
-      table
-        .getVisibleLeafColumns()
-        .map((column) => column.id)
-        .filter((id) => id !== treeColumnId && id !== '__selection__'),
-    [table, treeColumnId],
-  );
-  const valuesAt = useCallback(
-    (rowIndex: number, columnId: string): unknown => {
-      const row = rows[rowIndex];
-      if (!row) return null;
-      const c = row.getVisibleCells().find((cell) => cell.column.id === columnId);
-      return c?.getValue();
+    onRangeExtend: (deltaRow, deltaCol) => {
+      const currentFocus = cellRange.focus;
+      let startRow: number;
+      let startColIdx: number;
+      if (currentFocus) {
+        startRow = currentFocus.rowIndex;
+        startColIdx = rangeColumnIds.indexOf(currentFocus.columnId);
+      } else {
+        startRow = keyboard.activeCell[0];
+        const activeColId = keyboardColumnIds[keyboard.activeCell[1]];
+        startColIdx = rangeColumnIds.indexOf(activeColId);
+      }
+      if (startColIdx === -1) return;
+      const nextRow = Math.max(0, Math.min(rows.length - 1, startRow + deltaRow));
+      const nextColIdx = Math.max(
+        0,
+        Math.min(rangeColumnIds.length - 1, startColIdx + deltaCol),
+      );
+      const nextColId = rangeColumnIds[nextColIdx];
+      if (!cellRange.anchor) {
+        cellRange.beginRange({
+          rowIndex: startRow,
+          columnId: rangeColumnIds[startColIdx],
+        });
+      }
+      cellRange.extendTo({ rowIndex: nextRow, columnId: nextColId });
     },
-    [rows],
-  );
-  const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
-  const [isDraggingRange, setIsDraggingRange] = useState(false);
+    onRangeCopy: () => {
+      const range = cellRange.range;
+      if (!range) return;
+      const grid: string[][] = [];
+      for (let r = range.top; r <= range.bottom; r++) {
+        const row = rows[r];
+        if (!row) continue;
+        grid.push(
+          range.columnIds.map((id) => {
+            const c = row.getVisibleCells().find((cell) => cell.column.id === id);
+            const v = c?.getValue();
+            return v == null ? '' : String(v);
+          }),
+        );
+      }
+      const tsv = serializeRangeAsTsv(grid);
+      navigator.clipboard?.writeText?.(tsv);
+    },
+  });
 
   const handleCellPointerDown = useCallback(
     (rowId: string, columnId: string, event: React.PointerEvent) => {

@@ -36,6 +36,10 @@ export interface GridKeyboardOptions {
   onReorderUp?: (rowIndex: number) => void;
   onReorderDown?: (rowIndex: number) => void;
   onDelete?: (rowIndex: number) => void;
+  /** Shift+Arrow extends the range by (deltaRow, deltaCol). */
+  onRangeExtend?: (deltaRow: number, deltaCol: number) => void;
+  /** Ctrl/Cmd+C copies the active range. Only fires when not editing. */
+  onRangeCopy?: () => void;
 }
 
 export interface GridKeyboardReturn {
@@ -66,6 +70,8 @@ export function useGridKeyboard({
   onReorderUp,
   onReorderDown,
   onDelete,
+  onRangeExtend,
+  onRangeCopy,
 }: GridKeyboardOptions): GridKeyboardReturn {
   const clamp = useCallback(
     (rowIndex: number, colIndex: number): GridCellPosition => [
@@ -97,14 +103,24 @@ export function useGridKeyboard({
 
       switch (event.key) {
         case 'ArrowRight':
-          setActiveCellRaw((current) => clamp(current[0], current[1] + 1));
+          if (event.shiftKey && onRangeExtend) {
+            onRangeExtend(0, 1);
+          } else {
+            setActiveCellRaw((current) => clamp(current[0], current[1] + 1));
+          }
           break;
         case 'ArrowLeft':
-          setActiveCellRaw((current) => clamp(current[0], current[1] - 1));
+          if (event.shiftKey && onRangeExtend) {
+            onRangeExtend(0, -1);
+          } else {
+            setActiveCellRaw((current) => clamp(current[0], current[1] - 1));
+          }
           break;
         case 'ArrowDown':
           if (ctrl && event.shiftKey && onReorderDown) {
             onReorderDown(activeCell[0]);
+          } else if (event.shiftKey && onRangeExtend) {
+            onRangeExtend(1, 0);
           } else {
             setActiveCellRaw((current) => clamp(current[0] + 1, current[1]));
           }
@@ -112,6 +128,8 @@ export function useGridKeyboard({
         case 'ArrowUp':
           if (ctrl && event.shiftKey && onReorderUp) {
             onReorderUp(activeCell[0]);
+          } else if (event.shiftKey && onRangeExtend) {
+            onRangeExtend(-1, 0);
           } else {
             setActiveCellRaw((current) => clamp(current[0] - 1, current[1]));
           }
@@ -151,6 +169,14 @@ export function useGridKeyboard({
             handled = false;
           }
           break;
+        case 'c':
+        case 'C':
+          if (ctrl && onRangeCopy) {
+            onRangeCopy();
+          } else {
+            handled = false;
+          }
+          break;
         case 'Delete':
         case 'Backspace':
           if (onDelete) {
@@ -181,6 +207,8 @@ export function useGridKeyboard({
       onReorderUp,
       onReorderDown,
       onDelete,
+      onRangeExtend,
+      onRangeCopy,
       rowCount,
     ],
   );
