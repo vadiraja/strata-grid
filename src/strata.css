@@ -1237,15 +1237,37 @@
   align-items: center;
 }
 
+.strata-quick-search-icon {
+  position: absolute;
+  left: 8px;
+  width: 14px;
+  height: 14px;
+  color: var(--strata-text-muted, #9ca3af);
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.strata-quick-search:focus-within .strata-quick-search-icon {
+  color: var(--strata-accent, #2563eb);
+}
+
 .strata-quick-search-input {
   width: 200px;
-  padding: 6px 28px 6px 10px;
+  padding: 6px 28px 6px 28px;
   border: 1px solid var(--strata-border, #d1d5db);
   border-radius: 4px;
   background: var(--strata-bg, #fff);
   color: var(--strata-text, #111827);
   font-size: var(--strata-font-size-small, 0.8rem);
   font-family: var(--strata-font-family);
+}
+
+.strata-quick-search-input::-webkit-search-decoration,
+.strata-quick-search-input::-webkit-search-cancel-button,
+.strata-quick-search-input::-webkit-search-results-button,
+.strata-quick-search-input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .strata-quick-search-input:focus {

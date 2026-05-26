@@ -126,6 +126,7 @@ export function GridRoot<TRow>({
   const [scrollbarMetrics, setScrollbarMetrics] = useState({
     clientWidth: 0,
     scrollWidth: 0,
+    trackWidth: 0,
   });
   const editCtx = useEditContext();
 
@@ -637,6 +638,7 @@ export function GridRoot<TRow>({
     setScrollbarMetrics({
       clientWidth: scroller.clientWidth,
       scrollWidth: scroller.scrollWidth,
+      trackWidth: scrollbarTrackRef.current?.clientWidth ?? scroller.clientWidth,
     });
     setScrollLeft(clampedScrollLeft);
   }, []);
@@ -649,6 +651,9 @@ export function GridRoot<TRow>({
 
     const observer = new ResizeObserver(updateScrollbarMetrics);
     observer.observe(scroller);
+    if (scrollbarTrackRef.current) {
+      observer.observe(scrollbarTrackRef.current);
+    }
 
     return () => {
       observer.disconnect();
@@ -663,18 +668,22 @@ export function GridRoot<TRow>({
     scrollbarMetrics.clientWidth > 0
       ? Math.min(Math.max(scrollLeft, 0), maxScrollLeft)
       : scrollLeft;
+  const trackWidth =
+    scrollbarMetrics.trackWidth > 0
+      ? scrollbarMetrics.trackWidth
+      : scrollbarMetrics.clientWidth;
   const thumbWidth =
-    scrollbarMetrics.clientWidth > 0 && scrollbarMetrics.scrollWidth > 0
+    trackWidth > 0 && scrollbarMetrics.scrollWidth > 0
       ? Math.max(
           28,
           (scrollbarMetrics.clientWidth / scrollbarMetrics.scrollWidth) *
-            scrollbarMetrics.clientWidth,
+            trackWidth,
         )
       : 0;
   const thumbLeft =
     maxScrollLeft > 0
       ? (effectiveScrollLeft / maxScrollLeft) *
-        Math.max(0, scrollbarMetrics.clientWidth - thumbWidth)
+        Math.max(0, trackWidth - thumbWidth)
       : 0;
 
   useLayoutEffect(() => {
@@ -841,6 +850,10 @@ export function GridRoot<TRow>({
             ref={scrollbarTrackRef}
             className="strata-horizontal-scrollbar-track"
             onPointerDown={handleTrackPointerDown}
+            style={{
+              opacity: maxScrollLeft > 0 ? 1 : 0,
+              pointerEvents: maxScrollLeft > 0 ? 'auto' : 'none',
+            }}
           >
             <div
               className="strata-horizontal-scrollbar-thumb"
