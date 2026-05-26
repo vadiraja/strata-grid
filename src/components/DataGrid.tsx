@@ -29,7 +29,7 @@ import type {
   ViewState,
 } from '../model/types';
 import type { CellRange, RangeStats } from '../model/cell-range';
-import { StatusBar, type StatusBarSegment } from './StatusBar';
+import type { StatusBarSegment } from './StatusBar';
 import { RowActionsCell } from './RowActionsCell';
 import { useColorScheme } from '../themes/use-color-scheme';
 import { resolveTheme } from '../themes/resolve-theme';
@@ -732,73 +732,6 @@ export function DataGrid<TRow>({
     };
   }, [apiRef, gridApi]);
 
-  const gridContent = (
-    <GridRoot
-      table={table}
-      height={height}
-      treeColumnId={treeColumnId}
-      selection={selection ? selectionState : undefined}
-      theme={resolved.dataTheme ?? resolved.className}
-      density={density}
-      striped={striped}
-      transitions={transitions}
-      columns={leafColumns}
-      aggregation={aggregation}
-      bomRollup={bomRollup}
-      treeEditor={treeEditingEnabled ? treeEditorApi : undefined}
-      dragDrop={
-        treeEditingEnabled && treeEditor?.enableDrag !== false
-          ? dragDrop
-          : undefined
-      }
-      enableTreeKeyboard={
-        treeEditingEnabled && treeEditor?.enableIndent !== false
-      }
-      lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
-      onFillRange={onFillRange}
-      contextMenu={contextMenu}
-      rootRef={gridRootRef}
-      onStatusContextChange={(ctx) => {
-        setStatusRange(ctx.range);
-        setStatusRangeStats(ctx.rangeStats);
-      }}
-    />
-  );
-
-  // Show loading overlay only for server-side reloads (not initial load)
-  const showOverlay = !!(hasServerCapabilities && serverDS.isLoading);
-
-  const paginationBar = pagination && 'loadPage' in dataSource && dataSource.loadPage ? (
-    <PaginationBar
-      currentPage={paginationState.currentPage}
-      totalPages={paginationState.totalPages}
-      pageSize={paginationState.pageSize}
-      totalCount={paginationState.totalCount}
-      pageSizeOptions={pagination.pageSizeOptions}
-      mode={pagination.mode}
-      hasMore={paginationState.hasMore}
-      isLoading={paginationState.isLoading}
-      onPageChange={paginationState.goToPage}
-      onPageSizeChange={paginationState.setPageSize}
-      onLoadMore={paginationState.loadMore}
-    />
-  ) : null;
-
-  const wrappedContent = hasServerCapabilities ? (
-    <div style={{ position: 'relative' }}>
-      {gridContent}
-      {paginationBar}
-      <LoadingOverlay visible={showOverlay} />
-    </div>
-  ) : paginationBar ? (
-    <div>
-      {gridContent}
-      {paginationBar}
-    </div>
-  ) : (
-    gridContent
-  );
-
   const totalRowCount = effectiveRows.length;
   const selectedRowCount = selection ? selectionState.selectedIds.size : 0;
   const statusContext: StatusBarContext<TRow> = {
@@ -839,21 +772,82 @@ export function DataGrid<TRow>({
             ...(statusBarConfig.segments ?? []),
           ];
 
-  const finalContent = (
-    <>
-      {wrappedContent}
-      {statusBarSegments && <StatusBar segments={statusBarSegments} />}
-    </>
+  const gridContent = (
+    <GridRoot
+      table={table}
+      height={height}
+      treeColumnId={treeColumnId}
+      selection={selection ? selectionState : undefined}
+      theme={resolved.dataTheme ?? resolved.className}
+      density={density}
+      striped={striped}
+      transitions={transitions}
+      columns={leafColumns}
+      aggregation={aggregation}
+      bomRollup={bomRollup}
+      treeEditor={treeEditingEnabled ? treeEditorApi : undefined}
+      dragDrop={
+        treeEditingEnabled && treeEditor?.enableDrag !== false
+          ? dragDrop
+          : undefined
+      }
+      enableTreeKeyboard={
+        treeEditingEnabled && treeEditor?.enableIndent !== false
+      }
+      lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
+      onFillRange={onFillRange}
+      contextMenu={contextMenu}
+      rootRef={gridRootRef}
+      onStatusContextChange={(ctx) => {
+        setStatusRange(ctx.range);
+        setStatusRangeStats(ctx.rangeStats);
+      }}
+      statusBarSegments={statusBarSegments}
+    />
+  );
+
+  // Show loading overlay only for server-side reloads (not initial load)
+  const showOverlay = !!(hasServerCapabilities && serverDS.isLoading);
+
+  const paginationBar = pagination && 'loadPage' in dataSource && dataSource.loadPage ? (
+    <PaginationBar
+      currentPage={paginationState.currentPage}
+      totalPages={paginationState.totalPages}
+      pageSize={paginationState.pageSize}
+      totalCount={paginationState.totalCount}
+      pageSizeOptions={pagination.pageSizeOptions}
+      mode={pagination.mode}
+      hasMore={paginationState.hasMore}
+      isLoading={paginationState.isLoading}
+      onPageChange={paginationState.goToPage}
+      onPageSizeChange={paginationState.setPageSize}
+      onLoadMore={paginationState.loadMore}
+    />
+  ) : null;
+
+  const wrappedContent = hasServerCapabilities ? (
+    <div style={{ position: 'relative' }}>
+      {gridContent}
+      {paginationBar}
+      <LoadingOverlay visible={showOverlay} />
+    </div>
+  ) : paginationBar ? (
+    <div>
+      {gridContent}
+      {paginationBar}
+    </div>
+  ) : (
+    gridContent
   );
 
   return (
     <IconProvider overrides={icons ?? {}}>
       {editable ? (
         <EditContext.Provider value={{ editState, config: editable }}>
-          {finalContent}
+          {wrappedContent}
         </EditContext.Provider>
       ) : (
-        finalContent
+        wrappedContent
       )}
     </IconProvider>
   );

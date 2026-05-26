@@ -32,6 +32,7 @@ import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
+import { StatusBar } from './StatusBar';
 import { useColumnVirtualizer } from '../virtual/use-column-virtualizer';
 import { useFlexColumnSizing } from '../model/use-flex-column-sizing';
 import {
@@ -86,6 +87,8 @@ export interface GridRootProps<TRow> {
     range: import('../model/cell-range').CellRange | null;
     rangeStats: import('../model/cell-range').RangeStats;
   }) => void;
+  /** Status-bar segments to render inside the grid chrome, below the footer. */
+  statusBarSegments?: import('./StatusBar').StatusBarSegment[] | null;
 }
 
 /** The grid layout shell. */
@@ -109,6 +112,7 @@ export function GridRoot<TRow>({
   contextMenu,
   rootRef,
   onStatusContextChange,
+  statusBarSegments,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -829,6 +833,7 @@ export function GridRoot<TRow>({
             : undefined
         }
       />
+      {statusBarSegments && <StatusBar segments={statusBarSegments} />}
       <ContextMenu
         open={contextMenuState.open}
         position={contextMenuState.position}
