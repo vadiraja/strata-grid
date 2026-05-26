@@ -214,11 +214,16 @@ export function GridRoot<TRow>({
       setFocusCellRect(null);
       return;
     }
+    const sizer = root.querySelector<HTMLElement>('.strata-body-sizer');
+    if (!sizer) {
+      setFocusCellRect(null);
+      return;
+    }
     const cellRect = cell.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
+    const sizerRect = sizer.getBoundingClientRect();
     setFocusCellRect({
-      left: cellRect.left - rootRect.left,
-      top: cellRect.top - rootRect.top,
+      left: cellRect.left - sizerRect.left,
+      top: cellRect.top - sizerRect.top,
       width: cellRect.width,
       height: cellRect.height,
     });
