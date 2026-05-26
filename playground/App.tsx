@@ -430,7 +430,19 @@ const employeeColumns: ColumnDef<Employee>[] = [
   { id: 'department', header: 'Department', accessor: 'department', width: 140, filter: 'text' },
   { id: 'title', header: 'Title', accessor: 'title', width: 180, filter: 'text' },
   { id: 'location', header: 'Location', accessor: 'location', width: 140, filter: 'text' },
-  { id: 'salary', header: 'Salary', accessor: (row) => row.salary, cell: ({ value }) => `$${(value as number).toLocaleString()}`, width: 120, sortable: true, filter: 'number' },
+  {
+    id: 'salary',
+    header: 'Salary',
+    accessor: (row) => row.salary,
+    cell: ({ value }) => `$${(value as number).toLocaleString()}`,
+    cellClass: ({ value }) =>
+      (value as number) >= 180000 ? 'demo-cell-highlight' : undefined,
+    cellStyle: ({ value }) =>
+      (value as number) >= 200000 ? { fontWeight: 600 } : undefined,
+    width: 120,
+    sortable: true,
+    filter: 'number',
+  },
   { id: 'startDate', header: 'Start Date', accessor: 'startDate', width: 120, sortable: true },
   { id: 'email', header: 'Email', accessor: 'email', width: 200 },
 ];
@@ -925,6 +937,7 @@ function LiveUpdatesExample({ theme }: { theme: GridTheme }) {
         columns={wideColumns}
         height={460}
         theme={theme}
+        flashOnUpdate
       />
     </div>
   );
@@ -1195,6 +1208,8 @@ export function App() {
   }
 
   return (
+    <>
+      <style>{`.demo-cell-highlight { background: rgba(46, 160, 67, 0.12); }`}</style>
     <div
       style={{
         minHeight: '100vh',
@@ -1286,5 +1301,6 @@ export function App() {
         setSelectionInfo(selectedIds.length > 0 ? selectedIds.join(', ') : 'None');
       }, editableTasks, editableBom, handleBomEditEnd, handleTaskEditEnd, handleTaskRowEditEnd)}
     </div>
+    </>
   );
 }

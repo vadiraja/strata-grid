@@ -20,6 +20,7 @@ gets its own design spec → implementation plan → build cycle.
 | **M8** | Documentation & developer experience (partial — docs site, API ref, contributing, publish-prep) | Implemented (Astro Starlight site at `docs-site/`, TypeDoc-generated API reference, 10 guides covering M1–M5, 4-page contributing guide, `CONTRIBUTING.md`, npm publish metadata + publint gate, CI + GitHub Pages deploy workflows). Storybook, playground embeds, cookbook, migration guides, changelog automation deferred. Spec: [`docs/superpowers/specs/2026-05-23-m8-docs-and-npm-prep-design.md`](superpowers/specs/2026-05-23-m8-docs-and-npm-prep-design.md) |
 | M9 | Performance & benchmarks | Backlog |
 | M10 | Framework adapters | Backlog |
+| **0.4.0** | Live data polish (cell flash on update, conditional `cellClass` / `cellStyle`) | Implemented |
 | **0.3.0** | Interactive cell UX (range selection + fill handle, status bar, context menu, auto-size) | Implemented |
 | **0.2.0** | Server-driven list ergonomics — typed column filters, `onPaginationChange`, `rowActions` | Implemented (driven by ProtoTrack spike feedback, [issue #8](https://github.com/vadiraja/strata-grid/issues/8)). Plan: [`docs/superpowers/plans/2026-05-23-strata-0.2.0-server-driven-list-ergonomics.md`](superpowers/plans/2026-05-23-strata-0.2.0-server-driven-list-ergonomics.md) |
 

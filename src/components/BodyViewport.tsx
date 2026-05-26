@@ -54,6 +54,8 @@ export interface BodyViewportProps<TRow> {
   onCellPointerEnter?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
   /** Called on cell contextmenu to open the cell context menu. */
   onCellContextMenu?: (rowId: string, columnId: string, event: React.MouseEvent) => void;
+  /** Returns true when a (row, columnId) cell is currently flashing. */
+  isFlashing?: (rowId: string, columnId: string) => boolean;
   /** Bounding rect of the focus cell relative to the body viewport, or null. */
   focusCellRect?: { left: number; top: number; width: number; height: number } | null;
   /** Called when the fill handle begins a drag-fill. */
@@ -81,6 +83,7 @@ export function BodyViewport<TRow>({
   onCellPointerDown,
   onCellPointerEnter,
   onCellContextMenu,
+  isFlashing,
   focusCellRect,
   onFillStart,
 }: BodyViewportProps<TRow>) {
@@ -234,6 +237,7 @@ export function BodyViewport<TRow>({
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                     isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
                     isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    isFlashing={(columnId) => isFlashing?.(row.id, columnId) ?? false}
                     onCellPointerDown={onCellPointerDown}
                     onCellPointerEnter={onCellPointerEnter}
                     onCellContextMenu={onCellContextMenu}
@@ -271,6 +275,7 @@ export function BodyViewport<TRow>({
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                     isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
                     isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    isFlashing={(columnId) => isFlashing?.(row.id, columnId) ?? false}
                     onCellPointerDown={onCellPointerDown}
                     onCellPointerEnter={onCellPointerEnter}
                     onCellContextMenu={onCellContextMenu}
@@ -305,6 +310,7 @@ export function BodyViewport<TRow>({
                     onRowExpand={() => lazyTree?.loadNodeChildren(row.id)}
                     isInRange={(columnId) => isInRange?.(row.id, columnId) ?? false}
                     isRangeFocus={(columnId) => isRangeFocus?.(row.id, columnId) ?? false}
+                    isFlashing={(columnId) => isFlashing?.(row.id, columnId) ?? false}
                     onCellPointerDown={onCellPointerDown}
                     onCellPointerEnter={onCellPointerEnter}
                     onCellContextMenu={onCellContextMenu}

@@ -45,6 +45,8 @@ export interface GridRowProps<TRow> {
   onCellPointerDown?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
   onCellPointerEnter?: (rowId: string, columnId: string, event: React.PointerEvent) => void;
   onCellContextMenu?: (rowId: string, columnId: string, event: React.MouseEvent) => void;
+  /** Returns whether a (row, columnId) cell is currently flashing. */
+  isFlashing?: (columnId: string) => boolean;
   /** Called before this row is expanded. */
   onRowExpand?: () => void;
 }
@@ -68,6 +70,7 @@ export function GridRow<TRow>({
   onCellPointerDown,
   onCellPointerEnter,
   onCellContextMenu,
+  isFlashing,
   onRowExpand,
 }: GridRowProps<TRow>) {
   const isTree = treeColumnId !== undefined;
@@ -183,6 +186,7 @@ export function GridRow<TRow>({
             onFocusCell={() => onCellFocus?.(cell.column.id)}
             isInRange={isInRange?.(cell.column.id)}
             isRangeFocus={isRangeFocus?.(cell.column.id)}
+            isFlashing={isFlashing?.(cell.column.id) ?? false}
             onRangePointerDown={(event) => onCellPointerDown?.(row.id, cell.column.id, event)}
             onRangePointerEnter={(event) => onCellPointerEnter?.(row.id, cell.column.id, event)}
             onCellContextMenu={(event) => onCellContextMenu?.(row.id, cell.column.id, event)}

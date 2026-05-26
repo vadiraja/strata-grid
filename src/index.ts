@@ -230,3 +230,10 @@ export type {
   StatusBarConfig,
   StatusBarContext,
 } from './model/types';
+
+// ===== 0.4.0: live data polish =====
+export type { FlashConfig } from './model/types';
+export type {
+  RowValueSnapshot,
+  ChangedCell,
+} from './model/cell-flash';

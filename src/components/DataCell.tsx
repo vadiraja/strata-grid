@@ -26,6 +26,8 @@ export interface DataCellProps<TRow> {
   onRangePointerEnter?: (event: React.PointerEvent) => void;
   /** Called on right-click. */
   onCellContextMenu?: (event: React.MouseEvent) => void;
+  /** Whether this cell is currently in its post-update flash window. */
+  isFlashing?: boolean;
 }
 
 /** Renders a single ordinary body cell, delegating content rendering. */
@@ -41,10 +43,23 @@ export function DataCell<TRow>({
   onRangePointerDown,
   onRangePointerEnter,
   onCellContextMenu,
+  isFlashing,
 }: DataCellProps<TRow>) {
   const width = cell.column.getSize();
   const editCtx = useEditContext();
   const colDef = cell.column.columnDef.meta?.strataColumn;
+  const userClass = colDef?.cellClass?.({
+    row: cell.row.original,
+    value: cell.getValue(),
+    column: colDef,
+    rowIndex: cell.row.index,
+  });
+  const userStyle = colDef?.cellStyle?.({
+    row: cell.row.original,
+    value: cell.getValue(),
+    column: colDef,
+    rowIndex: cell.row.index,
+  });
 
   const isEditable = Boolean(
     editCtx &&
@@ -108,6 +123,8 @@ export function DataCell<TRow>({
     isRowEditing && 'strata-cell-row-editing',
     isInRange && 'strata-cell-in-range',
     isRangeFocus && 'strata-cell-range-focus',
+    isFlashing && 'strata-cell-flash',
+    userClass,
   ]
     .filter(Boolean)
     .join(' ');
@@ -119,7 +136,7 @@ export function DataCell<TRow>({
       id={isFocused ? focusId : undefined}
       data-strata-cell-row={cell.row.id}
       data-strata-cell-column={cell.column.id}
-      style={{ width, flex: `0 0 ${width}px` }}
+      style={{ width, flex: `0 0 ${width}px`, ...userStyle }}
       onClick={handleClick}
       onDoubleClick={editCtx ? handleDoubleClick : undefined}
       onPointerDown={onRangePointerDown}

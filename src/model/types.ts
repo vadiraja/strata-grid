@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { RowData } from '@tanstack/react-table';
 import type { ExportOptions } from '../export/types';
 import type { ColumnFilterConfig, FilterExpression } from '../data/types';
@@ -122,6 +122,18 @@ export interface ColumnDef<TRow> {
   aggregate?: AggregateType | ((values: unknown[]) => unknown);
   /** Optional formatter for group/footer aggregate values. */
   aggregateFormatter?: (value: unknown) => ReactNode;
+  /**
+   * Returns a class string to apply to this column's cells, computed per-row.
+   * Receives the same `CellContext<TRow>` as `cell`. Return `undefined` for
+   * the default class set.
+   */
+  cellClass?: (ctx: CellContext<TRow>) => string | undefined;
+  /**
+   * Returns inline style overrides for this column's cells, computed per-row.
+   * Receives the same `CellContext<TRow>` as `cell`. Return `undefined` for
+   * the default styles.
+   */
+  cellStyle?: (ctx: CellContext<TRow>) => CSSProperties | undefined;
 }
 
 /**
@@ -455,3 +467,12 @@ export interface StatusBarConfig<TRow> {
     ctx: StatusBarContext<TRow>,
   ) => import('../components/StatusBar').StatusBarSegment[];
 }
+
+// ===== 0.4.0: live data polish =====
+
+export type FlashConfig =
+  | boolean
+  | {
+      /** Flash duration in milliseconds. Default 1500. */
+      durationMs?: number;
+    };
