@@ -1,6 +1,6 @@
 {
   "name": "strata-grid",
-  "version": "0.4.0-alpha.0",
+  "version": "0.4.0",
   "description": "Open-source React tree data grid with virtualization, lazy hierarchies, and theming for enterprise applications.",
   "license": "Apache-2.0",
   "author": "Vadiraja <vadiraja@vadionline.com>",

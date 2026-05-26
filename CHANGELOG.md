@@ -4,7 +4,7 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0-alpha.0] — 2026-05-26
+## [0.4.0] — 2026-05-26
 
 ### Added
 
@@ -17,6 +17,27 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
   `ColumnDef.cellStyle(ctx)` for per-row class / inline style overrides
   without writing a full custom `cell` renderer. Both receive the same
   `CellContext<TRow>` as `cell`.
+
+### Fixed
+
+- **Quick search icon** — `.strata-quick-search-icon` had no CSS so the
+  search glyph rendered at the default 16px icon size with no positioning.
+  It is now absolutely positioned inside the input (14px, muted, tints
+  accent on focus), and the input grows its left padding to match. Native
+  WebKit search decorations are suppressed so the icon is the only
+  affordance.
+- **Empty horizontal scrollbar track** — when the grid had no horizontal
+  overflow the track still rendered as a gray pill at the bottom of the
+  grid. The track and thumb now both fade out (and stop receiving pointer
+  events) when `maxScrollLeft <= 0`.
+- **Scrollbar thumb math at max scroll** — the thumb's width and travel
+  were computed against the scroller's `clientWidth`, but the track sits
+  inside an 8px inset on each side. At `scrollLeft === maxScrollLeft` the
+  thumb either overshot or appeared to stop short of the track's right
+  edge, which users read as "there's more data hidden to the right." The
+  track's actual width is now observed via `ResizeObserver` and used as the
+  basis for thumb sizing and translation, so the thumb is flush with both
+  track edges at the scroll extremes.
 
 ## [0.3.0-alpha.0] — 2026-05-26
 
