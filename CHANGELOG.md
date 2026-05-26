@@ -4,6 +4,20 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Cell flash on update** — opt-in `flashOnUpdate` prop. Diffs row values
+  between renders and briefly applies `.strata-cell-flash` to cells whose
+  value changed. Pairs naturally with `useLiveUpdates` but works with any
+  source of row changes. Configurable duration; respects
+  `prefers-reduced-motion`.
+- **Conditional cell styling** — `ColumnDef.cellClass(ctx)` and
+  `ColumnDef.cellStyle(ctx)` for per-row class / inline style overrides
+  without writing a full custom `cell` renderer. Both receive the same
+  `CellContext<TRow>` as `cell`.
+
 ## [0.3.0-alpha.0] — 2026-05-26
 
 ### Added
