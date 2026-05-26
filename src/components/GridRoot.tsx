@@ -820,19 +820,22 @@ export function GridRoot<TRow>({
           />
         )}
       </div>
-      <GridFooter
-        rowCount={rows.length}
-        aggregateColumns={
-          aggregationConfig?.showFooterAggregates
-            ? aggregation.aggregateColumns
-            : undefined
-        }
-        aggregates={
-          aggregationConfig?.showFooterAggregates
-            ? aggregation.footerAggregates
-            : undefined
-        }
-      />
+      {(!statusBarSegments || aggregationConfig?.showFooterAggregates) && (
+        <GridFooter
+          rowCount={rows.length}
+          showRowCount={!statusBarSegments}
+          aggregateColumns={
+            aggregationConfig?.showFooterAggregates
+              ? aggregation.aggregateColumns
+              : undefined
+          }
+          aggregates={
+            aggregationConfig?.showFooterAggregates
+              ? aggregation.footerAggregates
+              : undefined
+          }
+        />
+      )}
       {statusBarSegments && <StatusBar segments={statusBarSegments} />}
       <ContextMenu
         open={contextMenuState.open}

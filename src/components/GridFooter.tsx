@@ -5,6 +5,8 @@ import { AggregateCell } from './AggregateCell';
 export interface GridFooterProps<TRow> {
   /** Number of rows currently shown. */
   rowCount: number;
+  /** Whether to render the row-count label. Defaults to true. */
+  showRowCount?: boolean;
   /** Columns with aggregate values to render in the footer. */
   aggregateColumns?: ColumnDef<TRow>[];
   /** Footer aggregate values keyed by column id. */
@@ -14,14 +16,17 @@ export interface GridFooterProps<TRow> {
 /** Renders the grid footer with the current row count. */
 export function GridFooter<TRow>({
   rowCount,
+  showRowCount = true,
   aggregateColumns = [],
   aggregates,
 }: GridFooterProps<TRow>) {
   return (
     <div className="strata-footer">
-      <span className="strata-footer-count">
-        {rowCount} {rowCount === 1 ? 'row' : 'rows'}
-      </span>
+      {showRowCount && (
+        <span className="strata-footer-count">
+          {rowCount} {rowCount === 1 ? 'row' : 'rows'}
+        </span>
+      )}
       {aggregateColumns.length > 0 && aggregates && (
         <span className="strata-footer-aggregates">
           {aggregateColumns.map((column) => (
