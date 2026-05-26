@@ -1590,3 +1590,19 @@
   color: var(--strata-text-muted);
 }
 .strata-status-bar-segment-end { margin-left: auto; }
+
+@keyframes strata-cell-flash-fade {
+  0%   { background-color: var(--strata-flash-bg, color-mix(in srgb, var(--strata-accent) 30%, transparent)); }
+  100% { background-color: transparent; }
+}
+
+.strata-cell-flash {
+  animation: strata-cell-flash-fade var(--strata-flash-duration, 1500ms) ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strata-cell-flash {
+    animation: none;
+    background-color: var(--strata-flash-bg, color-mix(in srgb, var(--strata-accent) 30%, transparent));
+  }
+}
