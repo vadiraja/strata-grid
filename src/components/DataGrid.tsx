@@ -200,6 +200,11 @@ export interface DataGridProps<TRow> {
   contextMenu?: ContextMenuConfig<TRow> | true;
   /** Renders an opt-in status bar below the grid body. */
   statusBar?: StatusBarConfig<TRow> | true;
+  /**
+   * Briefly highlights cells whose values change between renders. Useful with
+   * `useLiveUpdates` or any other source of streaming row updates. Default off.
+   */
+  flashOnUpdate?: import('../model/types').FlashConfig;
 }
 
 function collectAllRowIds<TRow>(
@@ -344,6 +349,7 @@ export function DataGrid<TRow>({
   onFillRange,
   contextMenu,
   statusBar,
+  flashOnUpdate,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -803,6 +809,7 @@ export function DataGrid<TRow>({
         setStatusRangeStats(ctx.rangeStats);
       }}
       statusBarSegments={statusBarSegments}
+      flashConfig={flashOnUpdate}
     />
   );
 

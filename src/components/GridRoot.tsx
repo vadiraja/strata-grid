@@ -26,6 +26,7 @@ import { useCellRange } from '../model/use-cell-range';
 import { serializeRangeAsTsv } from '../model/cell-range';
 import { useEditContext } from '../model/edit-context';
 import { useAggregation } from '../model/use-aggregation';
+import { useCellFlash } from '../model/use-cell-flash';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import type { UseDragDropReturn, UseTreeEditorReturn } from '../tree-editor';
 import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
@@ -89,6 +90,8 @@ export interface GridRootProps<TRow> {
   }) => void;
   /** Status-bar segments to render inside the grid chrome, below the footer. */
   statusBarSegments?: import('./StatusBar').StatusBarSegment[] | null;
+  /** Flash config; falsy disables tracking. */
+  flashConfig?: import('../model/types').FlashConfig;
 }
 
 /** The grid layout shell. */
@@ -113,6 +116,7 @@ export function GridRoot<TRow>({
   rootRef,
   onStatusContextChange,
   statusBarSegments,
+  flashConfig,
 }: GridRootProps<TRow>) {
   const gridRootRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -190,6 +194,44 @@ export function GridRoot<TRow>({
     onStatusContextChange?.({ range: cellRange.range, rangeStats: cellRange.stats });
   }, [cellRange.range, cellRange.stats, onStatusContextChange]);
   const contextMenuState = useContextMenu();
+
+  const flashEnabled = !!flashConfig;
+  const flashDurationMs =
+    typeof flashConfig === 'object' && flashConfig?.durationMs
+      ? flashConfig.durationMs
+      : undefined;
+  const flashColumnIds = useMemo(
+    () =>
+      table
+        .getVisibleLeafColumns()
+        .map((column) => column.id)
+        .filter((id) => id !== '__selection__' && id !== treeColumnId),
+    [table, treeColumnId],
+  );
+  const flashRowOriginals = useMemo(() => rows.map((r) => r.original), [rows]);
+  const getFlashRowId = useCallback(
+    (rowOriginal: TRow): string => {
+      const row = rows.find((r) => r.original === rowOriginal);
+      return row?.id ?? '';
+    },
+    [rows],
+  );
+  const getFlashCellValue = useCallback(
+    (rowOriginal: TRow, columnId: string): unknown => {
+      const row = rows.find((r) => r.original === rowOriginal);
+      const cell = row?.getVisibleCells().find((c) => c.column.id === columnId);
+      return cell?.getValue();
+    },
+    [rows],
+  );
+  const cellFlash = useCellFlash<TRow>({
+    rows: flashRowOriginals,
+    getRowId: getFlashRowId,
+    columnIds: flashColumnIds,
+    getCellValue: getFlashCellValue,
+    enabled: flashEnabled,
+    durationMs: flashDurationMs,
+  });
   const [isDraggingRange, setIsDraggingRange] = useState(false);
   const [focusCellRect, setFocusCellRect] = useState<{
     left: number;
@@ -771,6 +813,7 @@ export function GridRoot<TRow>({
         focusCellRect={focusCellRect}
         onFillStart={handleFillStart}
         onCellContextMenu={handleCellContextMenu}
+        isFlashing={(rowId, columnId) => cellFlash.isFlashing(rowId, columnId)}
       />
       <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
