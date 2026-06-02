@@ -576,6 +576,8 @@ export function GridRoot<TRow>({
     columns,
     containerRef: gridRootRef,
     columnSizing: table.getState().columnSizing,
+    hasSelectionColumn: !!selection,
+    hasRowEditControls: editCtx?.config.mode === 'row',
   });
 
   const columnVirtualizer = useColumnVirtualizer({

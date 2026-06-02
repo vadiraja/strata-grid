@@ -4,6 +4,25 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] — 2026-06-01
+
+### Fixed
+
+- **Phantom horizontal scrollbar with selection / row editing** — flex column
+  widths were distributed across the full grid-root width, ignoring the space
+  reserved by the selection checkbox column and the row-edit actions pane. The
+  flex columns therefore overshot the available track by exactly that reserved
+  width (e.g. 40px for selection), producing a horizontal scrollbar with
+  nothing to scroll. Flex sizing now subtracts the reserved chrome width so
+  columns fit the track exactly.
+- **Phantom horizontal scrollbar after a column resize** — the column
+  virtualizer caches its measurements and only recomputes them when its
+  size-cache version changes, not when a column width changes. After a flex
+  column grew or shrank (e.g. on window resize), the body kept a stale trailing
+  spacer sized to the old total, overflowing past the header by exactly the
+  width delta. The virtualizer now re-measures whenever the column widths
+  change, so the body track always matches the rendered columns.
+
 ## [0.4.0] — 2026-05-26
 
 ### Added

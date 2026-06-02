@@ -974,9 +974,19 @@ function exampleGrid(
           key="flat"
           data={employees}
           columns={employeeColumns}
-          defaultSort={[{ columnId: 'name', direction: 'asc' }]}
           height={500}
           theme={theme}
+          selection={{ mode: 'multi' }}
+          rowActions={{ width: 92, actions: [{ id: 'view', label: 'View', onClick: () => {} }] }}
+          defaultViewState={{
+            columnOrder: [...employeeColumns.map((c) => c.id), '__strata_actions__'],
+            columnSizing: {},
+            columnPinning: { left: ['name'], right: [] },
+            sorting: [{ columnId: 'name', direction: 'asc' }],
+            filters: [],
+            expandedIds: [],
+            hiddenColumns: [],
+          }}
           statusBar
           contextMenu
           onFillRange={(event) => {
