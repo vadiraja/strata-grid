@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import type { CellEditDelta, CellsChangeEvent } from './types';
 
 export interface ActiveCell {
   rowId: string;
@@ -39,6 +40,8 @@ export interface EditStateOptions {
     changes: Record<string, { oldValue: unknown; newValue: unknown }>;
     committed: boolean;
   }) => void;
+  /** Called once when multiple cells are written in a single batch via applyCellEdits. */
+  onCellsChange?: (event: CellsChangeEvent) => void;
 }
 
 export interface EditStateReturn {
@@ -60,8 +63,8 @@ export interface EditStateReturn {
   commitEdit: () => void;
   /** Commit the current row edit. */
   commitRowEdit: () => void;
-  /** Discard the current edit. */
-  discardEdit: () => void;
+  /** Discard the current edit. Pass `{ silent: true }` to suppress the onCellEditEnd callback. */
+  discardEdit: (opts?: { silent?: boolean }) => void;
   /** Discard the current row edit. */
   discardRowEdit: () => void;
   /** Update validation state for a cell in the active row. */
@@ -74,6 +77,15 @@ export interface EditStateReturn {
   getDirtyState: () => Map<string, Map<string, unknown>>;
   /** Clear all dirty state (e.g., after a successful save). */
   clearDirtyState: () => void;
+  /**
+   * Write N columns of one row into dirty state in a single batch and fire
+   * onCellsChange once. Use this for lookup cascade, fill, and undo writes.
+   */
+  applyCellEdits: (
+    rowId: string,
+    edits: CellEditDelta[],
+    opts?: { source?: CellsChangeEvent['source'] },
+  ) => void;
 }
 
 /**
@@ -90,7 +102,7 @@ export interface EditStateReturn {
  * sees fresh state. The state copy drives rendering.
  */
 export function useEditState(options: EditStateOptions): EditStateReturn {
-  const { onCellEditStart, onCellEditEnd, onRowEditStart, onRowEditEnd } = options;
+  const { onCellEditStart, onCellEditEnd, onRowEditStart, onRowEditEnd, onCellsChange } = options;
 
   const [activeCell, setActiveCellState] = useState<ActiveCell | null>(null);
   const [activeRow, setActiveRowState] = useState<ActiveRow | null>(null);
@@ -258,17 +270,19 @@ export function useEditState(options: EditStateOptions): EditStateReturn {
     commitCurrentRow();
   }, [commitCurrentRow]);
 
-  const discardEdit = useCallback(() => {
+  const discardEdit = useCallback((opts?: { silent?: boolean }) => {
     const cell = activeCellRef.current;
     if (!cell) return;
 
-    onCellEditEnd?.({
-      rowId: cell.rowId,
-      columnId: cell.columnId,
-      value: cell.originalValue,
-      newValue: cell.pendingValue,
-      committed: false,
-    });
+    if (!opts?.silent) {
+      onCellEditEnd?.({
+        rowId: cell.rowId,
+        columnId: cell.columnId,
+        value: cell.originalValue,
+        newValue: cell.pendingValue,
+        committed: false,
+      });
+    }
 
     setActive(null);
   }, [onCellEditEnd, setActive]);
@@ -314,6 +328,25 @@ export function useEditState(options: EditStateOptions): EditStateReturn {
     setDirtyState(new Map());
   }, []);
 
+  const applyCellEdits = useCallback(
+    (
+      rowId: string,
+      edits: CellEditDelta[],
+      opts?: { source?: CellsChangeEvent['source'] },
+    ) => {
+      if (edits.length === 0) return;
+      setDirtyState((prev) => {
+        const next = new Map(prev);
+        const rowMap = new Map(next.get(rowId) ?? []);
+        for (const e of edits) rowMap.set(e.columnId, e.newValue);
+        next.set(rowId, rowMap);
+        return next;
+      });
+      onCellsChange?.({ rowId, edits, source: opts?.source ?? 'edit' });
+    },
+    [onCellsChange],
+  );
+
   return {
     activeCell,
     activeRow,
@@ -331,5 +364,6 @@ export function useEditState(options: EditStateOptions): EditStateReturn {
     isDirty,
     getDirtyState,
     clearDirtyState,
+    applyCellEdits,
   };
 }

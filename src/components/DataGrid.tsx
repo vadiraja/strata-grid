@@ -7,10 +7,12 @@ import type {
   AdvancedFilterConfig,
   AnyColumn,
   AggregationConfig,
+  CellsChangeEvent,
   ColumnDef,
   ColumnManagementConfig,
   ContextMenuConfig,
   FillRangeEvent,
+  LookupConfig,
   ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
@@ -52,7 +54,10 @@ import { buildDataQuery } from '../data/build-data-query';
 import { useExport } from '../export/use-export';
 import type { ExportOptions } from '../export/types';
 import { useEditState } from '../model/use-edit-state';
+import { useCellHistory } from '../model/use-cell-history';
+import { applyCellEditsToRows, type CellWriter } from '../model/apply-cell-edits-to-rows';
 import { EditContext } from '../model/edit-context';
+import { defaultGetValue } from './editors/LookupEditor';
 import { useBomRollup } from '../model/use-bom-rollup';
 import { useGridApi, type GridApi } from '../model/use-grid-api';
 import {
@@ -64,6 +69,7 @@ import {
   type TreeState,
 } from '../tree-editor';
 import { GridRoot } from './GridRoot';
+import { EditToggle } from './EditToggle';
 import { LoadingOverlay } from './LoadingOverlay';
 import { PaginationBar } from './PaginationBar';
 import type { IconOverrides } from '../icons';
@@ -134,6 +140,17 @@ export interface DataGridProps<TRow> {
   icons?: IconOverrides;
   /** Enables cell editing. Omit to keep the grid read-only. */
   editable?: EditableConfig;
+  /**
+   * Controls whether the whole-grid edit gate is on. When omitted the gate is
+   * uncontrolled and defaults to on (non-breaking). When off, edit triggers,
+   * the fill handle, and row-edit controls are inert and the editable
+   * indicator is hidden.
+   */
+  editing?: boolean;
+  /** Called with the next gate state when the edit toggle is clicked. */
+  onEditingChange?: (next: boolean) => void;
+  /** Renders a built-in Edit/Done toggle button. Requires `editable`. */
+  showEditToggle?: boolean;
   /** Imperative grid API ref. */
   apiRef?: { current: GridApi<TRow> | null };
   /** Enables tree structure editing (add/delete/move/reparent). */
@@ -172,6 +189,8 @@ export interface DataGridProps<TRow> {
     changes: Record<string, { oldValue: unknown; newValue: unknown }>;
     committed: boolean;
   }) => void;
+  /** Fired once per multi-cell transaction (lookup cascade, etc.). */
+  onCellsChange?: (event: CellsChangeEvent) => void;
   /**
    * Called whenever the grid's paginated state changes. Use this to drive a
    * shell-rendered status bar with total count, current page, or loading
@@ -205,6 +224,12 @@ export interface DataGridProps<TRow> {
    * `useLiveUpdates` or any other source of streaming row updates. Default off.
    */
   flashOnUpdate?: import('../model/types').FlashConfig;
+  /** When true, the grid applies edits/fills/lookups to the data array and emits onDataChange. */
+  autoApply?: boolean;
+  /** Receives the next data array when autoApply mutates it. */
+  onDataChange?: (next: TRow[]) => void;
+  /** Row identity for flat grids (used by autoApply). Defaults to String(row.id). */
+  getRowId?: (row: TRow) => string;
 }
 
 function collectAllRowIds<TRow>(
@@ -330,6 +355,9 @@ export function DataGrid<TRow>({
   transitions,
   icons,
   editable,
+  editing,
+  onEditingChange,
+  showEditToggle,
   apiRef,
   treeEditor,
   onTreeChange,
@@ -344,12 +372,16 @@ export function DataGrid<TRow>({
   onCellEditEnd,
   onRowEditStart,
   onRowEditEnd,
+  onCellsChange,
   onPaginationChange,
   rowActions,
   onFillRange,
   contextMenu,
   statusBar,
   flashOnUpdate,
+  autoApply,
+  onDataChange,
+  getRowId,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -615,13 +647,233 @@ export function DataGrid<TRow>({
     onSelectionChange,
   });
 
+  // ===== autoApply write-back wiring =====
+  // Stable row identity used by applyCellEditsToRows to FIND a row in `data`.
+  const stableGetRowId = useCallback(
+    (row: TRow): string =>
+      treeData
+        ? treeData.getRowId(row)
+        : getRowId
+          ? getRowId(row)
+          : String((row as Record<string, unknown>).id),
+    [treeData, getRowId],
+  );
+
+  // Returns a writer that produces a NEW row with the column's value replaced.
+  const writerFor = useCallback(
+    (columnId: string): CellWriter<TRow> | undefined => {
+      const column = leafColumns.find((c) => c.id === columnId);
+      if (!column) return undefined;
+      const accessor = (column as ColumnDef<TRow>).accessor;
+      const key =
+        typeof accessor === 'string' || typeof accessor === 'number'
+          ? String(accessor)
+          : columnId;
+      return (row, value) => ({ ...row, [key]: value });
+    },
+    [leafColumns],
+  );
+
+  // Maps an editState/fill rowId (TanStack id = row INDEX string in flat mode)
+  // to the stable id understood by applyCellEditsToRows.
+  const resolveStableRowId = useCallback(
+    (editRowId: string): string => {
+      if (treeData) return editRowId;
+      // Flat grids: the editState/fill rowId is the row index as a string.
+      if (/^\d+$/.test(editRowId)) {
+        const row = data[Number(editRowId)];
+        if (row !== undefined) return stableGetRowId(row);
+      }
+      return editRowId;
+    },
+    [treeData, data, stableGetRowId],
+  );
+
+  // Apply one row's edits and emit a single onDataChange if anything changed.
+  const applyTransaction = useCallback(
+    (rowId: string, edits: import('../model/types').CellEditDelta[]) => {
+      const stableId = resolveStableRowId(rowId);
+      const next = applyCellEditsToRows(data, stableId, edits, stableGetRowId, writerFor);
+      if (next !== data) onDataChange?.(next);
+    },
+    [data, resolveStableRowId, stableGetRowId, writerFor, onDataChange],
+  );
+
+  // Cell-value undo/redo (flat & non-tree grids only). Tree grids keep their
+  // structural undo via the tree editor, so we gate recording on
+  // !treeEditingEnabled. A ref breaks the cycle between record sites (which run
+  // inside edit handlers) and applyReplay (which needs `editState`).
+  const cellHistoryRef = useRef<ReturnType<typeof useCellHistory> | null>(null);
+
+  // Wrap onCellEditEnd: preserve consumer behavior, then write back if enabled.
+  const handleCellEditEnd = useCallback(
+    (event: {
+      rowId: string;
+      columnId: string;
+      value: unknown;
+      newValue: unknown;
+      committed: boolean;
+    }) => {
+      onCellEditEnd?.(event);
+      if (event.committed && event.newValue !== event.value) {
+        // Emit the consumer's onCellsChange prop DIRECTLY (not via
+        // handleCellsChange, and not via editState.applyCellEdits) so a
+        // committed single-cell edit flows through the same uniform "apply"
+        // seam as cascades, fills, and undo/redo replays. Calling the raw prop
+        // here avoids a second autoApply or a second history record (both of
+        // which we still perform exactly once below).
+        onCellsChange?.({
+          rowId: event.rowId,
+          edits: [
+            { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+          ],
+          source: 'edit',
+        });
+        if (autoApply) {
+          applyTransaction(event.rowId, [
+            { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+          ]);
+        }
+        if (!treeEditingEnabled) {
+          cellHistoryRef.current?.record({
+            rowId: event.rowId,
+            edits: [
+              { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+            ],
+          });
+        }
+      }
+    },
+    [onCellEditEnd, onCellsChange, autoApply, applyTransaction, treeEditingEnabled],
+  );
+
+  // Merged onCellsChange: forward to consumer, then write back if enabled.
+  // Record multi-cell transactions (e.g. lookup cascades) into cell history,
+  // but skip undo/redo replays so they don't grow the history infinitely.
+  const handleCellsChange = useCallback(
+    (event: CellsChangeEvent) => {
+      onCellsChange?.(event);
+      if (autoApply) applyTransaction(event.rowId, event.edits);
+      if (
+        !treeEditingEnabled &&
+        event.source !== 'undo' &&
+        event.source !== 'redo'
+      ) {
+        cellHistoryRef.current?.record({ rowId: event.rowId, edits: event.edits });
+      }
+    },
+    [onCellsChange, autoApply, applyTransaction, treeEditingEnabled],
+  );
+
   const editState = useEditState({
     mode: editable?.mode ?? 'cell',
     onCellEditStart,
-    onCellEditEnd,
+    onCellEditEnd: handleCellEditEnd,
     onRowEditStart,
     onRowEditEnd,
+    onCellsChange: handleCellsChange,
   });
+
+  // Replay an undo/redo transaction through the SAME write-back path used by
+  // user edits: applyCellEdits writes dirty state + fires onCellsChange, which
+  // (with source 'undo'/'redo') performs the autoApply write-back without
+  // re-recording into history.
+  const applyReplay = useCallback(
+    (rowId: string, edits: import('../model/types').CellEditDelta[], source: 'undo' | 'redo') => {
+      editState.applyCellEdits(rowId, edits, { source });
+    },
+    [editState],
+  );
+  const cellHistory = useCellHistory({
+    apply: (t) => applyReplay(t.rowId, t.edits, t.source),
+  });
+  cellHistoryRef.current = cellHistory;
+
+  // Wrap onFillRange: forward to consumer, then write back as ONE emission.
+  const handleFillRange = useCallback(
+    (event: FillRangeEvent) => {
+      onFillRange?.(event);
+      if (!autoApply) return;
+      // Group targets by rowId, then fold across rows so onDataChange fires once.
+      const byRow = new Map<string, import('../model/types').CellEditDelta[]>();
+      for (const target of event.targets) {
+        const list = byRow.get(target.rowId) ?? [];
+        list.push({ columnId: target.columnId, oldValue: undefined, newValue: event.value });
+        byRow.set(target.rowId, list);
+      }
+      let next = data;
+      for (const [rowId, edits] of byRow) {
+        next = applyCellEditsToRows(
+          next,
+          resolveStableRowId(rowId),
+          edits,
+          stableGetRowId,
+          writerFor,
+        );
+      }
+      if (next !== data) onDataChange?.(next);
+    },
+    [onFillRange, autoApply, data, resolveStableRowId, stableGetRowId, writerFor, onDataChange],
+  );
+
+  const handleLookupSelect = useCallback(
+    (rowId: string, row: unknown, column: ColumnDef<unknown>, result: unknown) => {
+      const lookup = column.lookup as LookupConfig<unknown> | undefined;
+      if (!lookup) return;
+
+      const record = result as Record<string, unknown>;
+      const findColumn = (id: string) =>
+        leafColumns.find((candidate) => candidate.id === id) as
+          | ColumnDef<unknown>
+          | undefined;
+      const readCell = (col: ColumnDef<unknown> | undefined) =>
+        col ? readValue(col, row) : undefined;
+
+      const edits: { columnId: string; oldValue: unknown; newValue: unknown }[] = [];
+
+      const cellValue = lookup.getValue
+        ? lookup.getValue(record)
+        : defaultGetValue(record, lookup);
+      edits.push({
+        columnId: column.id,
+        oldValue: readCell(column),
+        newValue: cellValue,
+      });
+
+      for (const [resultField, targetColId] of Object.entries(lookup.map ?? {})) {
+        const col = findColumn(targetColId);
+        edits.push({
+          columnId: targetColId,
+          oldValue: readCell(col),
+          newValue: record[resultField],
+        });
+      }
+
+      if (lookup.onSelect) {
+        lookup.onSelect(record, {
+          setCell: (cid, v) => {
+            const col = findColumn(cid);
+            edits.push({ columnId: cid, oldValue: readCell(col), newValue: v });
+          },
+        });
+      }
+
+      editState.applyCellEdits(rowId, edits, { source: 'lookup' });
+      // Close the active single-cell editor without firing a spurious
+      // onCellEditEnd(committed:false) for the typed value.
+      editState.discardEdit({ silent: true });
+    },
+    [editState, leafColumns],
+  );
+  const [uncontrolledEditing, setUncontrolledEditing] = useState(true);
+  const editingEnabled = editing ?? uncontrolledEditing;
+  const handleEditingChange = useCallback(
+    (next: boolean) => {
+      if (editing === undefined) setUncontrolledEditing(next);
+      onEditingChange?.(next);
+    },
+    [editing, onEditingChange],
+  );
   const selectedRowsForExport = useCallback(() => {
     if (!selection) return [];
     return table
@@ -801,7 +1053,9 @@ export function DataGrid<TRow>({
         treeEditingEnabled && treeEditor?.enableIndent !== false
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
-      onFillRange={onFillRange}
+      onFillRange={handleFillRange}
+      onCellUndo={!treeEditingEnabled ? cellHistory.undo : undefined}
+      onCellRedo={!treeEditingEnabled ? cellHistory.redo : undefined}
       contextMenu={contextMenu}
       rootRef={gridRootRef}
       onStatusContextChange={(ctx) => {
@@ -850,7 +1104,19 @@ export function DataGrid<TRow>({
   return (
     <IconProvider overrides={icons ?? {}}>
       {editable ? (
-        <EditContext.Provider value={{ editState, config: editable }}>
+        <EditContext.Provider
+          value={{
+            editState,
+            config: editable,
+            editingEnabled,
+            onLookupSelect: handleLookupSelect,
+          }}
+        >
+          {showEditToggle && (
+            <div className="strata-toolbar">
+              <EditToggle editing={editingEnabled} onChange={handleEditingChange} />
+            </div>
+          )}
           {wrappedContent}
         </EditContext.Provider>
       ) : (

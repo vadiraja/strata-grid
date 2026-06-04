@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { Cell } from '@tanstack/react-table';
-import type { EditorType } from '../../model/types';
+import type { ColumnDef, EditorType } from '../../model/types';
 import { useEditContext } from '../../model/edit-context';
 import { useValidation } from '../../model/use-validation';
 import { resolveEditableNavigationTarget } from '../../model/use-edit-navigation';
@@ -10,6 +10,7 @@ import { SelectEditor, type SelectChoice } from './SelectEditor';
 import { DateEditor } from './DateEditor';
 import { CheckboxEditor } from './CheckboxEditor';
 import { ValidationMessage } from './ValidationMessage';
+import { renderActiveEditor } from './renderActiveEditor';
 
 export interface CellEditorProps<TRow> {
   cell: Cell<TRow, unknown>;
@@ -54,7 +55,7 @@ function normalizeChoices(options?: Record<string, unknown>): SelectChoice[] {
     .filter((choice): choice is SelectChoice => choice !== null);
 }
 
-function inferEditorType(value: unknown): EditorType {
+export function inferEditorType(value: unknown): EditorType {
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'checkbox';
   return 'text';
@@ -156,6 +157,13 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
     onChange,
     onCommit,
     onDiscard,
+    onLookupSelect: (result: unknown) =>
+      editCtx.onLookupSelect?.(
+        cell.row.id,
+        cell.row.original,
+        column as ColumnDef<unknown>,
+        result,
+      ),
     validation,
   };
 
@@ -166,26 +174,16 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
       onDoubleClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
     >
-      {column.editor ? (
-        column.editor(editorContext)
-      ) : (
-        renderBuiltInEditor(
-          column.editorType ?? inferEditorType(value),
-          value,
-          onChange,
-          onCommit,
-          onDiscard,
-          column.editorOptions,
-          !isActiveRow,
-          onNavigateKey,
-        )
-      )}
+      {renderActiveEditor(editorContext, column, {
+        autoFocus: !isActiveRow,
+        onNavigateKey,
+      })}
       <ValidationMessage validation={validation} />
     </div>
   );
 }
 
-function renderBuiltInEditor(
+export function renderBuiltInEditor(
   editorType: EditorType,
   value: unknown,
   onChange: (value: unknown) => void,

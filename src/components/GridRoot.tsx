@@ -18,6 +18,7 @@ import type {
   GridTheme,
 } from '../model/types';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { EditModalHost, type EditModalTarget } from './EditModalHost';
 import { useContextMenu } from '../model/use-context-menu';
 import { measureColumnWidth } from '../model/auto-size-column';
 import type { UseSelectionReturn } from '../model/use-selection';
@@ -80,6 +81,10 @@ export interface GridRootProps<TRow> {
   lazyTree?: UseLazyTreeReturn<TRow>;
   /** Called when the user completes a fill-handle drag. */
   onFillRange?: (event: FillRangeEvent) => void;
+  /** Ctrl/Cmd+Z handler for cell-value undo. Omitted in tree grids. */
+  onCellUndo?: () => void;
+  /** Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) handler for cell-value redo. */
+  onCellRedo?: () => void;
   /** Enables the right-click context menu. `true` = defaults; pass a config to override. */
   contextMenu?: ContextMenuConfig<TRow> | true;
   /** External ref forwarded to the grid root element. */
@@ -113,6 +118,8 @@ export function GridRoot<TRow>({
   enableTreeKeyboard,
   lazyTree,
   onFillRange,
+  onCellUndo,
+  onCellRedo,
   contextMenu,
   rootRef,
   onStatusContextChange,
@@ -149,7 +156,7 @@ export function GridRoot<TRow>({
 
   const startEditAt = useCallback(
     (rowIndex: number, colIndex: number) => {
-      if (!editCtx || editCtx.config.activateOn !== 'enter') return;
+      if (!editCtx || !editCtx.editingEnabled || editCtx.config.activateOn !== 'enter') return;
 
       const row = rows[rowIndex];
       const columnId = keyboardColumnIds[colIndex];
@@ -191,6 +198,24 @@ export function GridRoot<TRow>({
     },
     [rows],
   );
+  const getActiveModalTarget = useCallback((): EditModalTarget<TRow> | null => {
+    const activeCell = editCtx?.editState.activeCell;
+    if (!activeCell) return null;
+    const row = rows.find((r) => r.id === activeCell.rowId);
+    if (!row) return null;
+    const cell = row
+      .getVisibleCells()
+      .find((visibleCell) => visibleCell.column.id === activeCell.columnId);
+    const column = cell?.column.columnDef.meta?.strataColumn;
+    if (!column) return null;
+    return {
+      column,
+      row: row.original,
+      rowId: activeCell.rowId,
+      value: cell ? cell.getValue() : activeCell.originalValue,
+    };
+  }, [editCtx, rows]);
+
   const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
   useEffect(() => {
     onStatusContextChange?.({ range: cellRange.range, rangeStats: cellRange.stats });
@@ -279,6 +304,7 @@ export function GridRoot<TRow>({
 
   const handleFillStart = useCallback(
     (startEvent: React.PointerEvent) => {
+      if (!editCtx || !editCtx.editingEnabled) return;
       startEvent.preventDefault();
       const startFocus = cellRange.focus;
       if (!startFocus) return;
@@ -325,7 +351,7 @@ export function GridRoot<TRow>({
       window.addEventListener('pointermove', handleMove);
       window.addEventListener('pointerup', handleUp);
     },
-    [cellRange, onFillRange, rangeColumnIds, rows],
+    [cellRange, editCtx, onFillRange, rangeColumnIds, rows],
   );
 
   const keyboard = useGridKeyboard({
@@ -435,6 +461,8 @@ export function GridRoot<TRow>({
       const tsv = serializeRangeAsTsv(grid);
       navigator.clipboard?.writeText?.(tsv);
     },
+    onCellUndo,
+    onCellRedo,
   });
 
   const handleCellPointerDown = useCallback(
@@ -578,14 +606,15 @@ export function GridRoot<TRow>({
     containerRef: gridRootRef,
     columnSizing: table.getState().columnSizing,
     hasSelectionColumn: !!selection,
-    hasRowEditControls: editCtx?.config.mode === 'row',
+    hasRowEditControls: editCtx?.config.mode === 'row' && (editCtx?.editingEnabled ?? false),
   });
 
   const columnVirtualizer = useColumnVirtualizer({
     scrollRef: horizontalScrollRef,
     columnWidths: centerWidths,
   });
-  const showRowEditControls = editCtx?.config.mode === 'row';
+  const showRowEditControls =
+    editCtx?.config.mode === 'row' && (editCtx?.editingEnabled ?? false);
   const aggregation = useAggregation({
     table,
     columns,
@@ -823,7 +852,7 @@ export function GridRoot<TRow>({
         onCellPointerDown={handleCellPointerDown}
         onCellPointerEnter={handleCellPointerEnter}
         focusCellRect={focusCellRect}
-        onFillStart={handleFillStart}
+        onFillStart={editCtx?.editingEnabled ? handleFillStart : undefined}
         onCellContextMenu={handleCellContextMenu}
         isFlashing={(rowId, columnId) => cellFlash.isFlashing(rowId, columnId)}
       />
@@ -925,6 +954,10 @@ export function GridRoot<TRow>({
             : []
         }
         onClose={contextMenuState.close}
+      />
+      <EditModalHost
+        getActiveTarget={getActiveModalTarget}
+        portalTarget={gridRootRef.current ?? document.body}
       />
     </div>
   );

@@ -116,6 +116,10 @@ export interface ColumnDef<TRow> {
   editor?: (ctx: EditorContext<TRow>) => ReactNode;
   /** Editor options (e.g., choices for select editor). */
   editorOptions?: Record<string, unknown>;
+  /** Where the editor renders. Default 'inline'. */
+  editSurface?: 'inline' | 'modal';
+  /** Lookup configuration; required when editorType === 'lookup'. */
+  lookup?: LookupConfig<TRow>;
   /** Validation rules for this column. */
   validate?: Validator<TRow> | Validator<TRow>[];
   /** Aggregation function for group/parent rows. */
@@ -341,6 +345,8 @@ export interface EditorContext<TRow> {
   onDiscard: () => void;
   /** Current validation state. */
   validation: ValidationState;
+  /** Internal: fires with the raw lookup result for cascade-fill. Set by the grid. */
+  onLookupSelect?: (result: unknown) => void;
 }
 
 /** Validation state for a cell. */
@@ -357,6 +363,21 @@ export type Validator<TRow> = (
 
 /** Validation result: true = valid, string = error message. */
 export type ValidationResult = true | string;
+
+/** A single column's change in a multi-cell batch write. */
+export interface CellEditDelta {
+  columnId: string;
+  oldValue: unknown;
+  newValue: unknown;
+}
+
+/** Event fired when multiple cells of a row are written in one batch. */
+export interface CellsChangeEvent {
+  rowId: string;
+  edits: CellEditDelta[];
+  /** Origin of the change, for consumer telemetry. */
+  source: 'edit' | 'fill' | 'lookup' | 'undo' | 'redo';
+}
 
 /** Event fired when a cell edit starts. */
 export interface CellEditEvent<TRow> {
@@ -388,7 +409,37 @@ export interface RowEditEndEvent<TRow> extends RowEditEvent<TRow> {
 export type AggregateType = 'sum' | 'avg' | 'min' | 'max' | 'count';
 
 /** Built-in editor types. */
-export type EditorType = 'text' | 'number' | 'select' | 'date' | 'checkbox';
+export type EditorType = 'text' | 'number' | 'select' | 'date' | 'checkbox' | 'lookup';
+
+/** Row-level API passed to `LookupConfig.onSelect` for cascade-filling cells. */
+export interface LookupRowApi {
+  setCell: (columnId: string, value: unknown) => void;
+}
+
+/**
+ * Configuration for the built-in lookup editor.
+ * Required when `editorType === 'lookup'`.
+ */
+export interface LookupConfig<TRow, TResult = Record<string, unknown>> {
+  /** Consumer-provided async search. Debounced; called after minChars. */
+  search: (query: string, ctx: { row: TRow; columnId: string }) => Promise<TResult[]>;
+  /** How each result renders in the list. Default: String(result). */
+  renderOption?: (result: TResult) => ReactNode;
+  /** What value lands in THIS cell. Default: { id, label } reference. */
+  getValue?: (result: TResult) => unknown;
+  /** Field on TResult used as the reference id. Default: 'id'. */
+  idField?: string;
+  /** Field on TResult used as the display label. Default: 'label' / 'name'. */
+  labelField?: string;
+  /** Declarative cascade-fill: result field -> target column id. */
+  map?: Record<string, string>;
+  /** Escape hatch for computed/derived fills. Runs after map. */
+  onSelect?: (result: TResult, rowApi: LookupRowApi) => void;
+  /** Minimum query length before searching. Default 1. */
+  minChars?: number;
+  /** Debounce window in ms. Default 250. */
+  debounceMs?: number;
+}
 
 /**
  * Augments TanStack's `ColumnMeta` so every TanStack column carries the
