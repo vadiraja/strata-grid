@@ -30,6 +30,7 @@ import { useCellFlash } from '../model/use-cell-flash';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import type { UseDragDropReturn, UseTreeEditorReturn } from '../tree-editor';
 import type { UseLazyTreeReturn } from '../data/use-lazy-tree';
+import { shouldCollapseHorizontalScrollbar } from './horizontal-scrollbar';
 import { HeaderArea } from './HeaderArea';
 import { BodyViewport } from './BodyViewport';
 import { GridFooter } from './GridFooter';
@@ -826,7 +827,15 @@ export function GridRoot<TRow>({
         onCellContextMenu={handleCellContextMenu}
         isFlashing={(rowId, columnId) => cellFlash.isFlashing(rowId, columnId)}
       />
-      <div className="strata-horizontal-scrollbar-row" aria-hidden="true">
+      <div
+        className={
+          'strata-horizontal-scrollbar-row' +
+          (shouldCollapseHorizontalScrollbar(maxScrollLeft)
+            ? ' strata-horizontal-scrollbar-row--collapsed'
+            : '')
+        }
+        aria-hidden="true"
+      >
         {selection && <div className="strata-horizontal-scrollbar-spacer strata-selection-scrollbar-spacer" />}
         {columnLayout.leftWidth > 0 && (
           <div

@@ -27,6 +27,12 @@
 
   --strata-border: #d1d1d6;
   --strata-border-cell: #e5e5e7;
+  /* Granular border tokens (issue #10) */
+  --strata-border-cell-vertical: #eef0f3;
+  --strata-border-header-vertical: #e5e5e7;
+  --strata-border-frozen: #d8dce2;
+  --strata-shadow-frozen: 1px 0 0 rgba(148, 163, 184, 0.16);
+  --strata-shadow-frozen-right: -1px 0 0 rgba(148, 163, 184, 0.16);
   --strata-accent: #0071e3;
   --strata-accent-shadow: rgba(0, 113, 227, 0.2);
   --strata-focus-ring: rgba(0, 113, 227, 0.45);
