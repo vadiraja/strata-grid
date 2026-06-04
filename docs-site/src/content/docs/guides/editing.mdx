@@ -184,8 +184,7 @@ single transaction: one `onCellsChange` event and one undo step.
 Strata is **controlled by default**: the grid never mutates your data array. You
 apply edits yourself from the change callbacks. `onCellsChange` is the **uniform
 apply seam** — it fires for single edits (`source: 'edit'`), lookup cascades
-(`source: 'lookup'`), fills (`source: 'fill'`), and undo/redo
-(`source: 'undo'` / `'redo'`):
+(`source: 'lookup'`), and undo/redo (`source: 'undo'` / `'redo'`):
 
 ```tsx
 <DataGrid
@@ -211,6 +210,10 @@ apply seam** — it fires for single edits (`source: 'edit'`), lookup cascades
 `onCellEditEnd` remains the per-cell lifecycle event; a consumer wired to both
 receives both for a single edit (`onCellEditEnd` for the cell, `onCellsChange`
 for the transaction).
+
+Fills do **not** flow through `onCellsChange`. A drag-fill is delivered via
+`onFillRange`; under `autoApply` the fill is applied to the data array directly.
+Fill-undo is a 0.5.x follow-up.
 
 For flat (non-tree) grids you can let Strata do the write-back. Set `autoApply`
 and provide `getRowId`; the grid mutates the data array and emits the next array

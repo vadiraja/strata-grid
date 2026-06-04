@@ -100,6 +100,13 @@ export function EditModalHost<TRow>({ getActiveTarget, portalTarget }: EditModal
     onChange: setDraft,
     onCommit: commit,
     onDiscard: cancel,
+    onLookupSelect: (result) =>
+      editCtx.onLookupSelect?.(
+        target.rowId,
+        target.row,
+        target.column as ColumnDef<unknown>,
+        result,
+      ),
     validation,
   };
 
