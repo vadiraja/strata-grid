@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { Cell } from '@tanstack/react-table';
-import type { EditorType } from '../../model/types';
+import type { ColumnDef, EditorType } from '../../model/types';
 import { useEditContext } from '../../model/edit-context';
 import { useValidation } from '../../model/use-validation';
 import { resolveEditableNavigationTarget } from '../../model/use-edit-navigation';
@@ -157,6 +157,13 @@ export function CellEditor<TRow>({ cell }: CellEditorProps<TRow>) {
     onChange,
     onCommit,
     onDiscard,
+    onLookupSelect: (result: unknown) =>
+      editCtx.onLookupSelect?.(
+        cell.row.id,
+        cell.row.original,
+        column as ColumnDef<unknown>,
+        result,
+      ),
     validation,
   };
 

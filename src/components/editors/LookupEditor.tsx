@@ -15,6 +15,23 @@ export interface LookupEditorProps<TRow, TResult = Record<string, unknown>> {
   onNavigateKey?: (e: React.KeyboardEvent) => boolean;
 }
 
+/**
+ * Default mapping of a raw lookup result to the value written into the cell.
+ * Returns a `{ id, label }` reference. Exported so the cascade-fill handler in
+ * DataGrid can reuse the exact same logic as the editor.
+ */
+export function defaultGetValue<TResult>(
+  result: TResult,
+  config: Pick<LookupConfig<unknown, TResult>, 'idField' | 'labelField'>,
+): { id: unknown; label: unknown } {
+  const record = result as Record<string, unknown>;
+  const idField = config.idField ?? 'id';
+  const label = config.labelField
+    ? record[config.labelField]
+    : (record.label ?? record.name);
+  return { id: record[idField], label };
+}
+
 function initialQuery(value: unknown): string {
   if (value && typeof value === 'object' && 'label' in value) {
     const label = (value as { label: unknown }).label;
@@ -85,19 +102,12 @@ export function LookupEditor<TRow, TResult = Record<string, unknown>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  function defaultGetValue(result: TResult): { id: unknown; label: unknown } {
-    const record = result as Record<string, unknown>;
-    const idField = config.idField ?? 'id';
-    const label = config.labelField
-      ? record[config.labelField]
-      : (record.label ?? record.name);
-    return { id: record[idField], label };
-  }
-
   function select(result: TResult) {
     if (selectedRef.current) return;
     selectedRef.current = true;
-    onChange(config.getValue ? config.getValue(result) : defaultGetValue(result));
+    onChange(
+      config.getValue ? config.getValue(result) : defaultGetValue(result, config),
+    );
     onSelectResult(result);
     onCommit();
   }
@@ -160,7 +170,7 @@ export function LookupEditor<TRow, TResult = Record<string, unknown>>({
               >
                 {config.renderOption
                   ? config.renderOption(result)
-                  : String(defaultGetValue(result).label ?? '')}
+                  : String(defaultGetValue(result, config).label ?? '')}
               </li>
             ))
           )}

@@ -7,10 +7,12 @@ import type {
   AdvancedFilterConfig,
   AnyColumn,
   AggregationConfig,
+  CellsChangeEvent,
   ColumnDef,
   ColumnManagementConfig,
   ContextMenuConfig,
   FillRangeEvent,
+  LookupConfig,
   ColumnOrderState,
   ColumnPinningState,
   ColumnSizingState,
@@ -53,6 +55,7 @@ import { useExport } from '../export/use-export';
 import type { ExportOptions } from '../export/types';
 import { useEditState } from '../model/use-edit-state';
 import { EditContext } from '../model/edit-context';
+import { defaultGetValue } from './editors/LookupEditor';
 import { useBomRollup } from '../model/use-bom-rollup';
 import { useGridApi, type GridApi } from '../model/use-grid-api';
 import {
@@ -184,6 +187,8 @@ export interface DataGridProps<TRow> {
     changes: Record<string, { oldValue: unknown; newValue: unknown }>;
     committed: boolean;
   }) => void;
+  /** Fired once per multi-cell transaction (lookup cascade, etc.). */
+  onCellsChange?: (event: CellsChangeEvent) => void;
   /**
    * Called whenever the grid's paginated state changes. Use this to drive a
    * shell-rendered status bar with total count, current page, or loading
@@ -359,6 +364,7 @@ export function DataGrid<TRow>({
   onCellEditEnd,
   onRowEditStart,
   onRowEditEnd,
+  onCellsChange,
   onPaginationChange,
   rowActions,
   onFillRange,
@@ -636,7 +642,58 @@ export function DataGrid<TRow>({
     onCellEditEnd,
     onRowEditStart,
     onRowEditEnd,
+    onCellsChange,
   });
+
+  const handleLookupSelect = useCallback(
+    (rowId: string, row: unknown, column: ColumnDef<unknown>, result: unknown) => {
+      const lookup = column.lookup as LookupConfig<unknown> | undefined;
+      if (!lookup) return;
+
+      const record = result as Record<string, unknown>;
+      const findColumn = (id: string) =>
+        leafColumns.find((candidate) => candidate.id === id) as
+          | ColumnDef<unknown>
+          | undefined;
+      const readCell = (col: ColumnDef<unknown> | undefined) =>
+        col ? readValue(col, row) : undefined;
+
+      const edits: { columnId: string; oldValue: unknown; newValue: unknown }[] = [];
+
+      const cellValue = lookup.getValue
+        ? lookup.getValue(record)
+        : defaultGetValue(record, lookup);
+      edits.push({
+        columnId: column.id,
+        oldValue: readCell(column),
+        newValue: cellValue,
+      });
+
+      for (const [resultField, targetColId] of Object.entries(lookup.map ?? {})) {
+        const col = findColumn(targetColId);
+        edits.push({
+          columnId: targetColId,
+          oldValue: readCell(col),
+          newValue: record[resultField],
+        });
+      }
+
+      if (lookup.onSelect) {
+        lookup.onSelect(record, {
+          setCell: (cid, v) => {
+            const col = findColumn(cid);
+            edits.push({ columnId: cid, oldValue: readCell(col), newValue: v });
+          },
+        });
+      }
+
+      editState.applyCellEdits(rowId, edits, { source: 'lookup' });
+      // Close the active single-cell editor without firing a separate
+      // single-cell commit for the typed value.
+      editState.discardEdit();
+    },
+    [editState, leafColumns],
+  );
   const [uncontrolledEditing, setUncontrolledEditing] = useState(true);
   const editingEnabled = editing ?? uncontrolledEditing;
   const handleEditingChange = useCallback(
@@ -874,7 +931,14 @@ export function DataGrid<TRow>({
   return (
     <IconProvider overrides={icons ?? {}}>
       {editable ? (
-        <EditContext.Provider value={{ editState, config: editable, editingEnabled }}>
+        <EditContext.Provider
+          value={{
+            editState,
+            config: editable,
+            editingEnabled,
+            onLookupSelect: handleLookupSelect,
+          }}
+        >
           {showEditToggle && (
             <div className="strata-toolbar">
               <EditToggle editing={editingEnabled} onChange={handleEditingChange} />
