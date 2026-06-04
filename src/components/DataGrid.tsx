@@ -54,6 +54,7 @@ import { buildDataQuery } from '../data/build-data-query';
 import { useExport } from '../export/use-export';
 import type { ExportOptions } from '../export/types';
 import { useEditState } from '../model/use-edit-state';
+import { applyCellEditsToRows, type CellWriter } from '../model/apply-cell-edits-to-rows';
 import { EditContext } from '../model/edit-context';
 import { defaultGetValue } from './editors/LookupEditor';
 import { useBomRollup } from '../model/use-bom-rollup';
@@ -222,6 +223,12 @@ export interface DataGridProps<TRow> {
    * `useLiveUpdates` or any other source of streaming row updates. Default off.
    */
   flashOnUpdate?: import('../model/types').FlashConfig;
+  /** When true, the grid applies edits/fills/lookups to the data array and emits onDataChange. */
+  autoApply?: boolean;
+  /** Receives the next data array when autoApply mutates it. */
+  onDataChange?: (next: TRow[]) => void;
+  /** Row identity for flat grids (used by autoApply). Defaults to String(row.id). */
+  getRowId?: (row: TRow) => string;
 }
 
 function collectAllRowIds<TRow>(
@@ -371,6 +378,9 @@ export function DataGrid<TRow>({
   contextMenu,
   statusBar,
   flashOnUpdate,
+  autoApply,
+  onDataChange,
+  getRowId,
   dataSource: externalDataSource,
 }: DataGridProps<TRow>) {
   // Resolve theme: auto → follows OS preference; literals → data-theme; className strings → className
@@ -636,14 +646,121 @@ export function DataGrid<TRow>({
     onSelectionChange,
   });
 
+  // ===== autoApply write-back wiring =====
+  // Stable row identity used by applyCellEditsToRows to FIND a row in `data`.
+  const stableGetRowId = useCallback(
+    (row: TRow): string =>
+      treeData
+        ? treeData.getRowId(row)
+        : getRowId
+          ? getRowId(row)
+          : String((row as Record<string, unknown>).id),
+    [treeData, getRowId],
+  );
+
+  // Returns a writer that produces a NEW row with the column's value replaced.
+  const writerFor = useCallback(
+    (columnId: string): CellWriter<TRow> | undefined => {
+      const column = leafColumns.find((c) => c.id === columnId);
+      if (!column) return undefined;
+      const accessor = (column as ColumnDef<TRow>).accessor;
+      const key =
+        typeof accessor === 'string' || typeof accessor === 'number'
+          ? String(accessor)
+          : columnId;
+      return (row, value) => ({ ...row, [key]: value });
+    },
+    [leafColumns],
+  );
+
+  // Maps an editState/fill rowId (TanStack id = row INDEX string in flat mode)
+  // to the stable id understood by applyCellEditsToRows.
+  const resolveStableRowId = useCallback(
+    (editRowId: string): string => {
+      if (treeData) return editRowId;
+      // Flat grids: the editState/fill rowId is the row index as a string.
+      if (/^\d+$/.test(editRowId)) {
+        const row = data[Number(editRowId)];
+        if (row !== undefined) return stableGetRowId(row);
+      }
+      return editRowId;
+    },
+    [treeData, data, stableGetRowId],
+  );
+
+  // Apply one row's edits and emit a single onDataChange if anything changed.
+  const applyTransaction = useCallback(
+    (rowId: string, edits: import('../model/types').CellEditDelta[]) => {
+      const stableId = resolveStableRowId(rowId);
+      const next = applyCellEditsToRows(data, stableId, edits, stableGetRowId, writerFor);
+      if (next !== data) onDataChange?.(next);
+    },
+    [data, resolveStableRowId, stableGetRowId, writerFor, onDataChange],
+  );
+
+  // Wrap onCellEditEnd: preserve consumer behavior, then write back if enabled.
+  const handleCellEditEnd = useCallback(
+    (event: {
+      rowId: string;
+      columnId: string;
+      value: unknown;
+      newValue: unknown;
+      committed: boolean;
+    }) => {
+      onCellEditEnd?.(event);
+      if (autoApply && event.committed && event.newValue !== event.value) {
+        applyTransaction(event.rowId, [
+          { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+        ]);
+      }
+    },
+    [onCellEditEnd, autoApply, applyTransaction],
+  );
+
+  // Merged onCellsChange: forward to consumer, then write back if enabled.
+  const handleCellsChange = useCallback(
+    (event: CellsChangeEvent) => {
+      onCellsChange?.(event);
+      if (autoApply) applyTransaction(event.rowId, event.edits);
+    },
+    [onCellsChange, autoApply, applyTransaction],
+  );
+
   const editState = useEditState({
     mode: editable?.mode ?? 'cell',
     onCellEditStart,
-    onCellEditEnd,
+    onCellEditEnd: handleCellEditEnd,
     onRowEditStart,
     onRowEditEnd,
-    onCellsChange,
+    onCellsChange: handleCellsChange,
   });
+
+  // Wrap onFillRange: forward to consumer, then write back as ONE emission.
+  const handleFillRange = useCallback(
+    (event: FillRangeEvent) => {
+      onFillRange?.(event);
+      if (!autoApply) return;
+      // Group targets by rowId, then fold across rows so onDataChange fires once.
+      const byRow = new Map<string, import('../model/types').CellEditDelta[]>();
+      for (const target of event.targets) {
+        const list = byRow.get(target.rowId) ?? [];
+        list.push({ columnId: target.columnId, oldValue: undefined, newValue: event.value });
+        byRow.set(target.rowId, list);
+      }
+      let next = data;
+      for (const [rowId, edits] of byRow) {
+        next = applyCellEditsToRows(
+          next,
+          resolveStableRowId(rowId),
+          edits,
+          stableGetRowId,
+          writerFor,
+        );
+      }
+      if (next !== data) onDataChange?.(next);
+    },
+    [onFillRange, autoApply, data, resolveStableRowId, stableGetRowId, writerFor, onDataChange],
+  );
 
   const handleLookupSelect = useCallback(
     (rowId: string, row: unknown, column: ColumnDef<unknown>, result: unknown) => {
@@ -882,7 +999,7 @@ export function DataGrid<TRow>({
         treeEditingEnabled && treeEditor?.enableIndent !== false
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
-      onFillRange={onFillRange}
+      onFillRange={handleFillRange}
       contextMenu={contextMenu}
       rootRef={gridRootRef}
       onStatusContextChange={(ctx) => {
