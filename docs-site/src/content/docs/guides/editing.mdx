@@ -49,3 +49,197 @@ For multi-cell edits with Save and Cancel actions, set
 `editable={{ mode: 'row' }}` and handle `onRowEditEnd`.
 
 <EditableGrid client:load />
+
+## Edit mode (the gate)
+
+Strata editing is gated by a single `editing` flag. When **off**, edit triggers,
+the fill handle, and row-edit controls are inert, and the editable indicator is
+hidden — the grid behaves as a read-only view while keeping every column's
+`editable`/`editorType` config in place.
+
+The flag is **uncontrolled and on by default**, so existing consumers are
+unaffected. To gate editing, control it yourself:
+
+```tsx
+const [editing, setEditing] = useState(false);
+
+<DataGrid
+  data={rows}
+  columns={columns}
+  editable={{ mode: 'cell' }}
+  editing={editing}
+  onEditingChange={setEditing}
+/>;
+```
+
+Flip it with your own button (`onEditingChange` is also called when the grid
+toggles internally), or let Strata render a built-in toggle:
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  editable={{ mode: 'cell' }}
+  showEditToggle
+/>
+```
+
+The editable indicator (the subtle affordance on editable cells) follows
+`EditableConfig.showEditableIndicator`; set it to `false` to hide the indicator
+even while editing is on:
+
+```tsx
+editable={{ mode: 'cell', showEditableIndicator: false }}
+```
+
+## Modal editing
+
+By default cells edit inline. Set `editSurface: 'modal'` on a column to edit it
+in a focus-trapped dialog with explicit **Save** and **Cancel** buttons — handy
+for long text or complex editors. Pressing Escape or clicking the backdrop
+cancels.
+
+```tsx
+const columns: ColumnDef<Task>[] = [
+  {
+    id: 'notes',
+    header: 'Notes',
+    accessor: 'notes',
+    editable: true,
+    editorType: 'text',
+    editSurface: 'modal',
+  },
+];
+```
+
+`editSurface` accepts `'inline'` (default) or `'modal'`.
+
+## Lookup editor
+
+Set `editorType: 'lookup'` and provide a `lookup: LookupConfig` to turn a column
+into an async combobox. The consumer supplies `search`; Strata debounces it,
+renders the results, and on selection writes the chosen value into the cell —
+and, optionally, cascade-fills other columns in the same row.
+
+```tsx
+const columns: ColumnDef<Line>[] = [
+  {
+    id: 'part',
+    header: 'Part',
+    accessor: 'part',
+    editable: true,
+    editorType: 'lookup',
+    lookup: {
+      search: async (query) => searchParts(query), // [{ id, label, description, uom }]
+      map: {
+        description: 'description', // result.description -> column "description"
+        uom: 'uom',                 // result.uom         -> column "uom"
+      },
+    },
+  },
+];
+```
+
+### `LookupConfig` fields
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `search` | `(query, ctx) => Promise<TResult[]>` | — | Async, debounced. Called after `minChars`. `ctx` is `{ row, columnId }`. |
+| `renderOption` | `(result) => ReactNode` | `String(result)` | How each result renders in the list. |
+| `getValue` | `(result) => unknown` | `{ id, label }` reference | What value lands in **this** cell. |
+| `idField` | `string` | `'id'` | Field on the result used as the reference id. |
+| `labelField` | `string` | `'label'` / `'name'` | Field on the result used as the display label. |
+| `map` | `Record<resultField, columnId>` | — | Declarative cascade-fill from result fields into other columns. |
+| `onSelect` | `(result, rowApi) => void` | — | Escape hatch for computed fills; runs after `map`. Use `rowApi.setCell(columnId, value)`. |
+| `minChars` | `number` | `1` | Minimum query length before searching. |
+| `debounceMs` | `number` | `250` | Debounce window in milliseconds. |
+
+By default the cell stores an `{ id, label }` reference; override with `getValue`
+when you need the raw value.
+
+#### Cascade-fill example
+
+Picking a Part fills its Description and UOM in the same row. Use `map` for
+straight copies and `onSelect` for derived values:
+
+```tsx
+lookup: {
+  search: async (query) => searchParts(query),
+  map: {
+    description: 'description',
+    uom: 'uom',
+  },
+  onSelect: (result, rowApi) => {
+    // derived fill that map can't express
+    rowApi.setCell('extPrice', result.unitPrice * result.defaultQty);
+  },
+}
+```
+
+A lookup selection — the cell value **plus** every cascade-filled cell — is a
+single transaction: one `onCellsChange` event and one undo step.
+
+## Auto-apply write-back
+
+Strata is **controlled by default**: the grid never mutates your data array. You
+apply edits yourself from the change callbacks. `onCellsChange` is the **uniform
+apply seam** — it fires for single edits (`source: 'edit'`), lookup cascades
+(`source: 'lookup'`), fills (`source: 'fill'`), and undo/redo
+(`source: 'undo'` / `'redo'`):
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  editable={{ mode: 'cell' }}
+  getRowId={(row) => row.id}
+  onCellsChange={(event) => {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === event.rowId
+          ? event.edits.reduce(
+              (acc, edit) => ({ ...acc, [edit.columnId]: edit.newValue }),
+              row,
+            )
+          : row,
+      ),
+    );
+  }}
+/>
+```
+
+`onCellEditEnd` remains the per-cell lifecycle event; a consumer wired to both
+receives both for a single edit (`onCellEditEnd` for the cell, `onCellsChange`
+for the transaction).
+
+For flat (non-tree) grids you can let Strata do the write-back. Set `autoApply`
+and provide `getRowId`; the grid mutates the data array and emits the next array
+through `onDataChange`:
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  editable={{ mode: 'cell' }}
+  autoApply
+  getRowId={(row) => row.id}
+  onDataChange={(next) => setRows(next)}
+/>
+```
+
+In auto-apply mode, typed edits, fills, and lookup cascades all flow into the
+data array for you. `getRowId` defaults to `String(row.id)`.
+
+## Undo / redo
+
+Cell edits and lookup cascades support undo/redo from the keyboard:
+
+- **Undo** — Ctrl/Cmd+Z
+- **Redo** — Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y)
+
+One lookup cascade is a single undo step. Undo/redo emit through `onCellsChange`
+with `source: 'undo'` / `'redo'`, so the same apply seam keeps your data in sync.
+
+This works in flat / non-tree grids. Tree grids keep their existing structural
+undo (add/delete/move). Fill-undo and row-mode-edit undo are not yet covered and
+are tracked as a 0.5.x follow-up.

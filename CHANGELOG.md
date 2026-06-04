@@ -4,6 +4,30 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-06-04
+
+### Added
+
+- **Edit-mode gate** — opt-in whole-grid read-only gate via `editing` /
+  `onEditingChange`, plus a built-in `showEditToggle`. Uncontrolled default is on,
+  so existing consumers are unaffected. Honors `EditableConfig.showEditableIndicator`.
+- **Modal editor surface** — per-column `editSurface: 'inline' | 'modal'`; modal
+  columns edit in a focus-trapped dialog with explicit Save/Cancel.
+- **Lookup editor** — `editorType: 'lookup'` with `LookupConfig` (async debounced
+  `search`, `renderOption`, `getValue`, `idField`/`labelField`, declarative `map`
+  cascade-fill, `onSelect` hook). Default cell value is an `{ id, label }` reference.
+- **Auto-apply write-back** — opt-in `autoApply` + `onDataChange` (and `getRowId`
+  for flat grids); typed edits, fills, and lookup cascades mutate the data array.
+  In controlled mode, `onCellsChange` is the uniform apply seam.
+- **Cell-value undo/redo** — Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z for cell edits and
+  lookup cascades (one cascade = one undo step); separate from tree structural undo.
+
+### Notes
+
+- No breaking changes; all new behavior is opt-in.
+- Fill-undo, row-mode-edit undo, tabular TSV copy/paste, and unified tree+cell undo
+  are tracked for 0.5.x.
+
 ## [0.4.2] — 2026-06-03
 
 ### Changed
