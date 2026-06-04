@@ -716,6 +716,19 @@ export function DataGrid<TRow>({
     }) => {
       onCellEditEnd?.(event);
       if (event.committed && event.newValue !== event.value) {
+        // Emit the consumer's onCellsChange prop DIRECTLY (not via
+        // handleCellsChange, and not via editState.applyCellEdits) so a
+        // committed single-cell edit flows through the same uniform "apply"
+        // seam as cascades, fills, and undo/redo replays. Calling the raw prop
+        // here avoids a second autoApply or a second history record (both of
+        // which we still perform exactly once below).
+        onCellsChange?.({
+          rowId: event.rowId,
+          edits: [
+            { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+          ],
+          source: 'edit',
+        });
         if (autoApply) {
           applyTransaction(event.rowId, [
             { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
@@ -731,7 +744,7 @@ export function DataGrid<TRow>({
         }
       }
     },
-    [onCellEditEnd, autoApply, applyTransaction, treeEditingEnabled],
+    [onCellEditEnd, onCellsChange, autoApply, applyTransaction, treeEditingEnabled],
   );
 
   // Merged onCellsChange: forward to consumer, then write back if enabled.
