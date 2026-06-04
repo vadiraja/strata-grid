@@ -81,6 +81,10 @@ export interface GridRootProps<TRow> {
   lazyTree?: UseLazyTreeReturn<TRow>;
   /** Called when the user completes a fill-handle drag. */
   onFillRange?: (event: FillRangeEvent) => void;
+  /** Ctrl/Cmd+Z handler for cell-value undo. Omitted in tree grids. */
+  onCellUndo?: () => void;
+  /** Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) handler for cell-value redo. */
+  onCellRedo?: () => void;
   /** Enables the right-click context menu. `true` = defaults; pass a config to override. */
   contextMenu?: ContextMenuConfig<TRow> | true;
   /** External ref forwarded to the grid root element. */
@@ -114,6 +118,8 @@ export function GridRoot<TRow>({
   enableTreeKeyboard,
   lazyTree,
   onFillRange,
+  onCellUndo,
+  onCellRedo,
   contextMenu,
   rootRef,
   onStatusContextChange,
@@ -455,6 +461,8 @@ export function GridRoot<TRow>({
       const tsv = serializeRangeAsTsv(grid);
       navigator.clipboard?.writeText?.(tsv);
     },
+    onCellUndo,
+    onCellRedo,
   });
 
   const handleCellPointerDown = useCallback(

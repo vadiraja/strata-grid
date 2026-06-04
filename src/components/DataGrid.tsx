@@ -54,6 +54,7 @@ import { buildDataQuery } from '../data/build-data-query';
 import { useExport } from '../export/use-export';
 import type { ExportOptions } from '../export/types';
 import { useEditState } from '../model/use-edit-state';
+import { useCellHistory } from '../model/use-cell-history';
 import { applyCellEditsToRows, type CellWriter } from '../model/apply-cell-edits-to-rows';
 import { EditContext } from '../model/edit-context';
 import { defaultGetValue } from './editors/LookupEditor';
@@ -698,6 +699,12 @@ export function DataGrid<TRow>({
     [data, resolveStableRowId, stableGetRowId, writerFor, onDataChange],
   );
 
+  // Cell-value undo/redo (flat & non-tree grids only). Tree grids keep their
+  // structural undo via the tree editor, so we gate recording on
+  // !treeEditingEnabled. A ref breaks the cycle between record sites (which run
+  // inside edit handlers) and applyReplay (which needs `editState`).
+  const cellHistoryRef = useRef<ReturnType<typeof useCellHistory> | null>(null);
+
   // Wrap onCellEditEnd: preserve consumer behavior, then write back if enabled.
   const handleCellEditEnd = useCallback(
     (event: {
@@ -708,22 +715,41 @@ export function DataGrid<TRow>({
       committed: boolean;
     }) => {
       onCellEditEnd?.(event);
-      if (autoApply && event.committed && event.newValue !== event.value) {
-        applyTransaction(event.rowId, [
-          { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
-        ]);
+      if (event.committed && event.newValue !== event.value) {
+        if (autoApply) {
+          applyTransaction(event.rowId, [
+            { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+          ]);
+        }
+        if (!treeEditingEnabled) {
+          cellHistoryRef.current?.record({
+            rowId: event.rowId,
+            edits: [
+              { columnId: event.columnId, oldValue: event.value, newValue: event.newValue },
+            ],
+          });
+        }
       }
     },
-    [onCellEditEnd, autoApply, applyTransaction],
+    [onCellEditEnd, autoApply, applyTransaction, treeEditingEnabled],
   );
 
   // Merged onCellsChange: forward to consumer, then write back if enabled.
+  // Record multi-cell transactions (e.g. lookup cascades) into cell history,
+  // but skip undo/redo replays so they don't grow the history infinitely.
   const handleCellsChange = useCallback(
     (event: CellsChangeEvent) => {
       onCellsChange?.(event);
       if (autoApply) applyTransaction(event.rowId, event.edits);
+      if (
+        !treeEditingEnabled &&
+        event.source !== 'undo' &&
+        event.source !== 'redo'
+      ) {
+        cellHistoryRef.current?.record({ rowId: event.rowId, edits: event.edits });
+      }
     },
-    [onCellsChange, autoApply, applyTransaction],
+    [onCellsChange, autoApply, applyTransaction, treeEditingEnabled],
   );
 
   const editState = useEditState({
@@ -734,6 +760,21 @@ export function DataGrid<TRow>({
     onRowEditEnd,
     onCellsChange: handleCellsChange,
   });
+
+  // Replay an undo/redo transaction through the SAME write-back path used by
+  // user edits: applyCellEdits writes dirty state + fires onCellsChange, which
+  // (with source 'undo'/'redo') performs the autoApply write-back without
+  // re-recording into history.
+  const applyReplay = useCallback(
+    (rowId: string, edits: import('../model/types').CellEditDelta[], source: 'undo' | 'redo') => {
+      editState.applyCellEdits(rowId, edits, { source });
+    },
+    [editState],
+  );
+  const cellHistory = useCellHistory({
+    apply: (t) => applyReplay(t.rowId, t.edits, t.source),
+  });
+  cellHistoryRef.current = cellHistory;
 
   // Wrap onFillRange: forward to consumer, then write back as ONE emission.
   const handleFillRange = useCallback(
@@ -1000,6 +1041,8 @@ export function DataGrid<TRow>({
       }
       lazyTree={dataSource.capabilities?.()?.lazyChildren ? lazyTree : undefined}
       onFillRange={handleFillRange}
+      onCellUndo={!treeEditingEnabled ? cellHistory.undo : undefined}
+      onCellRedo={!treeEditingEnabled ? cellHistory.redo : undefined}
       contextMenu={contextMenu}
       rootRef={gridRootRef}
       onStatusContextChange={(ctx) => {

@@ -40,6 +40,10 @@ export interface GridKeyboardOptions {
   onRangeExtend?: (deltaRow: number, deltaCol: number) => void;
   /** Ctrl/Cmd+C copies the active range. Only fires when not editing. */
   onRangeCopy?: () => void;
+  /** Ctrl/Cmd+Z undoes the last cell transaction. Only fires when not editing. */
+  onCellUndo?: () => void;
+  /** Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) redoes the last undone transaction. */
+  onCellRedo?: () => void;
 }
 
 export interface GridKeyboardReturn {
@@ -72,6 +76,8 @@ export function useGridKeyboard({
   onDelete,
   onRangeExtend,
   onRangeCopy,
+  onCellUndo,
+  onCellRedo,
 }: GridKeyboardOptions): GridKeyboardReturn {
   const clamp = useCallback(
     (rowIndex: number, colIndex: number): GridCellPosition => [
@@ -100,6 +106,30 @@ export function useGridKeyboard({
     (event: KeyboardEvent | React.KeyboardEvent) => {
       const ctrl = event.ctrlKey || event.metaKey;
       let handled = true;
+
+      // Don't intercept while the user is typing in an inline editor input.
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const isEditingField =
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        (target?.isContentEditable ?? false);
+
+      // Cell-value undo/redo (flat & non-tree grids only — DataGrid gates this).
+      if ((onCellUndo || onCellRedo) && ctrl && !isEditingField) {
+        const key = event.key.toLowerCase();
+        if (key === 'z' && !event.shiftKey && onCellUndo) {
+          onCellUndo();
+          event.preventDefault();
+          return;
+        }
+        if (((key === 'z' && event.shiftKey) || key === 'y') && onCellRedo) {
+          onCellRedo();
+          event.preventDefault();
+          return;
+        }
+      }
 
       switch (event.key) {
         case 'ArrowRight':
@@ -209,6 +239,8 @@ export function useGridKeyboard({
       onDelete,
       onRangeExtend,
       onRangeCopy,
+      onCellUndo,
+      onCellRedo,
       rowCount,
     ],
   );
