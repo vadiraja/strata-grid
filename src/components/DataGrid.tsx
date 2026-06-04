@@ -688,9 +688,9 @@ export function DataGrid<TRow>({
       }
 
       editState.applyCellEdits(rowId, edits, { source: 'lookup' });
-      // Close the active single-cell editor without firing a separate
-      // single-cell commit for the typed value.
-      editState.discardEdit();
+      // Close the active single-cell editor without firing a spurious
+      // onCellEditEnd(committed:false) for the typed value.
+      editState.discardEdit({ silent: true });
     },
     [editState, leafColumns],
   );

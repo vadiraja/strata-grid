@@ -39,3 +39,22 @@ describe('useEditState.applyCellEdits', () => {
     expect(onCellsChange.mock.calls[0][0].source).toBe('edit');
   });
 });
+
+describe('useEditState.discardEdit silent option', () => {
+  it('discardEdit({ silent: true }) does not fire onCellEditEnd', () => {
+    const onCellEditEnd = vi.fn();
+    const { result } = renderHook(() => useEditState({ mode: 'cell', onCellEditEnd }));
+    act(() => result.current.startEdit('r1', 'a', 'orig'));
+    act(() => result.current.discardEdit({ silent: true }));
+    expect(onCellEditEnd).not.toHaveBeenCalled();
+    expect(result.current.activeCell).toBeNull();
+  });
+
+  it('discardEdit() still fires onCellEditEnd with committed:false', () => {
+    const onCellEditEnd = vi.fn();
+    const { result } = renderHook(() => useEditState({ mode: 'cell', onCellEditEnd }));
+    act(() => result.current.startEdit('r1', 'a', 'orig'));
+    act(() => result.current.discardEdit());
+    expect(onCellEditEnd).toHaveBeenCalledWith(expect.objectContaining({ committed: false }));
+  });
+});

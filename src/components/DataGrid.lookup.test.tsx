@@ -12,6 +12,7 @@ const data: Row[] = [{ id: '1', part: null, desc: '', uom: '' }];
 
 it('cascade-fills sibling columns as one transaction', async () => {
   const onCellsChange = vi.fn();
+  const onCellEditEnd = vi.fn();
   const columns: ColumnDef<Row>[] = [
     {
       id: 'part',
@@ -35,6 +36,7 @@ it('cascade-fills sibling columns as one transaction', async () => {
       columns={columns}
       editable={{ activateOn: 'doubleClick' }}
       onCellsChange={onCellsChange}
+      onCellEditEnd={onCellEditEnd}
     />,
   );
   fireEvent.doubleClick(container.querySelector('.strata-cell')!);
@@ -56,4 +58,16 @@ it('cascade-fills sibling columns as one transaction', async () => {
   expect(byCol.part).toEqual({ id: 'p1', label: 'Bolt' });
   expect(byCol.desc).toBe('Hex bolt');
   expect(byCol.uom).toBe('EA');
+
+  // oldValue for the part cell should be null (the row started with part: null)
+  const byColOld = Object.fromEntries(
+    evt.edits.map((e: { columnId: string; oldValue: unknown }) => [
+      e.columnId,
+      e.oldValue,
+    ]),
+  );
+  expect(byColOld.part).toBeNull();
+
+  // Lookup select must NOT fire a spurious discard event for the typed cell
+  expect(onCellEditEnd).not.toHaveBeenCalled();
 });

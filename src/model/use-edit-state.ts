@@ -63,8 +63,8 @@ export interface EditStateReturn {
   commitEdit: () => void;
   /** Commit the current row edit. */
   commitRowEdit: () => void;
-  /** Discard the current edit. */
-  discardEdit: () => void;
+  /** Discard the current edit. Pass `{ silent: true }` to suppress the onCellEditEnd callback. */
+  discardEdit: (opts?: { silent?: boolean }) => void;
   /** Discard the current row edit. */
   discardRowEdit: () => void;
   /** Update validation state for a cell in the active row. */
@@ -270,17 +270,19 @@ export function useEditState(options: EditStateOptions): EditStateReturn {
     commitCurrentRow();
   }, [commitCurrentRow]);
 
-  const discardEdit = useCallback(() => {
+  const discardEdit = useCallback((opts?: { silent?: boolean }) => {
     const cell = activeCellRef.current;
     if (!cell) return;
 
-    onCellEditEnd?.({
-      rowId: cell.rowId,
-      columnId: cell.columnId,
-      value: cell.originalValue,
-      newValue: cell.pendingValue,
-      committed: false,
-    });
+    if (!opts?.silent) {
+      onCellEditEnd?.({
+        rowId: cell.rowId,
+        columnId: cell.columnId,
+        value: cell.originalValue,
+        newValue: cell.pendingValue,
+        committed: false,
+      });
+    }
 
     setActive(null);
   }, [onCellEditEnd, setActive]);
