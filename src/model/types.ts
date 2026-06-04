@@ -358,6 +358,21 @@ export type Validator<TRow> = (
 /** Validation result: true = valid, string = error message. */
 export type ValidationResult = true | string;
 
+/** A single column's change in a multi-cell batch write. */
+export interface CellEditDelta {
+  columnId: string;
+  oldValue: unknown;
+  newValue: unknown;
+}
+
+/** Event fired when multiple cells of a row are written in one batch. */
+export interface CellsChangeEvent {
+  rowId: string;
+  edits: CellEditDelta[];
+  /** Origin of the change, for consumer telemetry. */
+  source: 'edit' | 'fill' | 'lookup' | 'undo' | 'redo';
+}
+
 /** Event fired when a cell edit starts. */
 export interface CellEditEvent<TRow> {
   rowId: string;
