@@ -17,6 +17,7 @@ import {
   useQuickSearch,
   useWhereUsed,
   type AnyColumn,
+  type CellContext,
   type ColumnDef,
   type DataChangeHandler,
   type DataSource,
@@ -41,6 +42,7 @@ type ExampleKey =
   | 'bomEditing'
   | 'editing'
   | 'rowEditing'
+  | 'gatedLookup'
   | 'pagination'
   | 'quickSearch'
   | 'filterBuilder'
@@ -100,6 +102,12 @@ const examples: ExampleConfig[] = [
     key: 'rowEditing',
     label: 'Row Editing',
     summary: 'Row-level editing with Edit, Save, Cancel, and validation-gated commits.',
+  },
+  {
+    key: 'gatedLookup',
+    label: 'Gated + Lookup (0.5.0)',
+    summary:
+      'Edit-mode toggle, async lookup with cascade-fill, a modal-surface column, auto-apply write-back, and Ctrl/Cmd+Z undo.',
   },
   {
     key: 'pagination',
@@ -957,6 +965,109 @@ interface PlaygroundRowEditEndEvent {
   committed: boolean;
 }
 
+interface PartRow {
+  id: string;
+  part: { id: string; label: string } | null;
+  desc: string;
+  uom: string;
+  qty: number;
+  notes: string;
+}
+
+const partCatalog = [
+  { id: 'P-1001', label: 'Hex Bolt M6', description: 'Hex head bolt, M6 x 20mm', uom: 'EA' },
+  { id: 'P-1002', label: 'Flat Washer M6', description: 'Flat washer, M6', uom: 'EA' },
+  { id: 'P-1003', label: 'Steel Sheet', description: 'Cold-rolled steel sheet 1.2mm', uom: 'M2' },
+  { id: 'P-1004', label: 'Aluminum Tube', description: 'Aluminum tube 25mm OD', uom: 'M' },
+  { id: 'P-1005', label: 'Rubber Gasket', description: 'NBR rubber gasket', uom: 'EA' },
+  { id: 'P-1006', label: 'Hex Nut M6', description: 'Hex nut, M6', uom: 'EA' },
+  { id: 'P-1007', label: 'Socket Screw M4', description: 'Socket head cap screw, M4 x 12mm', uom: 'EA' },
+];
+
+const initialPartRows: PartRow[] = [
+  { id: 'r1', part: null, desc: '', uom: '', qty: 1, notes: '' },
+  { id: 'r2', part: null, desc: '', uom: '', qty: 1, notes: '' },
+  { id: 'r3', part: null, desc: '', uom: '', qty: 1, notes: '' },
+  { id: 'r4', part: null, desc: '', uom: '', qty: 1, notes: '' },
+];
+
+function GatedLookupExample({ theme }: { theme: GridTheme }) {
+  const [rows, setRows] = useState<PartRow[]>(initialPartRows);
+  const [editing, setEditing] = useState(false);
+  const [log, setLog] = useState(
+    'Read-only until you click "Edit". Then double-click a Part cell to search; picking one cascade-fills Description + UOM. Double-click Notes for a modal editor. Ctrl/Cmd+Z undoes.',
+  );
+
+  const columns = useMemo<ColumnDef<PartRow>[]>(
+    () => [
+      {
+        id: 'part',
+        header: 'Part',
+        accessor: 'part',
+        width: 200,
+        editable: true,
+        editorType: 'lookup',
+        cell: (ctx: CellContext<PartRow>) => {
+          const v = ctx.value as PartRow['part'];
+          return v ? `${v.label} (${v.id})` : '—';
+        },
+        lookup: {
+          search: async (query: string) => {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            const q = query.toLowerCase();
+            return partCatalog.filter(
+              (p) => p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q),
+            );
+          },
+          renderOption: (p: (typeof partCatalog)[number]) => `${p.label} — ${p.id}`,
+          map: { description: 'desc', uom: 'uom' },
+          minChars: 1,
+        },
+      },
+      { id: 'desc', header: 'Description', accessor: 'desc', width: 230, editable: true },
+      { id: 'uom', header: 'UOM', accessor: 'uom', width: 80, editable: true },
+      { id: 'qty', header: 'Qty', accessor: 'qty', width: 90, editable: true, editorType: 'number' },
+      {
+        id: 'notes',
+        header: 'Notes (modal)',
+        accessor: 'notes',
+        width: 220,
+        editable: true,
+        editSurface: 'modal',
+      },
+    ],
+    [],
+  );
+
+  return (
+    <div>
+      <p style={{ margin: '0 0 8px', fontSize: 13, lineHeight: 1.5 }}>{log}</p>
+      <DataGrid
+        key="gated-lookup"
+        data={rows}
+        columns={columns}
+        height={460}
+        theme={theme}
+        editable={{ mode: 'cell', activateOn: 'doubleClick' }}
+        editing={editing}
+        showEditToggle
+        onEditingChange={setEditing}
+        autoApply
+        getRowId={(row) => row.id}
+        onDataChange={setRows}
+        onCellsChange={(event) =>
+          setLog(
+            `onCellsChange (${event.source}): ` +
+              event.edits
+                .map((d) => `${d.columnId}=${JSON.stringify(d.newValue)}`)
+                .join(', '),
+          )
+        }
+      />
+    </div>
+  );
+}
+
 function exampleGrid(
   activeExample: ExampleKey,
   theme: GridTheme,
@@ -1111,6 +1222,8 @@ function exampleGrid(
           onRowEditEnd={onTaskRowEditEnd}
         />
       );
+    case 'gatedLookup':
+      return <GatedLookupExample theme={theme} />;
     case 'pagination':
       return <PaginationExample theme={theme} />;
     case 'quickSearch':
