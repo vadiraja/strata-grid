@@ -27,6 +27,10 @@
 
   --strata-border: #ffffff;
   --strata-border-cell: #ffffff;
+  --strata-border-cell-vertical: #ffffff;
+  --strata-border-header-vertical: #ffffff;
+  --strata-border-frozen: #ffffff;
+  --strata-shadow-frozen: 2px 0 0 #ffffff;
   --strata-accent: #62b0ff;
   --strata-accent-shadow: rgba(98, 176, 255, 0.35);
   --strata-focus-ring: rgba(98, 176, 255, 0.6);
