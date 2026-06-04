@@ -61,13 +61,16 @@ export function DataCell<TRow>({
     rowIndex: cell.row.index,
   });
 
+  const gateOn = editCtx?.editingEnabled ?? true;
   const isEditable = Boolean(
     editCtx &&
+      gateOn &&
       colDef?.editable &&
       (typeof colDef.editable === 'function'
         ? colDef.editable(cell.row.original)
         : colDef.editable),
   );
+  const showIndicator = isEditable && (editCtx?.config.showEditableIndicator ?? true);
 
   const activeCell = editCtx?.editState.activeCell;
   const activeRow = editCtx?.editState.activeRow;
@@ -118,7 +121,7 @@ export function DataCell<TRow>({
   const className = [
     'strata-cell',
     isFocused && 'strata-cell-focused',
-    isEditable && 'strata-cell-editable',
+    showIndicator && 'strata-cell-editable',
     isEditing && 'strata-cell-editing',
     isRowEditing && 'strata-cell-row-editing',
     isInRange && 'strata-cell-in-range',

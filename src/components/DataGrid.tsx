@@ -64,6 +64,7 @@ import {
   type TreeState,
 } from '../tree-editor';
 import { GridRoot } from './GridRoot';
+import { EditToggle } from './EditToggle';
 import { LoadingOverlay } from './LoadingOverlay';
 import { PaginationBar } from './PaginationBar';
 import type { IconOverrides } from '../icons';
@@ -134,6 +135,17 @@ export interface DataGridProps<TRow> {
   icons?: IconOverrides;
   /** Enables cell editing. Omit to keep the grid read-only. */
   editable?: EditableConfig;
+  /**
+   * Controls whether the whole-grid edit gate is on. When omitted the gate is
+   * uncontrolled and defaults to on (non-breaking). When off, edit triggers,
+   * the fill handle, and row-edit controls are inert and the editable
+   * indicator is hidden.
+   */
+  editing?: boolean;
+  /** Called with the next gate state when the edit toggle is clicked. */
+  onEditingChange?: (next: boolean) => void;
+  /** Renders a built-in Edit/Done toggle button. Requires `editable`. */
+  showEditToggle?: boolean;
   /** Imperative grid API ref. */
   apiRef?: { current: GridApi<TRow> | null };
   /** Enables tree structure editing (add/delete/move/reparent). */
@@ -330,6 +342,9 @@ export function DataGrid<TRow>({
   transitions,
   icons,
   editable,
+  editing,
+  onEditingChange,
+  showEditToggle,
   apiRef,
   treeEditor,
   onTreeChange,
@@ -622,6 +637,15 @@ export function DataGrid<TRow>({
     onRowEditStart,
     onRowEditEnd,
   });
+  const [uncontrolledEditing, setUncontrolledEditing] = useState(true);
+  const editingEnabled = editing ?? uncontrolledEditing;
+  const handleEditingChange = useCallback(
+    (next: boolean) => {
+      if (editing === undefined) setUncontrolledEditing(next);
+      onEditingChange?.(next);
+    },
+    [editing, onEditingChange],
+  );
   const selectedRowsForExport = useCallback(() => {
     if (!selection) return [];
     return table
@@ -850,7 +874,12 @@ export function DataGrid<TRow>({
   return (
     <IconProvider overrides={icons ?? {}}>
       {editable ? (
-        <EditContext.Provider value={{ editState, config: editable }}>
+        <EditContext.Provider value={{ editState, config: editable, editingEnabled }}>
+          {showEditToggle && (
+            <div className="strata-toolbar">
+              <EditToggle editing={editingEnabled} onChange={handleEditingChange} />
+            </div>
+          )}
           {wrappedContent}
         </EditContext.Provider>
       ) : (

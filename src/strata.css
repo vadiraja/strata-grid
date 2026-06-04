@@ -756,6 +756,32 @@
 
 /* --- Editing --- */
 
+.strata-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.strata-edit-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--strata-border);
+  border-radius: var(--strata-radius-button);
+  background: var(--strata-bg-input);
+  color: var(--strata-text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.strata-edit-toggle--on {
+  background: var(--strata-accent);
+  border-color: var(--strata-accent);
+  color: #fff;
+}
+
 .strata-cell-editable {
   cursor: text;
 }

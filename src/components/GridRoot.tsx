@@ -149,7 +149,7 @@ export function GridRoot<TRow>({
 
   const startEditAt = useCallback(
     (rowIndex: number, colIndex: number) => {
-      if (!editCtx || editCtx.config.activateOn !== 'enter') return;
+      if (!editCtx || !editCtx.editingEnabled || editCtx.config.activateOn !== 'enter') return;
 
       const row = rows[rowIndex];
       const columnId = keyboardColumnIds[colIndex];
@@ -279,6 +279,7 @@ export function GridRoot<TRow>({
 
   const handleFillStart = useCallback(
     (startEvent: React.PointerEvent) => {
+      if (!editCtx || !editCtx.editingEnabled) return;
       startEvent.preventDefault();
       const startFocus = cellRange.focus;
       if (!startFocus) return;
@@ -325,7 +326,7 @@ export function GridRoot<TRow>({
       window.addEventListener('pointermove', handleMove);
       window.addEventListener('pointerup', handleUp);
     },
-    [cellRange, onFillRange, rangeColumnIds, rows],
+    [cellRange, editCtx, onFillRange, rangeColumnIds, rows],
   );
 
   const keyboard = useGridKeyboard({
@@ -578,14 +579,15 @@ export function GridRoot<TRow>({
     containerRef: gridRootRef,
     columnSizing: table.getState().columnSizing,
     hasSelectionColumn: !!selection,
-    hasRowEditControls: editCtx?.config.mode === 'row',
+    hasRowEditControls: editCtx?.config.mode === 'row' && (editCtx?.editingEnabled ?? false),
   });
 
   const columnVirtualizer = useColumnVirtualizer({
     scrollRef: horizontalScrollRef,
     columnWidths: centerWidths,
   });
-  const showRowEditControls = editCtx?.config.mode === 'row';
+  const showRowEditControls =
+    editCtx?.config.mode === 'row' && (editCtx?.editingEnabled ?? false);
   const aggregation = useAggregation({
     table,
     columns,
@@ -823,7 +825,7 @@ export function GridRoot<TRow>({
         onCellPointerDown={handleCellPointerDown}
         onCellPointerEnter={handleCellPointerEnter}
         focusCellRect={focusCellRect}
-        onFillStart={handleFillStart}
+        onFillStart={editCtx?.editingEnabled ? handleFillStart : undefined}
         onCellContextMenu={handleCellContextMenu}
         isFlashing={(rowId, columnId) => cellFlash.isFlashing(rowId, columnId)}
       />
