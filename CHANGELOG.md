@@ -4,6 +4,16 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] — 2026-06-04
+
+### Fixed
+
+- **Cell undo/redo no longer warns "Cannot update a component while rendering a
+  different component."** `useCellHistory` invoked its `apply` callback inside the
+  state-updater functions (which React runs during render); when `apply` triggered
+  a parent `setState` via `onCellsChange` / `onDataChange`, React warned. The
+  callback now runs after state is committed.
+
 ## [0.5.0] — 2026-06-04
 
 ### Added
