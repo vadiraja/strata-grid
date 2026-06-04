@@ -7,6 +7,8 @@ export interface EditContextValue {
   editState: EditStateReturn;
   /** The grid-level editable configuration. */
   config: EditableConfig;
+  /** Whether editing is currently enabled for the grid. */
+  editingEnabled: boolean;
 }
 
 export const EditContext = createContext<EditContextValue | null>(null);
