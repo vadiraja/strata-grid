@@ -1,4 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
+import { render, renderHook, act } from '@testing-library/react';
+import { createElement, useState } from 'react';
 import { useCellHistory } from './use-cell-history';
 
 describe('useCellHistory', () => {
@@ -30,5 +31,29 @@ describe('useCellHistory', () => {
     expect(apply).not.toHaveBeenCalled();
     expect(result.current.canUndo()).toBe(false);
     expect(result.current.canRedo()).toBe(false);
+  });
+
+  // Regression: apply must run OUTSIDE the state updaters. If apply (which can
+  // setState on a parent) runs inside a setUndoStack updater, React warns
+  // "Cannot update a component while rendering a different component".
+  it('runs apply outside state updaters (no cross-component setState-in-render)', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let api: ReturnType<typeof useCellHistory> | null = null;
+    function Child({ onApply }: { onApply: (t: unknown) => void }) {
+      api = useCellHistory({ apply: onApply });
+      return null;
+    }
+    function Parent() {
+      const [, setLog] = useState('');
+      return createElement(Child, { onApply: (t: unknown) => setLog(JSON.stringify(t)) });
+    }
+    render(createElement(Parent));
+    act(() => api!.record({ rowId: 'r1', edits: [{ columnId: 'a', oldValue: 1, newValue: 2 }] }));
+    act(() => api!.undo());
+    const offending = errorSpy.mock.calls.find((c) =>
+      String(c[0]).includes('while rendering a different component'),
+    );
+    expect(offending).toBeUndefined();
+    errorSpy.mockRestore();
   });
 });
