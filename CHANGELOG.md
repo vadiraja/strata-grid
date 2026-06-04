@@ -13,14 +13,16 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
   (a hard `2px 0 0` shadow) is replaced by a subtle shadow. This is a visible
   change to the default light theme. Restore the previous look by setting
   `--strata-border-cell-vertical: #e5e5e7`, `--strata-border-frozen: #d1d1d6`,
-  and `--strata-shadow-frozen: 2px 0 0 #d1d1d6`.
+  `--strata-shadow-frozen: 2px 0 0 #d1d1d6`, and
+  `--strata-shadow-frozen-right: -2px 0 0 #d1d1d6`.
 
 ### Added
 
 - **Granular border tokens** — `--strata-border-cell-vertical`,
-  `--strata-border-header-vertical`, `--strata-border-frozen`, and
-  `--strata-shadow-frozen` let consumers tune vertical separators and the
-  frozen-pane treatment independently of horizontal rules and the grid outline.
+  `--strata-border-header-vertical`, `--strata-border-frozen`,
+  `--strata-shadow-frozen`, and `--strata-shadow-frozen-right` let consumers tune
+  vertical separators and the left/right frozen-pane treatment independently of
+  horizontal rules and the grid outline.
 - **Auto-collapsing horizontal scrollbar row** — the scrollbar row collapses its
   height when columns fit the viewport, removing the empty scrollbar strip.
 
