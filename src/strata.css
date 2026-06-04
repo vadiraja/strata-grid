@@ -840,6 +840,53 @@
   accent-color: var(--strata-accent);
 }
 
+.strata-lookup {
+  position: relative;
+  width: 100%;
+}
+
+.strata-lookup-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.strata-lookup-list {
+  position: absolute;
+  z-index: 1000;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--strata-bg);
+  border: var(--strata-border-width) solid var(--strata-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.strata-lookup-option {
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--strata-text);
+}
+
+.strata-lookup-option--active,
+.strata-lookup-option:hover {
+  background: var(--strata-bg-header-hover);
+}
+
+.strata-lookup-loading,
+.strata-lookup-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--strata-text-muted);
+}
+
 .strata-validation-message {
   position: absolute;
   top: calc(100% + 4px);

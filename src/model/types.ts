@@ -345,6 +345,8 @@ export interface EditorContext<TRow> {
   onDiscard: () => void;
   /** Current validation state. */
   validation: ValidationState;
+  /** Internal: fires with the raw lookup result for cascade-fill. Set by the grid. */
+  onLookupSelect?: (result: unknown) => void;
 }
 
 /** Validation state for a cell. */
