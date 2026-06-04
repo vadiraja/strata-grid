@@ -1,3 +1,6 @@
+// NOTE (0.5.0): modal editing resolves the target from editState.activeCell, so it
+// applies to cell-mode editing only. In row-edit mode (config.mode === 'row') a
+// modal column is not opened in a dialog. Unifying row-mode + modal is a 0.5.x follow-up.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useEditContext } from '../model/edit-context';
@@ -65,6 +68,21 @@ export function EditModalHost<TRow>({ getActiveTarget, portalTarget }: EditModal
 
   if (!isModal || !editCtx || !portalTarget || !target) return null;
 
+  const handleDialogKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusables = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+  };
+
   const commit = async () => {
     if (target.column.validate) {
       const result = await validateNow();
@@ -94,6 +112,7 @@ export function EditModalHost<TRow>({ getActiveTarget, portalTarget }: EditModal
         tabIndex={-1}
         className="strata-modal"
         onPointerDown={(e) => e.stopPropagation()}
+        onKeyDown={handleDialogKeyDown}
       >
         <div className="strata-modal-header">
           {typeof target.column.header === 'string'

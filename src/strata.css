@@ -1633,7 +1633,7 @@
 .strata-context-menu-item:disabled { color: var(--strata-text-muted); cursor: not-allowed; }
 .strata-context-menu-divider { height: 1px; background: var(--strata-border); margin: 4px 0; }
 
-.strata-modal-backdrop { position: absolute; inset: 0; z-index: 2100; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.32); }
+.strata-modal-backdrop { position: fixed; inset: 0; z-index: 2100; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.32); }
 .strata-modal { min-width: 320px; max-width: 90%; background: var(--strata-bg); color: var(--strata-text); border: var(--strata-border-width) solid var(--strata-border); border-radius: 8px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24); outline: none; display: flex; flex-direction: column; }
 .strata-modal-header { padding: 12px 16px; font-weight: var(--strata-font-weight-header); border-bottom: 1px solid var(--strata-border); }
 .strata-modal-body { padding: 16px; }
