@@ -52,7 +52,7 @@
   font-weight: var(--strata-font-weight-header);
   background: var(--strata-bg-header);
   border-bottom: var(--strata-border-width) solid var(--strata-border);
-  border-right: var(--strata-border-width) solid var(--strata-border-cell);
+  border-right: var(--strata-border-width) solid var(--strata-border-header-vertical);
   color: var(--strata-text);
   overflow: hidden;
   white-space: nowrap;
@@ -362,15 +362,15 @@
   width: var(--strata-selection-cell-width);
   z-index: 4;
   background: var(--strata-bg);
-  border-right: var(--strata-border-width) solid var(--strata-border);
+  border-right: var(--strata-border-width) solid var(--strata-border-frozen);
 }
 
 .strata-pane-left {
   flex: none;
   z-index: 2;
   background: var(--strata-bg);
-  border-right: var(--strata-border-pinned-width) solid var(--strata-border);
-  box-shadow: 2px 0 0 var(--strata-border);
+  border-right: var(--strata-border-pinned-width) solid var(--strata-border-frozen);
+  box-shadow: var(--strata-shadow-frozen);
 }
 
 .strata-header-row .strata-pane-left,
@@ -407,8 +407,8 @@
   flex: none;
   z-index: 3;
   background: var(--strata-bg);
-  border-left: var(--strata-border-pinned-width) solid var(--strata-border);
-  box-shadow: -2px 0 0 var(--strata-border);
+  border-left: var(--strata-border-pinned-width) solid var(--strata-border-frozen);
+  box-shadow: -1px 0 0 rgba(148, 163, 184, 0.16);
 }
 
 .strata-row-edit-pane {
@@ -651,7 +651,7 @@
   padding: var(--strata-cell-padding-y) var(--strata-cell-padding-x);
   background: var(--strata-bg);
   border-bottom: var(--strata-border-width) solid var(--strata-border-cell);
-  border-right: var(--strata-border-width) solid var(--strata-border-cell);
+  border-right: var(--strata-border-width) solid var(--strata-border-cell-vertical);
   color: var(--strata-text);
   overflow: hidden;
   text-overflow: ellipsis;
