@@ -18,6 +18,7 @@ import type {
   GridTheme,
 } from '../model/types';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { EditModalHost, type EditModalTarget } from './EditModalHost';
 import { useContextMenu } from '../model/use-context-menu';
 import { measureColumnWidth } from '../model/auto-size-column';
 import type { UseSelectionReturn } from '../model/use-selection';
@@ -191,6 +192,24 @@ export function GridRoot<TRow>({
     },
     [rows],
   );
+  const getActiveModalTarget = useCallback((): EditModalTarget<TRow> | null => {
+    const activeCell = editCtx?.editState.activeCell;
+    if (!activeCell) return null;
+    const row = rows.find((r) => r.id === activeCell.rowId);
+    if (!row) return null;
+    const cell = row
+      .getVisibleCells()
+      .find((visibleCell) => visibleCell.column.id === activeCell.columnId);
+    const column = cell?.column.columnDef.meta?.strataColumn;
+    if (!column) return null;
+    return {
+      column,
+      row: row.original,
+      rowId: activeCell.rowId,
+      value: cell ? cell.getValue() : activeCell.originalValue,
+    };
+  }, [editCtx, rows]);
+
   const cellRange = useCellRange({ visibleColumnIds: rangeColumnIds, valuesAt });
   useEffect(() => {
     onStatusContextChange?.({ range: cellRange.range, rangeStats: cellRange.stats });
@@ -927,6 +946,10 @@ export function GridRoot<TRow>({
             : []
         }
         onClose={contextMenuState.close}
+      />
+      <EditModalHost
+        getActiveTarget={getActiveModalTarget}
+        portalTarget={gridRootRef.current ?? document.body}
       />
     </div>
   );

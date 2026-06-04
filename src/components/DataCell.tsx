@@ -146,7 +146,7 @@ export function DataCell<TRow>({
       onPointerEnter={onRangePointerEnter}
       onContextMenu={onCellContextMenu}
     >
-      {isEditing ? (
+      {isEditing && colDef?.editSurface !== 'modal' ? (
         <CellEditor cell={cell} />
       ) : cell.column.id === rollupTargetColumnId &&
         extendedQuantities?.has(cell.row.id) ? (

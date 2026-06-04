@@ -116,6 +116,8 @@ export interface ColumnDef<TRow> {
   editor?: (ctx: EditorContext<TRow>) => ReactNode;
   /** Editor options (e.g., choices for select editor). */
   editorOptions?: Record<string, unknown>;
+  /** Where the editor renders. Default 'inline'. */
+  editSurface?: 'inline' | 'modal';
   /** Validation rules for this column. */
   validate?: Validator<TRow> | Validator<TRow>[];
   /** Aggregation function for group/parent rows. */
