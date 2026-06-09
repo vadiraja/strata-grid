@@ -660,6 +660,23 @@
   cursor: cell;
 }
 
+/* Gridline modes — toggle which cell/header borders are drawn (configurable appearance) */
+.strata-grid[data-strata-gridlines="horizontal"] .strata-cell,
+.strata-grid[data-strata-gridlines="horizontal"] .strata-header-cell {
+  border-right: none;
+}
+
+.strata-grid[data-strata-gridlines="vertical"] .strata-cell,
+.strata-grid[data-strata-gridlines="vertical"] .strata-header-cell {
+  border-bottom: none;
+}
+
+.strata-grid[data-strata-gridlines="none"] .strata-cell,
+.strata-grid[data-strata-gridlines="none"] .strata-header-cell {
+  border-right: none;
+  border-bottom: none;
+}
+
 .strata-cell-focused {
   outline: 2px solid var(--strata-focus-ring);
   outline-offset: -2px;
