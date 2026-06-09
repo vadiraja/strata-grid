@@ -48,7 +48,7 @@
   --strata-font-weight-header: 600;
 
   --strata-cell-padding-x: 10px;
-  --strata-cell-padding-y: 6px;
+  --strata-cell-padding-y: 8px;
   --strata-header-padding-x: 10px;
   --strata-header-padding-y: 6px;
   --strata-footer-padding-x: 10px;
@@ -65,7 +65,7 @@
   --strata-radius-scrollbar: 999px;
 
   --strata-header-height: 40px;
-  --strata-row-height: 32px;
+  --strata-row-height: 36px;
   --strata-selection-cell-width: 40px;
   --strata-checkbox-size: 14px;
   --strata-toggle-size: 18px;
