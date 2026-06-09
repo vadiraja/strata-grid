@@ -7,7 +7,7 @@ import type { Density } from '../model/types';
 const mockMeasure = vi.fn();
 const mockScrollToIndex = vi.fn();
 const mockGetVirtualItems = vi.fn(() => [
-  { index: 5, start: 160, size: 32, end: 192, key: 5, lane: 0 },
+  { index: 5, start: 180, size: 36, end: 216, key: 5, lane: 0 },
 ]);
 const mockGetTotalSize = vi.fn(() => 3200);
 const capturedOptions: { estimateSize?: (index: number) => number } = {};

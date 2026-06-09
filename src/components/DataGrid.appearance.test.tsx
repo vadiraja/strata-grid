@@ -61,4 +61,28 @@ describe('DataGrid — appearance prop', () => {
     expect(grid.style.getPropertyValue('--strata-border-cell')).toBe('');
     expect(grid.style.getPropertyValue('--strata-border-width')).toBe('');
   });
+
+  it('maps every appearance field to its CSS custom property', () => {
+    const { container } = render(
+      <DataGrid
+        data={data}
+        columns={columns}
+        appearance={{
+          rowHeight: 40,
+          borderWidth: 2,
+          borderColor: '#111111',
+          horizontalBorderColor: '#222222',
+          verticalBorderColor: '#333333',
+        }}
+      />,
+    );
+    const grid = container.querySelector('.strata-grid') as HTMLElement;
+    expect(grid.style.getPropertyValue('--strata-row-height')).toBe('40px');
+    expect(grid.style.getPropertyValue('--strata-border-width')).toBe('2px');
+    expect(grid.style.getPropertyValue('--strata-border')).toBe('#111111');
+    expect(grid.style.getPropertyValue('--strata-border-cell')).toBe('#222222');
+    expect(grid.style.getPropertyValue('--strata-border-cell-vertical')).toBe(
+      '#333333',
+    );
+  });
 });
