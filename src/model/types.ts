@@ -248,6 +248,25 @@ export type GridTheme = 'light' | 'dark' | 'high-contrast-light' | 'high-contras
 /** Visual density — controls row height and cell padding. */
 export type Density = 'compact' | 'standard' | 'comfortable';
 
+/** Cell-border rendering style. */
+export type GridLines = 'both' | 'horizontal' | 'vertical' | 'none';
+
+/** Visual appearance overrides layered over the active theme + density. */
+export interface GridAppearance {
+  /** Which cell borders to draw. Default: 'horizontal'. */
+  gridLines?: GridLines;
+  /** Row height in px. Overrides the density preset. */
+  rowHeight?: number;
+  /** Border thickness in px. Maps to --strata-border-width. */
+  borderWidth?: number;
+  /** Outer border + header bottom. Maps to --strata-border. */
+  borderColor?: string;
+  /** Horizontal row separators. Maps to --strata-border-cell. */
+  cellBorderColor?: string;
+  /** Vertical column lines. Maps to --strata-border-cell-vertical. */
+  verticalBorderColor?: string;
+}
+
 /**
  * Configures grid-level editing behavior.
  */
