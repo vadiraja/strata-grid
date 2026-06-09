@@ -660,21 +660,26 @@
   cursor: cell;
 }
 
-/* Gridline modes — toggle which cell/header borders are drawn (configurable appearance) */
+/* Gridline modes — toggle which cell borders are drawn (configurable appearance).
+   The header cell's bottom border is the structural header/body divider and stays
+   visible in every mode; only its vertical column dividers (border-right) follow
+   the gridline setting. Frozen/pinned column edges are likewise never affected. */
 .strata-grid[data-strata-gridlines="horizontal"] .strata-cell,
 .strata-grid[data-strata-gridlines="horizontal"] .strata-header-cell {
   border-right: none;
 }
 
-.strata-grid[data-strata-gridlines="vertical"] .strata-cell,
-.strata-grid[data-strata-gridlines="vertical"] .strata-header-cell {
+.strata-grid[data-strata-gridlines="vertical"] .strata-cell {
   border-bottom: none;
 }
 
-.strata-grid[data-strata-gridlines="none"] .strata-cell,
-.strata-grid[data-strata-gridlines="none"] .strata-header-cell {
+.strata-grid[data-strata-gridlines="none"] .strata-cell {
   border-right: none;
   border-bottom: none;
+}
+
+.strata-grid[data-strata-gridlines="none"] .strata-header-cell {
+  border-right: none;
 }
 
 .strata-cell-focused {
