@@ -17,10 +17,10 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 
 ### Changed
 
-- **Default gridlines and standard row height** (visible breaking change to the
-  default light theme). Gridlines now default to horizontal-only (was a full
-  grid), and standard-density rows are 36px (was 32px) for an airier default.
-  Restore the previous look with `appearance={{ gridLines: 'both', rowHeight: 32 }}`.
+- **BREAKING (visual):** Default gridlines and standard row height changed in the
+  default light theme. Gridlines now default to horizontal-only (was a full grid),
+  and standard-density rows are 36px (was 32px) for an airier default. Restore the
+  previous look with `appearance={{ gridLines: 'both', rowHeight: 32 }}`.
 
 ## [0.5.1] — 2026-06-04
 

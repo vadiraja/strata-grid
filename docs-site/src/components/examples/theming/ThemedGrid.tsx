@@ -45,7 +45,7 @@ export default function ThemedGrid() {
         density="comfortable"
         striped
         transitions
-        appearance={{ gridLines: 'horizontal', rowHeight: 44 }}
+        appearance={{ gridLines: 'both' }}
       />
     </div>
   );
