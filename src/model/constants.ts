@@ -5,7 +5,7 @@ export const DEFAULT_COLUMN_WIDTH = 160;
 export const MIN_COLUMN_WIDTH = 48;
 
 /** Height of a single body row in pixels. Body rows are a fixed height. */
-export const ROW_HEIGHT = 32;
+export const ROW_HEIGHT = 36;
 
 /** Number of extra rows rendered above and below the visible window. */
 export const ROW_OVERSCAN = 8;

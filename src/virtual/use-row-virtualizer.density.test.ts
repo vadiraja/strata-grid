@@ -80,10 +80,10 @@ describe('useRowVirtualizer — density changes', () => {
     expect(mockMeasure).not.toHaveBeenCalled();
   });
 
-  it('estimateSize matches density: compact=24, standard=32, comfortable=44 (regression for #9)', () => {
+  it('estimateSize matches density: compact=24, standard=36, comfortable=44 (regression for #9)', () => {
     const cases: Array<[Density, number]> = [
       ['compact', 24],
-      ['standard', 32],
+      ['standard', 36],
       ['comfortable', 44],
     ];
     for (const [density, expected] of cases) {
@@ -94,6 +94,26 @@ describe('useRowVirtualizer — density changes', () => {
       expect(capturedOptions.estimateSize).toBeDefined();
       expect(capturedOptions.estimateSize!(0)).toBe(expected);
     }
+  });
+
+  it('rowHeight override takes precedence over density', () => {
+    capturedOptions.estimateSize = undefined;
+    renderHook(() =>
+      useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight: 60 }),
+    );
+    expect(capturedOptions.estimateSize!(0)).toBe(60);
+  });
+
+  it('calls measure() when rowHeight override changes', () => {
+    const { rerender } = renderHook(
+      ({ rowHeight }: { rowHeight: number }) =>
+        useRowVirtualizer({ scrollRef, count: 100, density: 'standard', rowHeight }),
+      { initialProps: { rowHeight: 36 } },
+    );
+
+    rerender({ rowHeight: 50 });
+
+    expect(mockMeasure).toHaveBeenCalled();
   });
 
   it('does NOT trigger remeasure when re-rendered with the same density', () => {

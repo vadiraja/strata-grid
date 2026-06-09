@@ -9,11 +9,15 @@ import type { Density } from '../model/types';
 
 const DENSITY_ROW_HEIGHT: Record<Density, number> = {
   compact: 24,
-  standard: 32,
+  standard: 36,
   comfortable: 44,
 };
 
-function resolveRowHeight(density: Density | undefined): number {
+function resolveRowHeight(
+  density: Density | undefined,
+  rowHeight: number | undefined,
+): number {
+  if (rowHeight != null) return rowHeight;
   return density ? DENSITY_ROW_HEIGHT[density] : ROW_HEIGHT;
 }
 
@@ -24,6 +28,8 @@ export interface UseRowVirtualizerOptions {
   count: number;
   /** Current density setting. Changes trigger remeasure with scroll anchor preservation. */
   density?: Density;
+  /** Explicit row height in px. Overrides the density preset. */
+  rowHeight?: number;
   /** When true, bypasses windowing and returns all loaded rows as virtual items. */
   printing?: boolean;
 }
@@ -52,8 +58,8 @@ export interface RowVirtualizerResult {
 export function useRowVirtualizer(
   options: UseRowVirtualizerOptions,
 ): RowVirtualizerResult {
-  const { scrollRef, count, density, printing = false } = options;
-  const rowHeight = resolveRowHeight(density);
+  const { scrollRef, count, density, rowHeight: rowHeightOverride, printing = false } = options;
+  const rowHeight = resolveRowHeight(density, rowHeightOverride);
 
   const virtualizer = useVirtualizer({
     count,
@@ -62,12 +68,18 @@ export function useRowVirtualizer(
     overscan: ROW_OVERSCAN,
   });
 
-  // Track previous density to detect changes (skip initial render)
+  // Track previous density + rowHeight to detect changes (skip initial render)
   const prevDensityRef = useRef(density);
+  const prevRowHeightRef = useRef(rowHeightOverride);
 
   useEffect(() => {
-    if (prevDensityRef.current === density) return;
+    if (
+      prevDensityRef.current === density &&
+      prevRowHeightRef.current === rowHeightOverride
+    )
+      return;
     prevDensityRef.current = density;
+    prevRowHeightRef.current = rowHeightOverride;
 
     // Capture the topmost visible row index before remeasure
     const virtualItems = virtualizer.getVirtualItems();
@@ -78,7 +90,7 @@ export function useRowVirtualizer(
 
     // Restore scroll position to the anchor row
     virtualizer.scrollToIndex(anchorIndex, { align: 'start' });
-  }, [density, virtualizer]);
+  }, [density, rowHeightOverride, virtualizer]);
 
   // Build print-mode virtual items for all rows
   const printItems = useMemo((): VirtualItem[] => {
