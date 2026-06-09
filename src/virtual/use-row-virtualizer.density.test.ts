@@ -101,7 +101,29 @@ describe('useRowVirtualizer — density changes', () => {
     renderHook(() =>
       useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight: 60 }),
     );
+    expect(capturedOptions.estimateSize).toBeDefined();
     expect(capturedOptions.estimateSize!(0)).toBe(60);
+  });
+
+  it('ignores a non-positive rowHeight and falls back to the density height', () => {
+    capturedOptions.estimateSize = undefined;
+    renderHook(() =>
+      useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight: 0 }),
+    );
+    expect(capturedOptions.estimateSize).toBeDefined();
+    expect(capturedOptions.estimateSize!(0)).toBe(36);
+  });
+
+  it('falls back to the density height when the override is cleared', () => {
+    const { rerender } = renderHook(
+      ({ rowHeight }: { rowHeight: number | undefined }) =>
+        useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight }),
+      { initialProps: { rowHeight: 60 as number | undefined } },
+    );
+    expect(capturedOptions.estimateSize!(0)).toBe(60);
+
+    rerender({ rowHeight: undefined });
+    expect(capturedOptions.estimateSize!(0)).toBe(36);
   });
 
   it('calls measure() when rowHeight override changes', () => {

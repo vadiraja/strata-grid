@@ -17,7 +17,9 @@ function resolveRowHeight(
   density: Density | undefined,
   rowHeight: number | undefined,
 ): number {
-  if (rowHeight != null) return rowHeight;
+  // Only honor a valid positive override; 0/NaN/negative fall back to density
+  // so an accidental binding can't silently collapse every row to zero height.
+  if (rowHeight != null && rowHeight > 0) return rowHeight;
   return density ? DENSITY_ROW_HEIGHT[density] : ROW_HEIGHT;
 }
 
