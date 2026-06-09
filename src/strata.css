@@ -663,7 +663,8 @@
 /* Gridline modes — toggle which cell borders are drawn (configurable appearance).
    The header cell's bottom border is the structural header/body divider and stays
    visible in every mode; only its vertical column dividers (border-right) follow
-   the gridline setting. Frozen/pinned column edges are likewise never affected. */
+   the gridline setting. "vertical" therefore keeps both header borders (no rule).
+   Frozen/pinned column edges are likewise never affected. */
 .strata-grid[data-strata-gridlines="horizontal"] .strata-cell,
 .strata-grid[data-strata-gridlines="horizontal"] .strata-header-cell {
   border-right: none;

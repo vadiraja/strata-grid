@@ -37,6 +37,16 @@ describe('DataGrid — appearance prop', () => {
     );
   });
 
+  it('round-trips the vertical gridLines value to the attribute', () => {
+    const { container } = render(
+      <DataGrid data={data} columns={columns} appearance={{ gridLines: 'vertical' }} />,
+    );
+    expect(container.querySelector('.strata-grid')).toHaveAttribute(
+      'data-strata-gridlines',
+      'vertical',
+    );
+  });
+
   it('emits CSS custom properties only for provided appearance fields', () => {
     const { container } = render(
       <DataGrid
