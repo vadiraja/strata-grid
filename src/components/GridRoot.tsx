@@ -15,6 +15,7 @@ import type {
   ContextMenuTarget,
   Density,
   FillRangeEvent,
+  GridAppearance,
   GridTheme,
 } from '../model/types';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
@@ -61,6 +62,8 @@ export interface GridRootProps<TRow> {
   theme?: GridTheme;
   /** Visual density. Default: 'standard'. */
   density?: Density;
+  /** Appearance overrides (gridlines, row height, border colors/width). */
+  appearance?: GridAppearance;
   /** Alternating row background. Default: false. */
   striped?: boolean;
   /** Smooth CSS transitions on theme/density changes. Default: false. */
@@ -108,6 +111,7 @@ export function GridRoot<TRow>({
   selection,
   theme,
   density,
+  appearance,
   striped,
   transitions,
   columns,
@@ -793,6 +797,22 @@ export function GridRoot<TRow>({
 
   const rootClassName = ['strata-grid', themeClassName].filter(Boolean).join(' ');
 
+  const appearanceStyle = {
+    ...(appearance?.rowHeight != null && {
+      '--strata-row-height': `${appearance.rowHeight}px`,
+    }),
+    ...(appearance?.borderWidth != null && {
+      '--strata-border-width': `${appearance.borderWidth}px`,
+    }),
+    ...(appearance?.borderColor && { '--strata-border': appearance.borderColor }),
+    ...(appearance?.horizontalBorderColor && {
+      '--strata-border-cell': appearance.horizontalBorderColor,
+    }),
+    ...(appearance?.verticalBorderColor && {
+      '--strata-border-cell-vertical': appearance.verticalBorderColor,
+    }),
+  } as React.CSSProperties;
+
   return (
     <div
       ref={(node) => {
@@ -807,6 +827,8 @@ export function GridRoot<TRow>({
       data-strata-density={density ?? 'standard'}
       data-strata-striped={String(striped ?? false)}
       data-strata-transitions={String(transitions ?? false)}
+      data-strata-gridlines={appearance?.gridLines ?? 'horizontal'}
+      style={appearanceStyle}
       tabIndex={0}
       onKeyDown={keyboard.handleKeyDown}
       aria-activedescendant={
@@ -829,6 +851,8 @@ export function GridRoot<TRow>({
         table={table}
         height={height}
         treeColumnId={treeColumnId}
+        density={density}
+        rowHeight={appearance?.rowHeight}
         scrollRef={bodyScrollRef}
         columnLayout={columnLayout}
         scrollLeft={effectiveScrollLeft}

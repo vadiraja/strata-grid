@@ -20,6 +20,7 @@ import type {
   Density,
   EditableConfig,
   ExportConfig,
+  GridAppearance,
   GridTheme,
   PaginationConfig,
   RowActionsConfig,
@@ -132,6 +133,8 @@ export interface DataGridProps<TRow> {
   theme?: GridTheme;
   /** Visual density. Default: 'standard'. */
   density?: Density;
+  /** Appearance overrides (gridlines, row height, border colors/width). */
+  appearance?: GridAppearance;
   /** Alternating row background. Default: false. */
   striped?: boolean;
   /** Smooth CSS transitions on theme/density changes. Default: false. */
@@ -351,6 +354,7 @@ export function DataGrid<TRow>({
   onSelectionChange,
   theme,
   density,
+  appearance,
   striped,
   transitions,
   icons,
@@ -1038,6 +1042,7 @@ export function DataGrid<TRow>({
       selection={selection ? selectionState : undefined}
       theme={resolved.dataTheme ?? resolved.className}
       density={density}
+      appearance={appearance}
       striped={striped}
       transitions={transitions}
       columns={leafColumns}
