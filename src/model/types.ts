@@ -248,21 +248,27 @@ export type GridTheme = 'light' | 'dark' | 'high-contrast-light' | 'high-contras
 /** Visual density — controls row height and cell padding. */
 export type Density = 'compact' | 'standard' | 'comfortable';
 
-/** Cell-border rendering style. */
+/**
+ * Cell-border rendering style.
+ * - `'both'` — horizontal row separators and vertical column lines.
+ * - `'horizontal'` — row separators only (default).
+ * - `'vertical'` — column lines only.
+ * - `'none'` — no cell borders.
+ */
 export type GridLines = 'both' | 'horizontal' | 'vertical' | 'none';
 
-/** Visual appearance overrides layered over the active theme + density. */
+/** Visual appearance overrides for the active theme and density. */
 export interface GridAppearance {
   /** Which cell borders to draw. Default: 'horizontal'. */
   gridLines?: GridLines;
-  /** Row height in px. Overrides the density preset. */
+  /** Row height in px (positive integer). Overrides the density preset. */
   rowHeight?: number;
-  /** Border thickness in px. Maps to --strata-border-width. */
+  /** Border thickness in px (positive integer). Maps to --strata-border-width. */
   borderWidth?: number;
   /** Outer border + header bottom. Maps to --strata-border. */
   borderColor?: string;
   /** Horizontal row separators. Maps to --strata-border-cell. */
-  cellBorderColor?: string;
+  horizontalBorderColor?: string;
   /** Vertical column lines. Maps to --strata-border-cell-vertical. */
   verticalBorderColor?: string;
 }

@@ -51,7 +51,7 @@ export interface GridAppearance {
   /** Outer border + header bottom. Maps to --strata-border. */
   borderColor?: string;
   /** Horizontal row separators. Maps to --strata-border-cell. */
-  cellBorderColor?: string;
+  horizontalBorderColor?: string;
   /** Vertical column lines. Maps to --strata-border-cell-vertical. */
   verticalBorderColor?: string;
 }
@@ -377,8 +377,8 @@ In `src/components/GridRoot.tsx`, just before the `return (` on line 796, add:
       '--strata-border-width': `${appearance.borderWidth}px`,
     }),
     ...(appearance?.borderColor && { '--strata-border': appearance.borderColor }),
-    ...(appearance?.cellBorderColor && {
-      '--strata-border-cell': appearance.cellBorderColor,
+    ...(appearance?.horizontalBorderColor && {
+      '--strata-border-cell': appearance.horizontalBorderColor,
     }),
     ...(appearance?.verticalBorderColor && {
       '--strata-border-cell-vertical': appearance.verticalBorderColor,
@@ -571,7 +571,7 @@ the active theme and density.
     rowHeight: 44,           // px — overrides the density preset
     borderWidth: 1,          // px
     borderColor: '#d1d1d6',
-    cellBorderColor: '#e5e5e7',
+    horizontalBorderColor: '#e5e5e7',
     verticalBorderColor: '#eef0f3',
   }}
 />
@@ -583,7 +583,7 @@ the active theme and density.
 | `rowHeight` | density preset | `--strata-row-height` |
 | `borderWidth` | `1px` | `--strata-border-width` |
 | `borderColor` | `#d1d1d6` | `--strata-border` |
-| `cellBorderColor` | `#e5e5e7` | `--strata-border-cell` |
+| `horizontalBorderColor` | `#e5e5e7` | `--strata-border-cell` |
 | `verticalBorderColor` | `#eef0f3` | `--strata-border-cell-vertical` |
 
 Each field is independent — set only the ones you need. To restore the pre-0.6 look
