@@ -205,6 +205,16 @@ Strata ships unopinionated styles driven by CSS custom properties. Import the
 stylesheet (`strata-grid/styles.css`) and override the `--strata-*` tokens in
 your own CSS to match your design system.
 
+For common adjustments — gridlines, row height, and border colors/width — pass
+the `appearance` prop instead of writing CSS:
+
+```tsx
+<DataGrid data={rows} columns={columns} appearance={{ gridLines: 'horizontal', rowHeight: 40 }} />
+```
+
+The default is horizontal-only gridlines with 36px standard rows; pass
+`appearance={{ gridLines: 'both', rowHeight: 32 }}` to restore the pre-0.6 look.
+
 Optional theme token files are exported for direct imports:
 
 ```tsx
