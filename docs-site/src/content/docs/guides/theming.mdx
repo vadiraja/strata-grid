@@ -55,6 +55,45 @@ theme.dispose();
 
 <ThemedGrid client:load />
 
+## Appearance
+
+The `appearance` prop bundles the most common visual knobs — gridlines, row
+height, and border width/colors — into a single object, so you can tune the
+grid without writing CSS. Each field is independent; set only the ones you need.
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  appearance={{
+    gridLines: 'horizontal', // 'both' | 'horizontal' | 'vertical' | 'none' — default 'horizontal'
+    rowHeight: 44,           // px — overrides the density preset
+    borderWidth: 1,          // px
+    borderColor: '#d1d1d6',
+    horizontalBorderColor: '#e5e5e7',
+    verticalBorderColor: '#eef0f3',
+  }}
+/>
+```
+
+| Field | Default | Controls |
+| --- | --- | --- |
+| `gridLines` | `'horizontal'` | `data-strata-gridlines` attribute |
+| `rowHeight` | density preset | `--strata-row-height` |
+| `borderWidth` | `1px` | `--strata-border-width` |
+| `borderColor` | `#d1d1d6` | `--strata-border` |
+| `horizontalBorderColor` | `#e5e5e7` | `--strata-border-cell` |
+| `verticalBorderColor` | `#eef0f3` | `--strata-border-cell-vertical` |
+
+`gridLines` chooses which cell borders are drawn: `'both'` for a full grid,
+`'horizontal'` for row separators only (the default), `'vertical'` for column
+lines only, or `'none'`. The header/body divider stays visible in every mode
+because it is structural.
+
+The default look draws horizontal row separators only and uses a 36px standard
+row height. To restore the previous full-grid look, set
+`appearance={{ gridLines: 'both', rowHeight: 32 }}`.
+
 ## Border & frozen-pane tokens
 
 Fine-grained control over separators and the frozen/pinned pane treatment:

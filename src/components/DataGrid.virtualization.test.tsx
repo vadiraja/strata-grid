@@ -39,8 +39,8 @@ describe('DataGrid — row virtualization', () => {
     );
     const sizer = container.querySelector('.strata-body-sizer');
     expect(sizer).not.toBeNull();
-    // 1000 rows * 32px row height
-    expect((sizer as HTMLElement).style.height).toBe('32000px');
+    // 1000 rows * 36px row height
+    expect((sizer as HTMLElement).style.height).toBe('36000px');
   });
 
   it('renders rows near the new position after scrolling', () => {
@@ -48,7 +48,7 @@ describe('DataGrid — row virtualization', () => {
       <DataGrid data={makeRows(1000)} columns={columns} />,
     );
     const scroller = container.querySelector('.strata-body') as HTMLElement;
-    scroller.scrollTop = 16000; // ~row 500 at 32px per row
+    scroller.scrollTop = 18000; // row 500 at 36px per row
     fireEvent.scroll(scroller);
     expect(screen.getByText('Row 500')).toBeInTheDocument();
   });

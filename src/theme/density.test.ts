@@ -59,12 +59,12 @@ describe('density.css — token resolution', () => {
   describe('standard density', () => {
     const tokens = extractTokens(densityCss, 'standard');
 
-    it('sets --strata-row-height to 32px', () => {
-      expect(tokens['--strata-row-height']).toBe('32px');
+    it('sets --strata-row-height to 36px', () => {
+      expect(tokens['--strata-row-height']).toBe('36px');
     });
 
-    it('sets --strata-cell-padding-y to 6px', () => {
-      expect(tokens['--strata-cell-padding-y']).toBe('6px');
+    it('sets --strata-cell-padding-y to 8px', () => {
+      expect(tokens['--strata-cell-padding-y']).toBe('8px');
     });
 
     it('sets --strata-cell-padding-x to 10px', () => {

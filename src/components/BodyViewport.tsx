@@ -9,7 +9,7 @@ import { useRowVirtualizer } from '../virtual/use-row-virtualizer';
 import { usePrintMode } from '../virtual/use-print-mode';
 import type { ColumnLayout } from './column-layout';
 import { useEditContext } from '../model/edit-context';
-import type { ColumnDef } from '../model/types';
+import type { ColumnDef, Density } from '../model/types';
 import type { UseAggregationReturn } from '../model/use-aggregation';
 import type { UseBomRollupReturn } from '../model/use-bom-rollup';
 import type { UseDragDropReturn } from '../tree-editor/use-drag-drop';
@@ -22,6 +22,10 @@ export interface BodyViewportProps<TRow> {
   height: number;
   /** Id of the tree column. Set only in tree mode. */
   treeColumnId?: string;
+  /** Visual density — drives virtual row measurement. */
+  density?: Density;
+  /** Explicit row height in px. Overrides the density preset. */
+  rowHeight?: number;
   /** Shared vertical and horizontal body scroll element. */
   scrollRef: RefObject<HTMLDivElement | null>;
   /** Shared column pane and virtual window layout. */
@@ -67,6 +71,8 @@ export function BodyViewport<TRow>({
   table,
   height,
   treeColumnId,
+  density,
+  rowHeight,
   scrollRef,
   columnLayout,
   scrollLeft,
@@ -89,7 +95,13 @@ export function BodyViewport<TRow>({
 }: BodyViewportProps<TRow>) {
   const rows = table.getRowModel().rows;
   const printing = usePrintMode();
-  const rowVirtualizer = useRowVirtualizer({ scrollRef, count: rows.length, printing });
+  const rowVirtualizer = useRowVirtualizer({
+    scrollRef,
+    count: rows.length,
+    density,
+    rowHeight,
+    printing,
+  });
   const editCtx = useEditContext();
   const showRowEditControls = editCtx?.config.mode === 'row';
 

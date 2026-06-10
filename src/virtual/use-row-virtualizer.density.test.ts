@@ -7,7 +7,7 @@ import type { Density } from '../model/types';
 const mockMeasure = vi.fn();
 const mockScrollToIndex = vi.fn();
 const mockGetVirtualItems = vi.fn(() => [
-  { index: 5, start: 160, size: 32, end: 192, key: 5, lane: 0 },
+  { index: 5, start: 180, size: 36, end: 216, key: 5, lane: 0 },
 ]);
 const mockGetTotalSize = vi.fn(() => 3200);
 const capturedOptions: { estimateSize?: (index: number) => number } = {};
@@ -80,10 +80,10 @@ describe('useRowVirtualizer — density changes', () => {
     expect(mockMeasure).not.toHaveBeenCalled();
   });
 
-  it('estimateSize matches density: compact=24, standard=32, comfortable=44 (regression for #9)', () => {
+  it('estimateSize matches density: compact=24, standard=36, comfortable=44 (regression for #9)', () => {
     const cases: Array<[Density, number]> = [
       ['compact', 24],
-      ['standard', 32],
+      ['standard', 36],
       ['comfortable', 44],
     ];
     for (const [density, expected] of cases) {
@@ -94,6 +94,48 @@ describe('useRowVirtualizer — density changes', () => {
       expect(capturedOptions.estimateSize).toBeDefined();
       expect(capturedOptions.estimateSize!(0)).toBe(expected);
     }
+  });
+
+  it('rowHeight override takes precedence over density', () => {
+    capturedOptions.estimateSize = undefined;
+    renderHook(() =>
+      useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight: 60 }),
+    );
+    expect(capturedOptions.estimateSize).toBeDefined();
+    expect(capturedOptions.estimateSize!(0)).toBe(60);
+  });
+
+  it('ignores a non-positive rowHeight and falls back to the density height', () => {
+    capturedOptions.estimateSize = undefined;
+    renderHook(() =>
+      useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight: 0 }),
+    );
+    expect(capturedOptions.estimateSize).toBeDefined();
+    expect(capturedOptions.estimateSize!(0)).toBe(36);
+  });
+
+  it('falls back to the density height when the override is cleared', () => {
+    const { rerender } = renderHook(
+      ({ rowHeight }: { rowHeight: number | undefined }) =>
+        useRowVirtualizer({ scrollRef, count: 10, density: 'standard', rowHeight }),
+      { initialProps: { rowHeight: 60 as number | undefined } },
+    );
+    expect(capturedOptions.estimateSize!(0)).toBe(60);
+
+    rerender({ rowHeight: undefined });
+    expect(capturedOptions.estimateSize!(0)).toBe(36);
+  });
+
+  it('calls measure() when rowHeight override changes', () => {
+    const { rerender } = renderHook(
+      ({ rowHeight }: { rowHeight: number }) =>
+        useRowVirtualizer({ scrollRef, count: 100, density: 'standard', rowHeight }),
+      { initialProps: { rowHeight: 36 } },
+    );
+
+    rerender({ rowHeight: 50 });
+
+    expect(mockMeasure).toHaveBeenCalled();
   });
 
   it('does NOT trigger remeasure when re-rendered with the same density', () => {

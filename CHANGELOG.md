@@ -4,6 +4,24 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`appearance` prop** on `<DataGrid>` (and `<GridRoot>`) for configurable
+  gridlines, row height, border width, and border colors without writing CSS.
+  `gridLines` (`'both' | 'horizontal' | 'vertical' | 'none'`) maps to a
+  `data-strata-gridlines` attribute; `rowHeight`, `borderWidth`, `borderColor`,
+  `horizontalBorderColor`, and `verticalBorderColor` map to the corresponding
+  `--strata-*` custom properties. Each field is independent.
+
+### Changed
+
+- **BREAKING (visual):** Default gridlines and standard row height changed in the
+  default light theme. Gridlines now default to horizontal-only (was a full grid),
+  and standard-density rows are 36px (was 32px) for an airier default. Restore the
+  previous look with `appearance={{ gridLines: 'both', rowHeight: 32 }}`.
+
 ## [0.5.1] — 2026-06-04
 
 ### Fixed

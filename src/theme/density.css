@@ -9,8 +9,8 @@
 }
 
 .strata-grid[data-strata-density="standard"] {
-  --strata-row-height: 32px;
-  --strata-cell-padding-y: 6px;
+  --strata-row-height: 36px;
+  --strata-cell-padding-y: 8px;
   --strata-cell-padding-x: 10px;
 }
 

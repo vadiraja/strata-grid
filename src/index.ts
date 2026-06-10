@@ -17,6 +17,8 @@ export type {
   SelectionState,
   GridTheme,
   Density,
+  GridLines,
+  GridAppearance,
   AggregationConfig,
   ExtendedQuantityConfig,
   AdvancedFilterConfig,

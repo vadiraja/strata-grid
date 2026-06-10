@@ -45,6 +45,7 @@ export default function ThemedGrid() {
         density="comfortable"
         striped
         transitions
+        appearance={{ gridLines: 'both' }}
       />
     </div>
   );

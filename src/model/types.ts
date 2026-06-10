@@ -249,6 +249,31 @@ export type GridTheme = 'light' | 'dark' | 'high-contrast-light' | 'high-contras
 export type Density = 'compact' | 'standard' | 'comfortable';
 
 /**
+ * Cell-border rendering style.
+ * - `'both'` — horizontal row separators and vertical column lines.
+ * - `'horizontal'` — row separators only (default).
+ * - `'vertical'` — column lines only.
+ * - `'none'` — no cell borders.
+ */
+export type GridLines = 'both' | 'horizontal' | 'vertical' | 'none';
+
+/** Visual appearance overrides for the active theme and density. */
+export interface GridAppearance {
+  /** Which cell borders to draw. Default: 'horizontal'. */
+  gridLines?: GridLines;
+  /** Row height in px (positive integer). Overrides the density preset. */
+  rowHeight?: number;
+  /** Border thickness in px (positive integer). Maps to --strata-border-width. */
+  borderWidth?: number;
+  /** Outer border + header bottom. Maps to --strata-border. */
+  borderColor?: string;
+  /** Horizontal row separators. Maps to --strata-border-cell. */
+  horizontalBorderColor?: string;
+  /** Vertical column lines. Maps to --strata-border-cell-vertical. */
+  verticalBorderColor?: string;
+}
+
+/**
  * Configures grid-level editing behavior.
  */
 export interface EditableConfig {
