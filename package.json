@@ -1,6 +1,6 @@
 {
   "name": "strata-grid",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Open-source React tree data grid with virtualization, lazy hierarchies, and theming for enterprise applications.",
   "license": "Apache-2.0",
   "author": "Vadiraja <vadiraja@vadionline.com>",
@@ -72,7 +72,8 @@
     "docs:api": "typedoc && node scripts/add-starlight-frontmatter.mjs && node scripts/write-api-landing.mjs",
     "lint:publish": "publint",
     "lint:types": "node scripts/check-types-resolution.mjs",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly":"npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",

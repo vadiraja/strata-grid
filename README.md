@@ -109,6 +109,26 @@ npm install strata-grid
 
 `react` and `react-dom` (>= 18) are peer dependencies.
 
+### Installing from GitHub
+
+You can also install a tagged release straight from GitHub. The package builds
+itself on install (via the `prepare` script), so `dist/` does not need to be committed:
+
+```json
+"strata-grid": "github:vadiraja/strata-grid#v0.6.1"
+```
+
+pnpm 10 blocks dependency build scripts by default and fails with
+`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`. Allow `strata-grid` to build in your
+consumer's `pnpm-workspace.yaml` (or under `"pnpm"` in `package.json`):
+
+```yaml
+onlyBuiltDependencies:
+  - strata-grid
+```
+
+npm and yarn need no extra configuration.
+
 ## Quick start
 
 A plain flat grid — no hierarchy config required:
