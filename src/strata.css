@@ -756,6 +756,17 @@
   white-space: nowrap;
 }
 
+/*
+ * Opt-in branch emphasis. Hierarchy is carried by the toggle and the indent
+ * only, so by default expandable rows look exactly like leaf rows. Set
+ * --strata-branch-font-weight (e.g. 600) on the grid or an ancestor to
+ * emphasise expandable rows. :where() keeps this at zero specificity so any
+ * host rule on .strata-tree-label still wins.
+ */
+:where(.strata-row-container[aria-expanded] .strata-tree-label) {
+  font-weight: var(--strata-branch-font-weight, inherit);
+}
+
 .strata-empty {
   padding: 24px;
   text-align: center;

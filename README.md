@@ -200,6 +200,38 @@ const columns: ColumnDef<FileNode>[] = [
 
 For flat, parent-pointer data, supply `getParentId` instead of `getChildren`.
 
+### Hierarchy and styling
+
+Hierarchy is carried by the **toggle and the indent**, never by font weight.
+Strata renders expandable rows and leaf rows in the same weight, style and color.
+
+- **Leaf rows keep the toggle gutter.** A leaf renders an empty, `aria-hidden`
+  toggle slot, so sibling labels at the same level start at the same x position.
+  Children are indented one level further than their parent.
+- **Hooks for your own CSS.** Expandable rows carry `aria-expanded` on
+  `.strata-row-container`; leaf rows do not carry it. The label is
+  `.strata-tree-label`.
+- **Styling branch rows is opt-in.** It is off by default. To emphasise
+  expandable rows, set the variable (on the grid or any ancestor):
+
+  ```css
+  .my-grid { --strata-branch-font-weight: 600; }
+  ```
+
+  or target the hook directly:
+
+  ```css
+  .strata-row-container[aria-expanded] .strata-tree-label { font-weight: 600; }
+  ```
+
+  The built-in rule has zero specificity (`:where()`), so your own selectors
+  always win.
+- **Don't rely on weight alone.** Bold or color by itself is not a reliable way to
+  show structure (in the spirit of WCAG 1.4.1, Use of Color). If you emphasise
+  branches, keep the toggle and the indent as the structure — in particular, a bold
+  expandable row next to plain leaf siblings makes the siblings look like its
+  children.
+
 ## API overview
 
 ### `<DataGrid>` props

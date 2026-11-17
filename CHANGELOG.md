@@ -4,6 +4,26 @@ All notable changes to `strata-grid` are documented here. The format is loosely 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] — 2026-11-16
+
+### Added
+
+- Opt-in branch emphasis for tree rows via `--strata-branch-font-weight`
+  (default: off, inherits). Applied through a zero-specificity `:where()` rule on
+  `.strata-row-container[aria-expanded] .strata-tree-label`, so host styles always win.
+- Docs (README and the tree-data guide) on hierarchy styling: leaf rows keep the
+  toggle gutter, children indent one level further, how to style branch rows, and
+  that weight alone should not carry hierarchy (WCAG 1.4.1 spirit).
+- Regression test that an expandable row and a leaf sibling have the same
+  font weight, style and color by default, and that only expandable rows carry
+  `aria-expanded`.
+
+### Notes
+
+- No visual or API change: an audit found no rule that styles tree rows by
+  weight, style or color depending on children/expanded state. The
+  `aria-expanded` (expandable rows only) and `.strata-tree-label` hooks are unchanged.
+
 ## [0.6.1] — 2026-11-16
 
 ### Added
